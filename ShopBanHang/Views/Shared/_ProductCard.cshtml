@@ -1,0 +1,67 @@
+@model Product
+@using ShopBanHang.Helpers
+@{
+    int phanTramGiam = TienViet.PhanTramGiam(Model.Price, Model.OldPrice);
+    bool hetHang = Model.Stock <= 0;
+}
+
+<div class="card h-100 shadow-sm product-card position-relative">
+   <div class="compare-check-wrap">
+        <input class="form-check-input compare-check shadow-sm"
+               type="checkbox"
+               value="@Model.Id"
+               id="ss-@Model.Id"
+               title="Chọn để so sánh"
+               aria-label="Chọn để so sánh" />
+    </div>
+    <div class="mc-badges">
+        @if (phanTramGiam > 0)
+        {
+            <span class="mc-badge mc-badge-hot ">-@phanTramGiam%</span>
+        }
+        @if (Model.IsFeatured)
+        {
+            <span class="mc-badge mc-badge-new">Nổi bật</span>
+        }
+    </div>
+
+    <a asp-controller="Product" asp-action="Detail" asp-route-slug="@Model.Slug">
+        <img src="@(string.IsNullOrEmpty(Model.ImageUrl) ? "/images/products/no-image.svg" : Model.ImageUrl)"
+             class="card-img-top" alt="@Model.Name" loading="lazy" />
+    </a>
+
+    <div class="card-body d-flex flex-column">
+        <h3 class="card-title h6 mb-2">
+            <a class="text-decoration-none text-dark"
+               asp-controller="Product" asp-action="Detail" asp-route-slug="@Model.Slug">
+                @Model.Name
+            </a>
+        </h3>
+
+        <div class="mb-2">
+            <span class="fw-bold text-danger">@TienViet.Dinh(Model.Price)</span>
+            @if (phanTramGiam > 0)
+            {
+                <del class="text-muted small ms-1">@TienViet.Dinh(Model.OldPrice)</del>
+            }
+        </div>
+
+        <div class="small text-muted mb-2">
+            @Model.Brand?.Name · Đã bán @Model.SoldCount
+        </div>
+
+        <div class="mt-auto">
+            @if (hetHang)
+            {
+                <button class="btn btn-secondary w-100 btn-sm" disabled>Hết hàng</button>
+            }
+            else
+            {
+                <a class="btn btn-mc-buy w-100 btn-sm"
+                   asp-controller="Product" asp-action="Detail" asp-route-slug="@Model.Slug">
+                    Xem chi tiết
+                </a>
+            }
+        </div>
+    </div>
+</div>

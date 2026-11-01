@@ -1,0 +1,164 @@
+@model Order
+@using ShopBanHang.Helpers
+@{
+    // Chỉ những trạng thái mà luồng cho phép đi tới, lấy từ OrderStatusFlow
+    var buocTiepTheo = OrderStatusFlow.BuocTiepTheo(Model.Status);
+}
+
+<div class="d-flex flex-wrap gap-2 mb-3">
+    <a asp-action="Index" class="btn btn-sm btn-outline-secondary">
+        <i class="bi bi-arrow-left"></i> Danh sách đơn
+    </a>
+</div>
+
+<div class="adm-hai-cot">
+    @* ===== Thông tin đơn ===== *@
+    <div class="adm-panel">
+        <div class="adm-panel-head">
+            <h2>Thông tin đơn</h2>
+            @{
+                string lopTrangThai = Model.Status switch
+                {
+                    OrderStatus.HoanThanh => "st-done",
+                    OrderStatus.DaHuy => "st-todo",
+                    _ => "st-wait"
+                };
+            }
+            <span class="st @lopTrangThai">@Model.Status.Nhan()</span>
+        </div>
+
+        <div class="p-3">
+            <dl class="adm-dl mb-0">
+                <dt>Mã đơn</dt>
+                <dd><code class="adm-ma-don">@Model.OrderCode</code></dd>
+
+                <dt>Người nhận</dt>
+                <dd>@Model.CustomerName</dd>
+
+                <dt>Điện thoại</dt>
+                <dd>@Model.Phone</dd>
+
+                <dt>Email</dt>
+                <dd>@(string.IsNullOrEmpty(Model.Email) ? "—" : Model.Email)</dd>
+
+                <dt>Địa chỉ giao</dt>
+                <dd>@Model.Address</dd>
+
+                <dt>Thanh toán</dt>
+                <dd>@Model.PaymentMethod.Nhan()</dd>
+
+                <dt>Ngày đặt</dt>
+                <dd>@Model.CreatedAt.ToString("dd/MM/yyyy HH:mm")</dd>
+
+                <dt>Tài khoản</dt>
+                <dd>
+                    @if (Model.User != null)
+                    {
+                        @Model.User.Email
+                    }
+                    else
+                    {
+                        <span class="text-muted">khách không đăng nhập</span>
+                    }
+                </dd>
+
+                @if (!string.IsNullOrEmpty(Model.Note))
+                {
+                    <dt>Ghi chú</dt>
+                    <dd>@Model.Note</dd>
+                }
+            </dl>
+        </div>
+    </div>
+
+    @* ===== Đổi trạng thái ===== *@
+    <div class="adm-panel">
+        <div class="adm-panel-head">
+            <h2>Chuyển trạng thái</h2>
+        </div>
+
+        <div class="p-3">
+            @if (buocTiepTheo.Length == 0)
+            {
+                <div class="alert alert-light border mb-0">
+                    Đơn đã ở trạng thái cuối (<b>@Model.Status.Nhan()</b>), không chuyển tiếp được nữa.
+                </div>
+            }
+            else
+            {
+                <p class="small text-muted">
+                    Từ <b>@Model.Status.Nhan()</b> chỉ đi tiếp được sang:
+                </p>
+
+                <div class="adm-chon-tt d-flex flex-wrap gap-2">
+                    @foreach (var tt in buocTiepTheo)
+                    {
+                        <form asp-action="ChangeStatus" asp-route-id="@Model.Id" method="post" class="d-inline">
+                            <input type="hidden" name="moi" value="@((int)tt)" />
+                            <button type="submit"
+                                    class="btn btn-sm @(tt == OrderStatus.DaHuy ? "btn-outline-danger" : "btn-primary")"
+                                    onsubmit="return confirm('Chuyen trang thai don?');">
+                                @tt.Nhan()
+                            </button>
+                        </form>
+                    }
+                </div>
+
+                <p class="text-muted small mt-3 mb-0">
+                    Luồng đi một chiều: Chờ xác nhận → Đã xác nhận → Đang giao → Hoàn thành.
+                    Huỷ được ở ba bước đầu. Khi chuyển sang <b>Hoàn thành</b>, hệ thống cộng
+                    số đã bán cho từng sản phẩm trong đơn.
+                </p>
+            }
+        </div>
+    </div>
+</div>
+
+@* ===== Các dòng hàng ===== *@
+<div class="adm-panel mt-3">
+    <div class="adm-panel-head">
+        <h2>Sản phẩm trong đơn</h2>
+        <span class="adm-badge">@Model.OrderDetails.Count dòng</span>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table adm-table mb-0">
+            <thead>
+                <tr>
+                    <th style="width:70px">Ảnh</th>
+                    <th>Sản phẩm</th>
+                    <th style="width:140px" class="text-end">Đơn giá</th>
+                    <th style="width:90px" class="text-end">Số lượng</th>
+                    <th style="width:150px" class="text-end">Thành tiền</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var dong in Model.OrderDetails)
+                {
+                    <tr>
+                        <td>
+                            <img src="@(string.IsNullOrEmpty(dong.Product?.ImageUrl) ? "/images/products/no-image.svg" : dong.Product!.ImageUrl)"
+                                 alt="@dong.Product?.Name"
+                                 style="width:44px;height:44px;object-fit:cover;border-radius:4px" />
+                        </td>
+                        <td>@dong.Product?.Name</td>
+                        <td class="text-end adm-tien">@TienViet.Dinh(dong.UnitPrice)</td>
+                        <td class="text-end">@dong.Quantity</td>
+                        <td class="text-end adm-tien">@TienViet.Dinh(dong.LineTotal)</td>
+                    </tr>
+                }
+            </tbody>
+            <tfoot>
+                <tr>
+                    <td colspan="4" class="text-end"><b>Tổng cộng</b></td>
+                    <td class="text-end adm-tong-tien"><b>@TienViet.Dinh(Model.Total)</b></td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+</div>
+
+<p class="text-muted small mt-3 mb-0">
+    Đơn giá ở đây là <b>giá tại thời điểm khách mua</b>, lưu trong bảng OrderDetails.
+    Shop đổi giá sau này cũng không làm sai hoá đơn cũ.
+</p>

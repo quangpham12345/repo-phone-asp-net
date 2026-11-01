@@ -1,0 +1,25 @@
+@model List<Category>
+@*
+    Đường dẫn file phải đúng quy ước:
+    Views/Shared/Components/<TênClassBỏHậuTốViewComponent>/Default.cshtml
+*@
+<div class="mc-catnav">
+    <div class="container">
+        <ul class="nav">
+            <li class="nav-item">
+                <a class="nav-link" asp-controller="Product" asp-action="Index">
+                    <i class="bi bi-grid"></i> Tất cả
+                </a>
+            </li>
+            @foreach (var dm in Model)
+            {
+                <li class="nav-item">
+                    <a class="nav-link" asp-controller="Product" asp-action="Index"
+                       asp-route-danhMuc="@dm.Slug">
+                        @dm.Name
+                    </a>
+                </li>
+            }
+        </ul>
+    </div>
+</div>

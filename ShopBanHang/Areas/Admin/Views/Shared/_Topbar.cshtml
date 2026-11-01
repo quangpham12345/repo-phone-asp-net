@@ -1,0 +1,19 @@
+@*
+    Thanh trên của khu quản trị. Tiêu đề trang lấy từ ViewData["Title"].
+    Bên Java chỗ này là sec:authentication="name", ở đây là User.Identity.
+*@
+<header class="adm-topbar">
+    <h1 class="adm-page-title">@ViewData["Title"]</h1>
+
+    <div class="adm-topbar-right">
+        <span class="adm-user">
+            <i class="bi bi-person-circle"></i>
+            <b>@(User.Identity?.Name ?? "")</b>
+        </span>
+        <form asp-area="" asp-controller="Account" asp-action="Logout" method="post" class="d-inline">
+            <button type="submit" class="btn btn-sm btn-outline-secondary">
+                <i class="bi bi-box-arrow-right"></i> Đăng xuất
+            </button>
+        </form>
+    </div>
+</header>

@@ -1,0 +1,82 @@
+@model List<Brand>
+
+<div class="adm-panel">
+    <div class="adm-panel-head">
+        <h2>Thương hiệu</h2>
+        <div class="d-flex align-items-center gap-2">
+            <span class="adm-badge">@Model.Count thương hiệu</span>
+            <a asp-action="Create" class="btn btn-sm btn-primary">
+                <i class="bi bi-plus-lg"></i> Thêm thương hiệu
+            </a>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table adm-table mb-0">
+            <thead>
+                <tr>
+                    <th style="width:80px">Logo</th>
+                    <th>Tên thương hiệu</th>
+                    <th style="width:200px">Đường dẫn</th>
+                    <th style="width:100px" class="text-end">Sản phẩm</th>
+                    <th style="width:110px">Trạng thái</th>
+                    <th style="width:150px" class="text-end">Thao tác</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.Any())
+                {
+                    <tr><td colspan="6" class="text-center text-muted py-4">Chưa có thương hiệu nào</td></tr>
+                }
+
+                @foreach (var b in Model)
+                {
+                    <tr class="@(b.IsActive ? "" : "adm-dong-an")">
+                        <td>
+                            @if (!string.IsNullOrEmpty(b.LogoUrl))
+                            {
+                                <img src="@b.LogoUrl" alt="@b.Name" class="adm-logo-thumb"
+                                     style="width:60px;height:34px;object-fit:contain" />
+                            }
+                            else
+                            {
+                                <span class="text-muted small">—</span>
+                            }
+                        </td>
+                        <td><b>@b.Name</b></td>
+                        <td><code>@b.Slug</code></td>
+                        <td class="text-end">@b.Products.Count</td>
+                        <td>
+                            @if (b.IsActive)
+                            {
+                                <span class="text-success"><i class="bi bi-check-circle"></i> Đang hiện</span>
+                            }
+                            else
+                            {
+                                <span class="text-muted"><i class="bi bi-slash-circle"></i> Đã ẩn</span>
+                            }
+                        </td>
+                        <td class="text-end text-nowrap">
+                            <form asp-action="ToggleActive" asp-route-id="@b.Id" method="post" class="d-inline">
+                                <button type="submit" class="btn btn-sm @(b.IsActive ? "btn-outline-danger" : "btn-outline-success")"
+                                        title="@(b.IsActive ? "Ẩn" : "Hiện")">
+                                    <i class="bi @(b.IsActive ? "bi-toggle-on" : "bi-toggle-off")"></i>
+                                </button>
+                            </form>
+                            <a asp-action="Edit" asp-route-id="@b.Id"
+                               class="btn btn-sm btn-outline-secondary" title="Sửa">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                            <form asp-action="Delete" asp-route-id="@b.Id" method="post" class="d-inline"
+                                  onsubmit="return confirm('Xoá thương hiệu @b.Name?');">
+                                <button type="submit" class="btn btn-sm btn-outline-danger" title="Xoá">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

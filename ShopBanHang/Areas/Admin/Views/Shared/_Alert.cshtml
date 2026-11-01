@@ -1,0 +1,16 @@
+@*
+    Thông báo sau khi lưu hoặc xoá. Controller đặt TempData rồi redirect,
+    TempData sống qua đúng một lần chuyển trang nên hiện xong là tự mất.
+*@
+@if (TempData["ThanhCong"] != null)
+{
+    <div class="alert alert-success py-2">
+        <i class="bi bi-check-circle"></i> @TempData["ThanhCong"]
+    </div>
+}
+@if (TempData["Loi"] != null)
+{
+    <div class="alert alert-danger py-2">
+        <i class="bi bi-exclamation-triangle"></i> @TempData["Loi"]
+    </div>
+}

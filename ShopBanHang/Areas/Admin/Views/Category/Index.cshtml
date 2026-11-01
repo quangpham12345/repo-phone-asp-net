@@ -1,0 +1,77 @@
+@model List<Category>
+
+<div class="adm-panel">
+    <div class="adm-panel-head">
+        <h2>Danh mục sản phẩm</h2>
+        <div class="d-flex align-items-center gap-2">
+            <span class="adm-badge">@Model.Count danh mục</span>
+            <a asp-action="Create" class="btn btn-sm btn-primary">
+                <i class="bi bi-plus-lg"></i> Thêm danh mục
+            </a>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table adm-table mb-0">
+            <thead>
+                <tr>
+                    <th style="width:62px">Thứ tự</th>
+                    <th>Tên danh mục</th>
+                    <th style="width:200px">Đường dẫn</th>
+                    <th style="width:100px" class="text-end">Sản phẩm</th>
+                    <th style="width:110px">Trạng thái</th>
+                    <th style="width:150px" class="text-end">Thao tác</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.Any())
+                {
+                    <tr><td colspan="6" class="text-center text-muted py-4">Chưa có danh mục nào</td></tr>
+                }
+
+                @foreach (var c in Model)
+                {
+                    <tr class="@(c.IsActive ? "" : "adm-dong-an")">
+                        <td class="text-center"><b>@c.DisplayOrder</b></td>
+                        <td><b>@c.Name</b></td>
+                        <td><code>@c.Slug</code></td>
+                        <td class="text-end">@c.Products.Count</td>
+                        <td>
+                            @if (c.IsActive)
+                            {
+                                <span class="text-success"><i class="bi bi-check-circle"></i> Đang hiện</span>
+                            }
+                            else
+                            {
+                                <span class="text-muted"><i class="bi bi-slash-circle"></i> Đã ẩn</span>
+                            }
+                        </td>
+                        <td class="text-end text-nowrap">
+                            <form asp-action="ToggleActive" asp-route-id="@c.Id" method="post" class="d-inline">
+                                <button type="submit" class="btn btn-sm @(c.IsActive ? "btn-outline-danger" : "btn-outline-success")"
+                                        title="@(c.IsActive ? "Ẩn danh mục" : "Hiện danh mục")">
+                                    <i class="bi @(c.IsActive ? "bi-toggle-on" : "bi-toggle-off")"></i>
+                                </button>
+                            </form>
+                            <a asp-action="Edit" asp-route-id="@c.Id"
+                               class="btn btn-sm btn-outline-secondary" title="Sửa">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                            <form asp-action="Delete" asp-route-id="@c.Id" method="post" class="d-inline"
+                                  onsubmit="return confirm('Xoa danh muc nay?');">
+                                <button type="submit" class="btn btn-sm btn-outline-danger" title="Xoá">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<p class="text-muted small mt-3 mb-0">
+    Danh mục đang có sản phẩm thì <b>không xoá được</b> — khoá ngoại bên bảng sản phẩm chặn lại.
+    Muốn tạm bỏ khỏi trang bán hàng thì bấm nút bật tắt.
+</p>

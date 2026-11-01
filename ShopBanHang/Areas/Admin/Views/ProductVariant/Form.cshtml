@@ -1,0 +1,108 @@
+@model ProductVariantFormViewModel
+
+<div class="adm-panel adm-form-panel adm-form-wide">
+    <div class="adm-panel-head">
+        <h2>@(Model.LaThemMoi ? "Thêm biến thể" : "Sửa biến thể"): @Model.TenSanPham</h2>
+        <a asp-action="Index" asp-route-productId="@Model.ProductId" class="btn btn-sm btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Quay lại
+        </a>
+    </div>
+
+    <form asp-action="Save" method="post" class="p-3">
+        <input type="hidden" asp-for="Id" />
+        <input type="hidden" asp-for="ProductId" />
+
+        <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 small"></div>
+
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label asp-for="Storage" class="form-label"></label>
+                <input asp-for="Storage" class="form-control" placeholder="256GB" />
+                <span asp-validation-for="Storage" class="text-danger small"></span>
+            </div>
+
+            <div class="col-md-6 mb-3">
+                <label asp-for="Color" class="form-label"></label>
+                <input asp-for="Color" class="form-control" placeholder="Titan Tự nhiên" />
+                <span asp-validation-for="Color" class="text-danger small"></span>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-4 mb-3">
+                <label asp-for="Price" class="form-label"></label>
+                <div class="input-group">
+                    <input asp-for="Price" type="number" class="form-control" min="1" step="1000" />
+                    <span class="input-group-text">đ</span>
+                </div>
+                <span asp-validation-for="Price" class="text-danger small"></span>
+            </div>
+
+            <div class="col-md-4 mb-3">
+                <label asp-for="OldPrice" class="form-label"></label>
+                <div class="input-group">
+                    <input asp-for="OldPrice" type="number" class="form-control" min="0" step="1000" />
+                    <span class="input-group-text">đ</span>
+                </div>
+                <span asp-validation-for="OldPrice" class="text-danger small"></span>
+                <div class="form-text">Để trống nếu không giảm giá. Phải lớn hơn giá bán.</div>
+            </div>
+
+            <div class="col-md-4 mb-3">
+                <label asp-for="Stock" class="form-label"></label>
+                <input asp-for="Stock" type="number" class="form-control" min="0" />
+                <span asp-validation-for="Stock" class="text-danger small"></span>
+                <div class="form-text">Bằng 0 thì phía khách hiện "Hết hàng".</div>
+            </div>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="ImageUrl" class="form-label"></label>
+            <select asp-for="ImageUrl" class="form-select" id="anhBienThe">
+                <option value="">— Dùng ảnh chính của sản phẩm —</option>
+                @foreach (var u in Model.CacAnh)
+                {
+                    <option value="@u">@System.IO.Path.GetFileName(u)</option>
+                }
+            </select>
+            <span asp-validation-for="ImageUrl" class="text-danger small"></span>
+            <div class="form-text">
+                Chọn trong các ảnh của sản phẩm, thường là ảnh đúng màu này. Thêm ảnh mới ở trang sửa sản phẩm.
+            </div>
+            <img id="xemTruocAnh" src="" alt="" class="mt-2 d-none"
+                 style="max-height:120px;border-radius:6px" />
+        </div>
+
+        <div class="mb-3">
+            <div class="form-check">
+                <input asp-for="IsActive" class="form-check-input" />
+                <label asp-for="IsActive" class="form-check-label"></label>
+            </div>
+        </div>
+
+        <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-primary"><i class="bi bi-save"></i> Lưu</button>
+            <a asp-action="Index" asp-route-productId="@Model.ProductId" class="btn btn-light">Huỷ</a>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+
+    <script>
+        // Chọn ảnh nào thì hiện xem trước ảnh đó
+        (function () {
+            var chon = document.getElementById('anhBienThe');
+            var anh = document.getElementById('xemTruocAnh');
+
+            function capNhat() {
+                if (chon.value) { anh.src = chon.value; anh.classList.remove('d-none'); }
+                else { anh.removeAttribute('src'); anh.classList.add('d-none'); }
+            }
+
+            chon.addEventListener('change', capNhat);
+            capNhat();
+        })();
+    </script>
+}

@@ -1,0 +1,592 @@
+/* ==== MobileCity Shop - custom style ==== */
+
+:root {
+    --mc-gold: #c69a39;
+    --mc-gold-dark: #c69a39;
+    --mc-gold-light: #c69a39;
+    --mc-orange: #f5821f;
+    --mc-orange-dark: #d96f10;
+    --mc-red: #e53935;
+}
+
+body {
+    font-family: "Segoe UI", Roboto, Arial, sans-serif;
+    background-color: #f5f5f5;
+}
+
+a {
+    color: inherit;
+}
+
+.mc-text-gold {
+    color: var(--mc-gold-light) !important;
+}
+
+.mc-border-gold {
+    border-color: var(--mc-gold) !important;
+}
+
+/* ===== Topbar (header vang dong) ===== */
+.mc-topbar {
+    background: linear-gradient(180deg, var(--mc-gold) 0%, var(--mc-gold-dark) 100%);
+    padding-top: 4px;
+}
+
+.mc-logo {
+    color: #fff;
+    font-weight: 800;
+    font-size: 1.4rem;
+    letter-spacing: 0.5px;
+}
+
+.mc-logo i {
+    font-size: 1.8rem;
+    margin-right: 8px;
+}
+
+.mc-btn-outline {
+    background: rgba(255, 255, 255, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    color: #fff;
+    white-space: nowrap;
+}
+
+.mc-btn-outline:hover {
+    background: rgba(255, 255, 255, 0.3);
+    color: #fff;
+}
+
+.mc-search {
+    max-width: 560px;        /* khong cho o tim kiem gian het chieu ngang man hinh */
+}
+
+.mc-search .form-control {
+    border: none;
+    border-radius: 6px 0 0 6px;
+}
+
+/* Nut tim kiem: nen trang lien voi o nhap, chi con bieu tuong kinh lup mau vang */
+.mc-btn-search {
+    background-color: #fff;
+    color: var(--mc-gold);
+    border: none;
+    border-radius: 0 6px 6px 0;
+    padding-left: 0.9rem;
+    padding-right: 0.9rem;
+    font-size: 1.1rem;
+}
+
+.mc-btn-search:hover,
+.mc-btn-search:focus,
+.mc-btn-search:active {
+    background-color: #fff !important;
+    color: var(--mc-gold-dark) !important;     /* di chuot vao thi kinh lup dam hon */
+}
+
+/* Bo vien xanh mac dinh cua Bootstrap; thay bang vien vang bao quanh ca o khi dang go */
+.mc-search .form-control:focus {
+    box-shadow: none;
+}
+
+.mc-search .input-group:focus-within {
+    border-radius: 6px;
+    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.45);
+}
+
+.mc-toplinks a {
+    color: #fff5e0;
+    text-decoration: none;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+}
+
+.mc-toplinks a:hover {
+    text-decoration: underline;
+}
+
+/* ===== Category navigation ===== */
+.mc-catnav {
+    background: linear-gradient(180deg, var(--mc-gold-dark) 0%, var(--mc-gold) 100%);
+    border-top: 1px solid rgba(255, 255, 255, 0.25);
+}
+
+.mc-catnav .nav-link {
+    color: #fff;
+    font-weight: 600;
+    padding: 10px 16px;
+    white-space: nowrap;
+}
+
+.mc-catnav .nav-link i {
+    margin-right: 6px;
+}
+
+.mc-catnav .nav-link:hover {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+/* ===== Hero banner ===== */
+.mc-hero {
+    background: linear-gradient(120deg, #fdf6e8 0%, #f3e3c2 100%);
+    border-radius: 10px;
+    overflow: hidden;
+    position: relative;
+    padding: 40px;
+}
+
+.mc-hero .badge-icon {
+    width: 46px;
+    height: 46px;
+    background: var(--mc-gold);
+    color: #fff;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+    margin-bottom: 14px;
+}
+
+.mc-hero h1 {
+    color: var(--mc-gold-dark);
+    font-weight: 800;
+    font-size: 2.4rem;
+    line-height: 1.15;
+}
+
+.mc-hero .mc-hero-tags {
+    display: flex;
+    gap: 24px;
+    margin: 18px 0;
+    flex-wrap: wrap;
+}
+
+.mc-hero .mc-hero-tags div {
+    font-weight: 700;
+}
+
+.mc-hero .mc-hero-tags small {
+    display: block;
+    font-weight: 400;
+    color: #6b5a35;
+}
+
+.btn-mc-cta {
+    background-color: var(--mc-orange);
+    color: #fff;
+    font-weight: 700;
+    padding: 10px 28px;
+    border-radius: 6px;
+    border: none;
+}
+
+.btn-mc-cta:hover {
+    background-color: var(--mc-orange-dark);
+    color: #fff;
+}
+
+/* ===== Product card ===== */
+.product-card {
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    border-radius: 10px;
+    overflow: hidden;
+    position: relative;
+}
+
+.product-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12) !important;
+}
+
+.product-card .mc-badges {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.product-card .mc-badge {
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 4px;
+    color: #fff;
+}
+
+.product-card .mc-badge-new {
+    background-color: var(--mc-gold);
+}
+
+.product-card .mc-badge-hot {
+    background-color: var(--mc-red);
+}
+
+.product-card .card-title a {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    min-height: 44px;
+}
+
+.btn-mc-buy {
+    background-color: var(--mc-orange);
+    color: #fff;
+    border: none;
+    font-weight: 700;
+}
+
+.btn-mc-buy:hover {
+    background-color: var(--mc-orange-dark);
+    color: #fff;
+}
+
+footer a:hover {
+    text-decoration: underline !important;
+}
+
+.breadcrumb {
+    background: transparent;
+    padding-left: 0;
+}
+
+.card-img-top {
+    background-color: #fff;
+}
+
+/* ===== Tien trinh don hang (trang chi tiet don cua khach) ===== */
+.order-steps {
+    display: flex;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.order-steps li {
+    flex: 1;
+    position: relative;
+    text-align: center;
+    padding-top: 34px;
+    font-size: 0.9rem;
+    color: #999;
+}
+
+.order-steps li::before {          /* cham tron cua tung buoc */
+    content: "";
+    position: absolute;
+    top: 8px;
+    left: 50%;
+    width: 18px;
+    height: 18px;
+    margin-left: -9px;
+    border-radius: 50%;
+    background: #ddd;
+    z-index: 2;
+}
+
+.order-steps li::after {           /* duong noi voi buoc truoc */
+    content: "";
+    position: absolute;
+    top: 16px;
+    left: -50%;
+    width: 100%;
+    height: 2px;
+    background: #ddd;
+    z-index: 1;
+}
+
+.order-steps li:first-child::after {
+    display: none;
+}
+
+.order-steps li.done {
+    color: var(--mc-gold-dark);
+    font-weight: 600;
+}
+
+.order-steps li.done::before,
+.order-steps li.done::after {
+    background: var(--mc-gold);
+}
+
+/* ===== Thong bao noi (toast) - xem static/js/toast.js ===== */
+.mc-toast-wrap {
+    position: fixed;
+    top: 90px;
+    right: 20px;
+    z-index: 2000;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 340px;
+    max-width: calc(100vw - 40px);
+    pointer-events: none;            /* khung khong chan chuot, chi tung thong bao nhan chuot */
+}
+
+.mc-toast {
+    pointer-events: auto;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    background: #fff;
+    border-left: 5px solid var(--mc-gold);
+    border-radius: 8px;
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.2);
+    padding: 12px 14px;
+    font-size: 0.95rem;
+    color: #2b2b2b;
+    opacity: 0;
+    transform: translateX(28px);
+    transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+.mc-toast.show {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+.mc-toast > i {
+    font-size: 1.2rem;
+    line-height: 1.3;
+}
+
+.mc-toast-text {
+    flex: 1;
+    line-height: 1.4;
+}
+
+.mc-toast-warning { border-left-color: var(--mc-orange, #f5821f); }
+.mc-toast-warning > i { color: var(--mc-orange, #f5821f); }
+.mc-toast-danger { border-left-color: #dc3545; }
+.mc-toast-danger > i { color: #dc3545; }
+.mc-toast-success { border-left-color: #198754; }
+.mc-toast-success > i { color: #198754; }
+.mc-toast-info > i { color: var(--mc-gold); }
+
+.mc-toast-close {
+    background: none;
+    border: 0;
+    padding: 0 2px;
+    font-size: 1.3rem;
+    line-height: 1;
+    color: #888;
+    cursor: pointer;
+}
+
+.mc-toast-close:hover {
+    color: #333;
+}
+
+/* ===== Slideshow banner trang chu ===== */
+.mc-banner .carousel-item a {
+    display: block;
+}
+
+.mc-banner .carousel-item img {
+    display: block;
+    width: 100%;
+    aspect-ratio: 21 / 8;            /* cac slide luon bang nhau du anh co ti le khac */
+    object-fit: cover;
+}
+
+.mc-banner .carousel-indicators [data-bs-target] {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    border: 0;
+}
+
+/* Keo chuot / vuot de chuyen slide */
+.mc-banner {
+    cursor: grab;
+}
+
+.mc-banner.is-dragging,
+.mc-banner.is-dragging * {
+    cursor: grabbing;
+}
+
+.mc-banner .carousel-item img {
+    user-select: none;
+    -webkit-user-drag: none;         /* khong cho keo anh ra khoi khung */
+}
+
+/* Cham tron: them vien toi nhe de thay duoc tren banner sang */
+.mc-banner .carousel-indicators [data-bs-target] {
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.25);
+}
+
+/* ===== Goi y tim kiem (xem static/js/search-suggest.js) ===== */
+.mc-search {
+    position: relative;
+}
+
+.mc-suggest {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    right: 0;
+    z-index: 1500;
+    overflow: hidden;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+    text-align: left;
+}
+
+.mc-suggest[hidden] {
+    display: none;
+}
+
+.mc-suggest-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    color: #212529;
+    text-decoration: none;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.mc-suggest-item:hover,
+.mc-suggest-item.is-active {
+    background: #fbf4e3;
+    color: #212529;
+}
+
+.mc-suggest-thumb {
+    flex: 0 0 52px;
+    width: 52px;
+    height: 52px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #fff;
+    border: 1px solid #eee;
+    border-radius: 6px;
+}
+
+.mc-suggest-thumb img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+}
+
+.mc-suggest-info {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.mc-suggest-name {
+    font-size: 0.95rem;
+    font-weight: 600;
+    line-height: 1.3;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.mc-suggest-name mark {
+    padding: 0;
+    color: inherit;
+    background: #ffe9a8;
+}
+
+.mc-suggest-price {
+    color: var(--mc-red);
+    font-size: 0.9rem;
+    font-weight: 700;
+}
+
+.mc-suggest-out {
+    margin-left: 6px;
+    color: #999;
+    font-size: 0.75rem;
+    font-weight: 400;
+}
+
+.mc-suggest-empty {
+    padding: 14px;
+    color: #6c757d;
+    font-size: 0.9rem;
+}
+
+.mc-suggest-all {
+    display: block;
+    padding: 10px 14px;
+    text-align: center;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--mc-gold-dark);
+    text-decoration: none;
+    background: #faf8f3;
+}
+
+.mc-suggest-all:hover,
+.mc-suggest-all.is-active {
+    background: #f3ead2;
+}
+
+
+/* Lọc trang chủ */
+.brand-nav {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    overflow-x: auto;
+    white-space: nowrap;
+    padding: 10px 0;
+    scrollbar-width: none;
+}
+
+    .brand-nav::-webkit-scrollbar {
+        display: none;
+    }
+
+.brand-item {
+    flex-shrink: 0;
+    padding: 10px 18px;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    background: #f3f4f6;
+    color: #333;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 600;
+    transition: all .25s ease;
+}
+
+    .brand-item:hover {
+        color: #f97316;
+        background: #fff3e8;
+        border-color: #f97316;
+        transform: translateY(-2px);
+    }
+
+/* Checkbox góc PHẢI */
+.product-card .compare-check-wrap {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    left: auto;
+    z-index: 3;
+}
+
+.product-card .compare-check {
+    width: 1.25rem;
+    height: 1.25rem;
+    cursor: pointer;
+    margin: 0;
+}
+
+    .product-card .compare-check:checked {
+        background-color: #0d6efd;
+        border-color: #0d6efd;
+    }

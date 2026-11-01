@@ -1,0 +1,180 @@
+﻿@using System.Globalization
+@model CouponListViewModel
+@{
+    var vi = new CultureInfo("vi-VN");
+    DateTime bayGio = DateTime.Now;
+
+    // Tên trạng thái lấy từ [Display] trên enum, chỉ khai báo ở một nơi
+    var cacTrangThai = Html.GetEnumSelectList<CouponStatus>().ToList();
+    var tenTrangThai = cacTrangThai.ToDictionary(o => o.Value, o => o.Text);
+}
+
+@functions {
+    static (string icon, string css) Kieu(CouponStatus s) => s switch
+    {
+        CouponStatus.DangChay => ("bi-check-circle", "text-success"),
+        CouponStatus.SapDienRa => ("bi-clock", "text-primary"),
+        CouponStatus.HetLuot => ("bi-exclamation-circle", "text-warning"),
+        CouponStatus.HetHan => ("bi-calendar-x", "text-muted"),
+        _ => ("bi-slash-circle", "text-muted")
+    };
+}
+
+<div class="adm-panel">
+    <div class="adm-panel-head">
+        <h2>Danh sách mã giảm giá</h2>
+        <div class="d-flex align-items-center gap-2">
+            <span class="adm-badge">@Model.KetQua.TotalItems mã</span>
+            <a asp-action="Create" class="btn btn-sm btn-primary">
+                <i class="bi bi-plus-lg"></i> Thêm mã
+            </a>
+        </div>
+    </div>
+
+    @* ===== Bộ lọc: tìm theo mã/mô tả, lọc theo trạng thái ===== *@
+    <form asp-action="Index" method="get" class="d-flex flex-wrap gap-2 p-3 border-bottom">
+        <input type="text" name="tuKhoa" value="@Model.TuKhoa" class="form-control"
+               style="max-width:260px" placeholder="Tìm theo mã hoặc mô tả" />
+
+        <select name="trangThai" class="form-select" style="max-width:200px">
+            <option value="">— Mọi trạng thái —</option>
+            @foreach (var o in cacTrangThai)
+            {
+                <option value="@o.Value" selected="@(o.Value == ((int?)Model.TrangThai)?.ToString())">@o.Text</option>
+            }
+        </select>
+
+        <button type="submit" class="btn btn-primary"><i class="bi bi-search"></i> Tìm</button>
+        <a asp-action="Index" class="btn btn-light">Bỏ lọc</a>
+    </form>
+
+    <div class="table-responsive">
+        <table class="table adm-table mb-0">
+            <thead>
+                <tr>
+                    <th style="width:52px">STT</th>
+                    <th>Mã</th>
+                    <th style="width:150px">Giảm</th>
+                    <th style="width:140px">Đơn tối thiểu</th>
+                    <th style="width:100px">Lượt dùng</th>
+                    <th style="width:200px">Thời hạn</th>
+                    <th style="width:150px">Trạng thái</th>
+                    <th style="width:130px" class="text-end">Thao tác</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.KetQua.Items.Any())
+                {
+                    <tr>
+                        <td colspan="8" class="text-center text-muted py-4">
+                            Không có mã giảm giá nào khớp điều kiện lọc
+                        </td>
+                    </tr>
+                }
+
+                @{
+                    int stt = Model.KetQua.SttDau;
+                }
+                @foreach (var c in Model.KetQua.Items)
+                {
+                    stt++;
+                    var tt = c.LayTrangThai(bayGio);
+                    var (icon, css) = Kieu(tt);
+
+                    <tr class="@(c.IsActive ? "" : "adm-dong-an")">
+                        <td class="text-center">@stt</td>
+                        <td>
+                            <b>@c.Code</b>
+                            @if (!string.IsNullOrEmpty(c.Description))
+                            {
+                                <div class="small text-muted">@c.Description</div>
+                            }
+                        </td>
+                        <td>
+                            @if (c.DiscountType == DiscountType.PhanTram)
+                            {
+                                <span>@c.DiscountValue.ToString("0")%</span>
+                                @if (c.MaxDiscount.HasValue)
+                                {
+                                    <div class="small text-muted">tối đa @c.MaxDiscount.Value.ToString("N0", vi)đ</div>
+                                }
+                            }
+                            else
+                            {
+                                <span>@c.DiscountValue.ToString("N0", vi)đ</span>
+                            }
+                        </td>
+                        <td>@(c.MinOrderValue > 0 ? c.MinOrderValue.ToString("N0", vi) + "đ" : "Không")</td>
+                        <td>@c.UsedCount / @(c.UsageLimit?.ToString() ?? "∞")</td>
+                        <td class="small">@c.StartDate.ToString("dd/MM/yyyy") - @c.EndDate.ToString("dd/MM/yyyy")</td>
+                        <td>
+                            <span class="@css"><i class="bi @icon"></i> @tenTrangThai[((int)tt).ToString()]</span>
+                        </td>
+                        <td class="text-end text-nowrap">
+                            <form asp-action="ToggleActive" asp-route-id="@c.Id" method="post" class="d-inline">
+                                <button type="submit" class="btn btn-sm @(c.IsActive ? "btn-outline-danger" : "btn-outline-success")"
+                                        title="@(c.IsActive ? "Tắt mã" : "Bật mã")">
+                                    <i class="bi @(c.IsActive ? "bi-toggle-on" : "bi-toggle-off")"></i>
+                                </button>
+                            </form>
+                            <a asp-action="Edit" asp-route-id="@c.Id"
+                               class="btn btn-sm btn-outline-secondary" title="Sửa">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                            @* Mã đã có người dùng thì không xoá, chỉ tắt, để đơn cũ còn đối chiếu được *@
+                            @if (c.UsedCount == 0)
+                            {
+                                <form asp-action="Delete" asp-route-id="@c.Id" method="post" class="d-inline"
+                                      onsubmit="return confirm('Xoá mã @c.Code?');">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger" title="Xoá">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    @* ===== Phân trang: giữ lại điều kiện lọc trên từng link, nếu không sang trang 2 là mất lọc ===== *@
+    @if (Model.KetQua.TotalPages > 1)
+    {
+        <nav class="p-3 border-top">
+            <ul class="pagination mb-0">
+                <li class="page-item @(Model.KetQua.CoTrangTruoc ? "" : "disabled")">
+                    <a class="page-link"
+                       asp-action="Index"
+                       asp-route-page="@(Model.KetQua.Page - 1)"
+                       asp-route-tuKhoa="@Model.TuKhoa"
+                       asp-route-trangThai="@Model.TrangThai">&laquo;</a>
+                </li>
+
+                @for (int i = 1; i <= Model.KetQua.TotalPages; i++)
+                {
+                    <li class="page-item @(i == Model.KetQua.Page ? "active" : "")">
+                        <a class="page-link"
+                           asp-action="Index"
+                           asp-route-page="@i"
+                           asp-route-tuKhoa="@Model.TuKhoa"
+                           asp-route-trangThai="@Model.TrangThai">@i</a>
+                    </li>
+                }
+
+                <li class="page-item @(Model.KetQua.CoTrangSau ? "" : "disabled")">
+                    <a class="page-link"
+                       asp-action="Index"
+                       asp-route-page="@(Model.KetQua.Page + 1)"
+                       asp-route-tuKhoa="@Model.TuKhoa"
+                       asp-route-trangThai="@Model.TrangThai">&raquo;</a>
+                </li>
+            </ul>
+        </nav>
+    }
+</div>
+
+<p class="text-muted small mt-3 mb-0">
+    Mã chưa ai dùng thì xoá được. Mã đã được dùng trong đơn hàng chỉ được tắt, không xoá hẳn,
+    để đơn cũ còn đối chiếu được.
+</p>

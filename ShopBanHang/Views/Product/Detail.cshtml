@@ -1,0 +1,151 @@
+@model ProductDetailViewModel
+@using ShopBanHang.Helpers
+@{
+    var sp = Model.SanPham;
+    int phanTramGiam = TienViet.PhanTramGiam(sp.Price, sp.OldPrice);
+    bool hetHang = sp.Stock <= 0;
+    var anh = sp.TatCaAnh;
+    if (anh.Count == 0) anh.Add("/images/products/no-image.svg");
+}
+
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb small">
+        <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">Trang chủ</a></li>
+        <li class="breadcrumb-item">
+            <a asp-controller="Product" asp-action="Index" asp-route-danhMuc="@sp.Category?.Slug">
+                @sp.Category?.Name
+            </a>
+        </li>
+        <li class="breadcrumb-item active" aria-current="page">@sp.Name</li>
+    </ol>
+</nav>
+
+<div class="card shadow-sm mb-4">
+    <div class="row g-0">
+        <div class="col-md-5 p-3">
+            <div class="mb-2 text-center">
+                <img id="anhChinh" src="@anh[0]" class="img-fluid rounded" style="max-height:360px;object-fit:contain" alt="@sp.Name" />
+            </div>
+            @if (anh.Count > 1)
+            {
+                <div class="d-flex gap-2 flex-wrap justify-content-center">
+                    @for (int i = 0; i < anh.Count; i++)
+                    {
+                        <img src="@anh[i]" class="rounded border thumb-gallery @(i == 0 ? "border-primary" : "")"
+                             style="width:64px;height:64px;object-fit:cover;cursor:pointer"
+                             data-src="@anh[i]" alt="Ảnh @(i + 1)" />
+                    }
+                </div>
+            }
+        </div>
+
+        <div class="col-md-7 p-4">
+            <h1 class="h4">@sp.Name</h1>
+
+            <div class="small text-muted mb-3">
+                Thương hiệu <b>@sp.Brand?.Name</b> ·
+                Danh mục <b>@sp.Category?.Name</b> ·
+                Đã bán <b>@sp.SoldCount</b>
+            </div>
+
+            <div class="mb-3">
+                <span class="h3 text-danger fw-bold">@TienViet.Dinh(sp.Price)</span>
+                @if (phanTramGiam > 0)
+                {
+                    <del class="text-muted ms-2">@TienViet.Dinh(sp.OldPrice)</del>
+                    <span class="badge bg-danger ms-2">-@phanTramGiam%</span>
+                }
+            </div>
+
+            <div class="mb-3">
+                @if (hetHang)
+                {
+                    <span class="badge bg-secondary">Hết hàng</span>
+                }
+                else
+                {
+                    <span class="badge bg-success">Còn @sp.Stock sản phẩm</span>
+                }
+            </div>
+
+            @if (Model.PhienBanKhac.Any())
+            {
+                <div class="mb-3">
+                    <div class="small fw-semibold mb-2">Chọn phiên bản (màu / dung lượng)</div>
+                    <div class="d-flex flex-wrap gap-2">
+                        <a class="btn btn-sm btn-outline-primary active" asp-action="Detail" asp-route-slug="@sp.Slug">
+                            @(sp.Storage ?? "") @(sp.Color ?? "Hiện tại")
+                        </a>
+                        @foreach (var pb in Model.PhienBanKhac)
+                        {
+                            <a class="btn btn-sm btn-outline-secondary" asp-action="Detail" asp-route-slug="@pb.Slug"
+                               title="@pb.Name — @TienViet.Dinh(pb.Price)">
+                                @(pb.Storage ?? "") @(pb.Color ?? pb.Name)
+                            </a>
+                        }
+                    </div>
+                </div>
+            }
+
+            @if (!string.IsNullOrWhiteSpace(sp.Description))
+            {
+                <p class="mb-4">@sp.Description</p>
+            }
+
+            <div class="d-flex gap-2 flex-wrap">
+                @* GIAI ĐOẠN SAU: hai nút này sẽ gọi AJAX thêm vào giỏ hàng *@
+                <button class="btn btn-mc-cta" disabled="@hetHang">
+                    <i class="bi bi-cart-plus"></i> Thêm vào giỏ
+                </button>
+                <a asp-controller="Product" asp-action="Index" class="btn btn-light">
+                    Xem sản phẩm khác
+                </a>
+            </div>
+            <div class="form-text mt-2">Chức năng giỏ hàng sẽ làm ở giai đoạn sau.</div>
+        </div>
+    </div>
+</div>
+
+<div class="card shadow-sm mb-4">
+    <div class="card-header bg-white fw-semibold">Thông số kỹ thuật</div>
+    <div class="card-body p-0">
+        <table class="table table-bordered mb-0">
+            <tbody>
+                <tr><th class="w-25 bg-light">Thương hiệu</th><td>@(sp.Brand?.Name ?? "—")</td></tr>
+                <tr><th class="bg-light">Danh mục</th><td>@(sp.Category?.Name ?? "—")</td></tr>
+                <tr><th class="bg-light">Màu sắc</th><td>@(sp.Color ?? "—")</td></tr>
+                <tr><th class="bg-light">RAM</th><td>@(sp.Ram ?? "—")</td></tr>
+                <tr><th class="bg-light">Dung lượng</th><td>@(sp.Storage ?? "—")</td></tr>
+                <tr><th class="bg-light">Hệ điều hành</th><td>@(sp.Os ?? "—")</td></tr>
+                <tr><th class="bg-light">Tồn kho</th><td>@sp.Stock</td></tr>
+                <tr><th class="bg-light">Đã bán</th><td>@sp.SoldCount</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@if (Model.LienQuan.Any())
+{
+    <h2 class="h5 mb-3">Sản phẩm cùng danh mục</h2>
+    <div class="row row-cols-2 row-cols-md-4 g-3">
+        @foreach (var lq in Model.LienQuan)
+        {
+            <div class="col">
+                <partial name="_ProductCard" model="lq" />
+            </div>
+        }
+    </div>
+}
+
+
+@section Scripts {
+    <script>
+        document.querySelectorAll('.thumb-gallery').forEach(function (el) {
+            el.addEventListener('click', function () {
+                document.getElementById('anhChinh').src = this.dataset.src;
+                document.querySelectorAll('.thumb-gallery').forEach(t => t.classList.remove('border-primary'));
+                this.classList.add('border-primary');
+            });
+        });
+    </script>
+}
