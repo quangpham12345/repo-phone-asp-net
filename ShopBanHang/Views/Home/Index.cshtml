@@ -64,13 +64,25 @@
         Tất cả
     </a>
 
+   
     @foreach (var brand in cacThuongHieu)
     {
         <a asp-controller="Product"
            asp-action="Index"
            asp-route-ThuongHieu="@brand.Slug"
            class="brand-item">
-            @brand.Name
+
+            @if (!string.IsNullOrEmpty(brand.LogoUrl))
+            {
+                <img src="@brand.LogoUrl"
+                     alt="@brand.Name"
+                     class="adm-logo-thumb"
+                     style="width:60px;height:34px;object-fit:contain" />
+            }
+            else
+            {
+                <span class="text-muted small">—</span>
+            }
         </a>
     }
 </div>

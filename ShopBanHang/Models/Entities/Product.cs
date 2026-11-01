@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using ShopBanHang.Helpers;
 
 namespace ShopBanHang.Models.Entities
 {
@@ -16,21 +17,6 @@ namespace ShopBanHang.Models.Entities
         [StringLength(220)]
         [Display(Name = "Đường dẫn")]
         public string Slug { get; set; } = string.Empty;
-
-        /// <summary>Giá bán. decimal(18,0) vì VNĐ không có phần xu.</summary>        
-        [Range(0, 999999999, ErrorMessage = "Giá phải từ 0 trở lên")]
-        [Column(TypeName = "decimal(18,0)")]
-        [Display(Name = "Giá bán")]
-        public decimal Price { get; set; }
-
-        /// <summary>Giá gốc để hiển thị gạch ngang khi giảm giá. Null là không giảm.</summary>
-        [Column(TypeName = "decimal(18,0)")]
-        [Display(Name = "Giá gốc")]
-        public decimal? OldPrice { get; set; }
-
-        [Range(0, int.MaxValue, ErrorMessage = "Tồn kho không được âm")]
-        [Display(Name = "Tồn kho")]
-        public int Stock { get; set; }
 
         /// <summary>Cộng dồn khi đơn chuyển sang Hoàn thành, dùng cho thống kê bán chạy.</summary>        
         [Display(Name = "Đã bán")]
@@ -53,17 +39,9 @@ namespace ShopBanHang.Models.Entities
         [Display(Name = "RAM")]
         public string? Ram { get; set; }
 
-        [StringLength(30)]
-        [Display(Name = "Dung lượng")]
-        public string? Storage { get; set; }
-
         [StringLength(50)]
         [Display(Name = "Hệ điều hành")]
         public string? Os { get; set; }
-
-        [StringLength(40)]
-        [Display(Name = "Màu sắc")]
-        public string? Color { get; set; }
 
         [StringLength(100)]
         [Display(Name = "Màn hình")]
@@ -101,6 +79,46 @@ namespace ShopBanHang.Models.Entities
         public virtual ICollection<OrderDetail> OrderDetails { get; set; } = new List<OrderDetail>();
 
         public virtual ICollection<ProductVariant> Variants { get; set; } = new List<ProductVariant>();
+
+        // ===== Các thuộc tính tính từ biến thể. Chỉ đúng khi query đã Include(p => p.Variants). =====
+
+        /// <summary>Sản phẩm có ít nhất một biến thể (kể cả đã tắt). Chưa có thì chưa có giá, chưa bán được.</summary>
+        [NotMapped]
+        public bool HasVariants => Variants.Count > 0;
+
+        /// <summary>Giá bán hiển thị: giá thấp nhất trong các biến thể đang bán. Chưa có biến thể thì là 0.</summary>
+        [NotMapped]
+        public decimal DisplayPrice => TongHopBienThe.Tinh(Variants)?.Gia ?? 0;
+
+        /// <summary>Giá gốc của biến thể đang được lấy làm giá hiển thị. Null là không giảm giá.</summary>
+        [NotMapped]
+        public decimal? DisplayOldPrice => TongHopBienThe.Tinh(Variants)?.GiaGoc;
+
+        /// <summary>Tổng tồn kho của các biến thể đang bán.</summary>
+        [NotMapped]
+        public int TotalStock => TongHopBienThe.Tinh(Variants)?.TonKho ?? 0;
+
+        /// <summary>Các biến thể đang bán có giá khác nhau, để hiện chữ "Từ" trước giá.</summary>
+        [NotMapped]
+        public bool HasPriceRange => Variants.Where(v => v.IsActive).Select(v => v.Price).Distinct().Count() > 1;
+
+        /// <summary>Các dung lượng đang bán, xếp từ nhỏ đến lớn.</summary>
+        [NotMapped]
+        public List<string> StorageOptions => Variants
+            .Where(v => v.IsActive)
+            .Select(v => v.Storage)
+            .Distinct()
+            .OrderBy(TongHopBienThe.GiaTriGB).ThenBy(s => s)
+            .ToList();
+
+        /// <summary>Các màu đang bán.</summary>
+        [NotMapped]
+        public List<string> ColorOptions => Variants
+            .Where(v => v.IsActive)
+            .Select(v => v.Color)
+            .Distinct()
+            .OrderBy(c => c)
+            .ToList();
 
         [NotMapped]
         public List<string> TatCaAnh

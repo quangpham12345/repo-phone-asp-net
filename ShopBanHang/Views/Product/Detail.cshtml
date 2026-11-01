@@ -2,8 +2,40 @@
 @using ShopBanHang.Helpers
 @{
     var sp = Model.SanPham;
-    int phanTramGiam = TienViet.PhanTramGiam(sp.Price, sp.OldPrice);
-    bool hetHang = sp.Stock <= 0;
+
+    // Giá và tồn kho lấy từ biến thể. Phần hiển thị ban đầu là giá thấp nhất; khách chọn dung lượng/màu
+    // thì script ở cuối trang đổi giá, tồn kho và ảnh theo biến thể đang chọn.
+    int phanTramGiam = TienViet.PhanTramGiam(sp.DisplayPrice, sp.DisplayOldPrice);
+    bool hetHang = sp.TotalStock <= 0;
+
+    var cacBienThe = sp.Variants
+        .Where(v => v.IsActive)
+        .OrderBy(v => TongHopBienThe.GiaTriGB(v.Storage)).ThenBy(v => v.Color)
+        .ToList();
+    var duLieuBienThe = cacBienThe.Select(v => new
+    {
+        id = v.Id,
+        storage = v.Storage,
+        color = v.Color,
+        price = v.Price,
+        oldPrice = v.OldPrice,
+        stock = v.Stock,
+        image = v.ImageUrl
+    });
+
+    var thongSo = new List<(string Nhan, string? GiaTri)>
+    {
+        ("Thương hiệu", sp.Brand?.Name),
+        ("Danh mục", sp.Category?.Name),
+        ("Màn hình", sp.Screen),
+        ("Chip", sp.Chip),
+        ("RAM", sp.Ram),
+        ("Dung lượng", sp.StorageOptions.Any() ? string.Join(", ", sp.StorageOptions) : null),
+        ("Màu sắc", sp.ColorOptions.Any() ? string.Join(", ", sp.ColorOptions) : null),
+        ("Camera", sp.Camera),
+        ("Pin", sp.Battery),
+        ("Hệ điều hành", sp.Os)
+    }.Where(x => !string.IsNullOrWhiteSpace(x.GiaTri)).ToList();
     var anh = sp.TatCaAnh;
     if (anh.Count == 0) anh.Add("/images/products/no-image.svg");
 }
@@ -59,43 +91,39 @@
                 }
             </div>
 
-            <div class="mb-3">
-                <span class="h3 text-danger fw-bold">@TienViet.Dinh(sp.Price)</span>
-                @if (phanTramGiam > 0)
-                {
-                    <del class="text-muted ms-2">@TienViet.Dinh(sp.OldPrice)</del>
-                    <span class="badge bg-danger ms-2">-@phanTramGiam%</span>
-                }
-            </div>
-
-            <div class="mb-3">
-                @if (hetHang)
-                {
-                    <span class="badge bg-secondary">Hết hàng</span>
-                }
-                else
-                {
-                    <span class="badge bg-success">Còn @sp.Stock sản phẩm</span>
-                }
-            </div>
-
-            @if (Model.PhienBanKhac.Any())
+            @if (!sp.HasVariants)
             {
                 <div class="mb-3">
-                    <div class="small fw-semibold mb-2">Chọn phiên bản (màu / dung lượng)</div>
-                    <div class="d-flex flex-wrap gap-2">
-                        <a class="btn btn-sm btn-outline-primary active" asp-action="Detail" asp-route-slug="@sp.Slug">
-                            @(sp.Storage ?? "") @(sp.Color ?? "Hiện tại")
-                        </a>
-                        @foreach (var pb in Model.PhienBanKhac)
-                        {
-                            <a class="btn btn-sm btn-outline-secondary" asp-action="Detail" asp-route-slug="@pb.Slug"
-                               title="@pb.Name — @TienViet.Dinh(pb.Price)">
-                                @(pb.Storage ?? "") @(pb.Color ?? pb.Name)
-                            </a>
-                        }
-                    </div>
+                    <span class="h5 text-muted">Đang cập nhật giá</span>
                 </div>
+            }
+            else
+            {
+                <div class="mb-3">
+                    <span id="giaBan" class="h3 text-danger fw-bold">@TienViet.Dinh(sp.DisplayPrice)</span>
+                    <del id="giaGoc" class="text-muted ms-2 @(phanTramGiam > 0 ? "" : "d-none")">@TienViet.Dinh(sp.DisplayOldPrice)</del>
+                    <span id="phanTramGiam" class="badge bg-danger ms-2 @(phanTramGiam > 0 ? "" : "d-none")">-@phanTramGiam%</span>
+                </div>
+            }
+
+            <div class="mb-3">
+                <span id="tonKho" class="badge @(hetHang ? "bg-secondary" : "bg-success")">
+                    @(hetHang ? "Hết hàng" : "Còn " + sp.TotalStock + " sản phẩm")
+                </span>
+            </div>
+
+            @if (cacBienThe.Count > 0)
+            {
+                @* Nút chọn dung lượng và màu do script vẽ từ dữ liệu JSON này *@
+                <div class="mb-3">
+                    <div class="small fw-semibold mb-2">Dung lượng</div>
+                    <div id="dsDungLuong" class="d-flex flex-wrap gap-2"></div>
+                </div>
+                <div class="mb-3">
+                    <div class="small fw-semibold mb-2">Màu sắc</div>
+                    <div id="dsMau" class="d-flex flex-wrap gap-2"></div>
+                </div>
+                <script type="application/json" id="bienTheData">@Html.Raw(System.Text.Json.JsonSerializer.Serialize(duLieuBienThe))</script>
             }
 
             @if (!string.IsNullOrWhiteSpace(sp.Description))
@@ -105,7 +133,7 @@
 
             <div class="d-flex gap-2 flex-wrap">
                 @* GIAI ĐOẠN SAU: hai nút này sẽ gọi AJAX thêm vào giỏ hàng *@
-                <button class="btn btn-mc-cta" disabled="@hetHang">
+                <button id="btnThemGio" class="btn btn-mc-cta" disabled="@hetHang">
                     <i class="bi bi-cart-plus"></i> Thêm vào giỏ
                 </button>
                 <a asp-controller="Product" asp-action="Index" class="btn btn-light">
@@ -117,24 +145,82 @@
     </div>
 </div>
 
-<div class="card shadow-sm mb-4">
-    <div class="card-header bg-white fw-semibold">Thông số kỹ thuật</div>
-    <div class="card-body p-0">
-        <table class="table table-bordered mb-0">
-            <tbody>
-                <tr><th class="w-25 bg-light">Thương hiệu</th><td>@(sp.Brand?.Name ?? "—")</td></tr>
-                <tr><th class="bg-light">Danh mục</th><td>@(sp.Category?.Name ?? "—")</td></tr>
-                <tr><th class="bg-light">Màu sắc</th><td>@(sp.Color ?? "—")</td></tr>
-                <tr><th class="bg-light">RAM</th><td>@(sp.Ram ?? "—")</td></tr>
-                <tr><th class="bg-light">Dung lượng</th><td>@(sp.Storage ?? "—")</td></tr>
-                <tr><th class="bg-light">Hệ điều hành</th><td>@(sp.Os ?? "—")</td></tr>
-                <tr><th class="bg-light">Tồn kho</th><td>@sp.Stock</td></tr>
-                <tr><th class="bg-light">Đã bán</th><td>@sp.SoldCount</td></tr>
-            </tbody>
-        </table>
+<div class="spec-card mb-4">
+    <div class="spec-header">
+        <div class="spec-header-icon">
+            <i class="bi bi-cpu"></i>
+        </div>
+        <div>
+            <h5 class="mb-1">Thông số kỹ thuật</h5>
+            <p class="mb-0">Thông tin chi tiết về sản phẩm</p>
+        </div>
+    </div>
+
+    <div class="spec-body">
+        <div class="spec-grid">
+            @foreach (var (nhan, giaTri) in thongSo)
+            {
+                var icon = nhan switch
+                {
+                    "Thương hiệu" => "bi-award",
+                    "Danh mục" => "bi-grid",
+                    "Màn hình" => "bi-display",
+                    "Chip" => "bi-cpu",
+                    "RAM" => "bi-memory",
+                    "Dung lượng" => "bi-device-ssd",
+                    "Màu sắc" => "bi-palette",
+                    "Camera" => "bi-camera",
+                    "Pin" => "bi-battery-full",
+                    "Hệ điều hành" => "bi-android2",
+                    _ => "bi-info-circle"
+                };
+
+                <div class="spec-item">
+                    <div class="spec-item-icon">
+                        <i class="bi @icon"></i>
+                    </div>
+                    <div class="spec-item-content">
+                        <span class="spec-label">@nhan</span>
+                        <span class="spec-value">@giaTri</span>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <div class="spec-divider"></div>
+
+        <div class="spec-summary">
+            <div class="spec-summary-item">
+                <div class="summary-icon stock-icon">
+                    <i class="bi bi-box-seam"></i>
+                </div>
+                <div>
+                    <span class="summary-label">Tồn kho</span>
+                    @if (sp.TotalStock > 0)
+                    {
+                        <span class="summary-value text-success">
+                            Còn @sp.TotalStock sản phẩm
+                        </span>
+                    }
+                    else
+                    {
+                        <span class="summary-value text-danger">Hết hàng</span>
+                    }
+                </div>
+            </div>
+
+            <div class="spec-summary-item">
+                <div class="summary-icon sold-icon">
+                    <i class="bi bi-cart-check"></i>
+                </div>
+                <div>
+                    <span class="summary-label">Đã bán</span>
+                    <span class="summary-value">@sp.SoldCount sản phẩm</span>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
-
 @* ===== Đánh giá sản phẩm ===== *@
 <div class="card shadow-sm mb-4">
     <div class="card-body">
@@ -261,5 +347,114 @@
                 this.classList.add('border-primary');
             });
         });
+
+        // ===== Chọn biến thể (dung lượng x màu): đổi giá, tồn kho, ảnh theo biến thể đang chọn =====
+        (function () {
+            var nguon = document.getElementById('bienTheData');
+            if (!nguon) return;
+
+            var ds = JSON.parse(nguon.textContent);
+            if (ds.length === 0) return;
+
+            var boxDungLuong = document.getElementById('dsDungLuong');
+            var boxMau = document.getElementById('dsMau');
+            var elGia = document.getElementById('giaBan');
+            var elGiaGoc = document.getElementById('giaGoc');
+            var elGiam = document.getElementById('phanTramGiam');
+            var elTon = document.getElementById('tonKho');
+            var btnGio = document.getElementById('btnThemGio');
+            var anhChinh = document.getElementById('anhChinh');
+
+            var dinhDang = function (n) { return Number(n).toLocaleString('de-DE') + ' đ'; };
+
+            // Thứ tự dung lượng giữ đúng như server đã xếp (nhỏ đến lớn)
+            var cacDungLuong = [];
+            ds.forEach(function (v) {
+                if (cacDungLuong.indexOf(v.storage) === -1) cacDungLuong.push(v.storage);
+            });
+
+            function theoDungLuong(dl) {
+                return ds.filter(function (v) { return v.storage === dl; });
+            }
+
+            // Mặc định chọn biến thể rẻ nhất còn hàng; hết sạch hàng thì chọn biến thể rẻ nhất
+            var conHang = ds.filter(function (v) { return v.stock > 0; });
+            var chon = (conHang.length > 0 ? conHang : ds).reduce(function (a, b) {
+                return a.price > b.price ? b : a;
+            });
+
+            function taoNut(nhan, dangChon, hetHang, onClick) {
+                var b = document.createElement('button');
+                b.type = 'button';
+                b.className = 'btn btn-sm ' + (dangChon ? 'btn-outline-primary active' : 'btn-outline-secondary')
+                            + (hetHang ? ' opacity-50' : '');
+                b.textContent = nhan;
+                if (hetHang) b.title = 'Hết hàng';
+                b.addEventListener('click', onClick);
+                return b;
+            }
+
+            function veNut() {
+                boxDungLuong.innerHTML = '';
+                cacDungLuong.forEach(function (dl) {
+                    var het = theoDungLuong(dl).every(function (v) { return v.stock <= 0; });
+                    boxDungLuong.appendChild(taoNut(dl, dl === chon.storage, het, function () {
+                        if (dl === chon.storage) return;
+                        var cungDl = theoDungLuong(dl);
+                        // Giữ màu đang chọn nếu dung lượng mới có màu đó, không thì lấy biến thể còn hàng đầu tiên
+                        var cungMau = cungDl.filter(function (v) { return v.color === chon.color; })[0];
+                        var conHangDl = cungDl.filter(function (v) { return v.stock > 0; })[0];
+                        chon = cungMau || conHangDl || cungDl[0];
+                        capNhat();
+                    }));
+                });
+
+                boxMau.innerHTML = '';
+                theoDungLuong(chon.storage).forEach(function (v) {
+                    boxMau.appendChild(taoNut(v.color, v.id === chon.id, v.stock <= 0, function () {
+                        chon = v;
+                        capNhat();
+                    }));
+                });
+            }
+
+            function capNhat() {
+                veNut();
+
+                elGia.textContent = dinhDang(chon.price);
+                var giam = (chon.oldPrice && chon.oldPrice > chon.price)
+                    ? Math.floor((chon.oldPrice - chon.price) / chon.oldPrice * 100) : 0;
+                elGiaGoc.classList.toggle('d-none', giam === 0);
+                elGiam.classList.toggle('d-none', giam === 0);
+                if (giam > 0) {
+                    elGiaGoc.textContent = dinhDang(chon.oldPrice);
+                    elGiam.textContent = '-' + giam + '%';
+                }
+
+                if (chon.stock > 0) {
+                    elTon.className = 'badge bg-success';
+                    elTon.textContent = 'Còn ' + chon.stock + ' sản phẩm';
+                } else {
+                    elTon.className = 'badge bg-secondary';
+                    elTon.textContent = 'Hết hàng';
+                }
+
+                // Giai đoạn giỏ hàng sẽ đọc data-variant-id để biết khách đang mua biến thể nào
+                if (btnGio) {
+                    btnGio.disabled = chon.stock <= 0;
+                    btnGio.dataset.variantId = chon.id;
+                }
+
+                // Biến thể có ảnh riêng thì đổi ảnh chính theo
+                if (chon.image && anhChinh) {
+                    anhChinh.src = chon.image;
+                    document.querySelectorAll('.thumb-gallery').forEach(function (t) {
+                        t.classList.toggle('border-primary', t.dataset.src === chon.image);
+                    });
+                }
+            }
+
+            capNhat();
+        })();
     </script>
 }

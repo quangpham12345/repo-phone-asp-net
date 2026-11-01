@@ -87,15 +87,31 @@
                         </td>
                         <td>@sp.Category?.Name</td>
                         <td>@sp.Brand?.Name</td>
-                        <td class="text-end adm-tien">@TienViet.Dinh(sp.Price)</td>
+                        <td class="text-end adm-tien">
+                            @if (!sp.HasVariants)
+                            {
+                                <span class="text-muted">—</span>
+                            }
+                            else
+                            {
+                                @(sp.HasPriceRange ? "Từ " : "")@TienViet.Dinh(sp.DisplayPrice)
+                            }
+                        </td>
                         <td class="text-end">
-                            @if (sp.Stock <= 0)
+                            @if (!sp.HasVariants)
+                            {
+                                <a asp-controller="ProductVariant" asp-action="Create" asp-route-productId="@sp.Id"
+                                   class="st st-wait text-decoration-none" title="Sản phẩm chưa có biến thể nên chưa có giá và chưa bán được">
+                                    Chưa có biến thể
+                                </a>
+                            }
+                            else if (sp.TotalStock <= 0)
                             {
                                 <span class="text-danger">Hết</span>
                             }
                             else
                             {
-                                @sp.Stock
+                                @sp.TotalStock
                                 @if (Model.SanPhamCanhBao.Contains(sp.Id))
                                 {
                                     <a asp-controller="ProductVariant" asp-action="Index" asp-route-productId="@sp.Id"

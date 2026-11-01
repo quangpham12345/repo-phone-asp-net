@@ -1,4 +1,6 @@
-﻿using ShopBanHang.Models.Entities;
+﻿using System.Globalization;
+using System.Text.RegularExpressions;
+using ShopBanHang.Models.Entities;
 
 namespace ShopBanHang.Helpers
 {
@@ -31,6 +33,26 @@ namespace ShopBanHang.Helpers
 
             var reNhat = RePhatNhat(dangBan);
             return new KetQua(reNhat.Price, reNhat.OldPrice, dangBan.Sum(v => v.Stock));
+        }
+
+        /// <summary>
+        /// Đổi chuỗi dung lượng ("256GB", "1TB") ra số GB để xếp từ nhỏ đến lớn.
+        /// Chuỗi không đọc được thì cho xuống cuối.
+        /// </summary>
+        public static double GiaTriGB(string? dungLuong)
+        {
+            if (string.IsNullOrWhiteSpace(dungLuong)) return double.MaxValue;
+
+            var m = Regex.Match(dungLuong, @"(\d+(?:[.,]\d+)?)\s*(TB|GB|MB)", RegexOptions.IgnoreCase);
+            if (!m.Success) return double.MaxValue;
+
+            double so = double.Parse(m.Groups[1].Value.Replace(',', '.'), CultureInfo.InvariantCulture);
+            return m.Groups[2].Value.ToUpperInvariant() switch
+            {
+                "TB" => so * 1024,
+                "MB" => so / 1024,
+                _ => so
+            };
         }
 
         // Cùng giá thì lấy biến thể có giá gốc cao hơn, để hiện mức giảm lớn nhất

@@ -47,18 +47,15 @@ namespace ShopBanHang.Areas.Admin.Controllers
             var vm = new ProductVariantFormViewModel
             {
                 ProductId = productId,
-                Price = sp.Price,
-                OldPrice = sp.OldPrice,
                 TenSanPham = sp.Name,
                 CacAnh = sp.TatCaAnh
             };
 
-            // Biến thể đầu tiên thường chính là cấu hình sản phẩm đang có, điền sẵn cho đỡ gõ lại
-            if (await _variants.DemAsync(productId) == 0)
+            // Đã có biến thể thì điền sẵn giá đang hiển thị của sản phẩm, vì thêm màu mới thường cùng giá
+            if (sp.HasVariants)
             {
-                vm.Storage = sp.Storage ?? string.Empty;
-                vm.Color = sp.Color ?? string.Empty;
-                vm.Stock = sp.Stock;
+                vm.Price = sp.DisplayPrice;
+                vm.OldPrice = sp.DisplayOldPrice;
             }
 
             DatTieuDe("Thêm biến thể");

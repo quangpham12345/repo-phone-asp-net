@@ -39,14 +39,23 @@ else
                     <td class="text-start fw-semibold">Giá bán</td>
                     @foreach (var sp in Model.SanPham)
                     {
-                        <td class="text-danger fw-bold">@TienViet.Dinh(sp.Price)</td>
+                        <td class="text-danger fw-bold">
+                            @if (sp.HasVariants)
+                            {
+                                @(sp.HasPriceRange ? "Từ " : "")@TienViet.Dinh(sp.DisplayPrice)
+                            }
+                            else
+                            {
+                                <span class="text-muted fw-normal">Đang cập nhật</span>
+                            }
+                        </td>
                     }
                 </tr>
                 <tr>
                     <td class="text-start fw-semibold">Giá gốc</td>
                     @foreach (var sp in Model.SanPham)
                     {
-                        <td>@(sp.OldPrice.HasValue ? TienViet.Dinh(sp.OldPrice) : "—")</td>
+                        <td>@(sp.DisplayOldPrice.HasValue ? TienViet.Dinh(sp.DisplayOldPrice) : "—")</td>
                     }
                 </tr>
                 <tr>
@@ -67,7 +76,7 @@ else
                     <td class="text-start fw-semibold">Màu sắc</td>
                     @foreach (var sp in Model.SanPham)
                     {
-                        <td>@(sp.Color ?? "—")</td>
+                        <td>@(sp.ColorOptions.Any() ? string.Join(", ", sp.ColorOptions) : "—")</td>
                     }
                 </tr>
                 <tr>
@@ -81,7 +90,7 @@ else
                     <td class="text-start fw-semibold">Dung lượng</td>
                     @foreach (var sp in Model.SanPham)
                     {
-                        <td>@(sp.Storage ?? "—")</td>
+                        <td>@(sp.StorageOptions.Any() ? string.Join(", ", sp.StorageOptions) : "—")</td>
                     }
                 </tr>
                 <tr>
@@ -95,7 +104,7 @@ else
                     <td class="text-start fw-semibold">Tồn kho</td>
                     @foreach (var sp in Model.SanPham)
                     {
-                        <td>@(sp.Stock > 0 ? sp.Stock.ToString() : "Hết hàng")</td>
+                        <td>@(sp.TotalStock > 0 ? sp.TotalStock.ToString() : "Hết hàng")</td>
                     }
                 </tr>
                 <tr>

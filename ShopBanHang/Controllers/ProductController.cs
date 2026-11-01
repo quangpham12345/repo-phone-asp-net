@@ -73,7 +73,6 @@ namespace ShopBanHang.Controllers
             {
                 SanPham = sp,
                 LienQuan = await _productService.LayLienQuanAsync(sp, 4),
-                PhienBanKhac = await _productService.LayPhienBanKhacAsync(sp, 6),
                 DanhGia = await _reviewService.LayCuaSanPhamAsync(sp.Id),
                 DiemTrungBinh = trungBinh,
                 SoLuotDanhGia = soLuot

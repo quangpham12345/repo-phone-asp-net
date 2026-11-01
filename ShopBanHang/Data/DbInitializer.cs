@@ -25,8 +25,8 @@ namespace ShopBanHang.Data
             SeedDanhMucVaThuongHieu(db);
             SeedSanPham(db);
             SeedBanner(db);
+            SeedBienThe(db);      // phải đứng trước SeedDonHang: giá sản phẩm lấy từ biến thể
             SeedDonHang(db);
-            SeedBienThe(db);
             SeedThongSo(db);
             SeedMaGiamGia(db);
         }
@@ -40,7 +40,8 @@ namespace ShopBanHang.Data
         {
             if (db.Orders.Any()) return;
 
-            var sp = db.Products.ToList();
+            // Include biến thể vì giá của sản phẩm tính từ chúng
+            var sp = db.Products.Include(p => p.Variants).ToList();
             if (sp.Count == 0) return;
 
             int? idKhach1 = db.Users.FirstOrDefault(u => u.Email == "khach1@shop.com")?.Id;
@@ -97,7 +98,7 @@ namespace ShopBanHang.Data
                     {
                         ProductId = hang.Id,
                         Quantity = soLuong,
-                        UnitPrice = hang.Price   // chốt giá tại thời điểm mua
+                        UnitPrice = hang.DisplayPrice   // chốt giá tại thời điểm mua
                     });
 
                     if (m.Tt == OrderStatus.HoanThanh) hang.SoldCount += soLuong;
@@ -229,6 +230,7 @@ namespace ShopBanHang.Data
         /// Tám sản phẩm mẫu trải đủ 4 danh mục và 3 thương hiệu, có hàng giảm giá,
         /// có hàng hết kho và một hàng đã ẩn - để thử bộ lọc và các trạng thái hiển thị.
         /// Ảnh là file SVG trong wwwroot nên không phụ thuộc mạng.
+        /// Giá, giảm giá, tồn kho, dung lượng và màu của từng sản phẩm nằm ở SeedBienThe.
         /// </summary>
         private static void SeedSanPham(ShopContext db)
         {
@@ -247,54 +249,52 @@ namespace ShopBanHang.Data
             // Thêm sản phẩm mới thì thêm vào CUỐI danh sách, chèn vào giữa sẽ làm lệch các đơn mẫu.
             var ds = new List<Product>
             {
-                // Một sản phẩm, nhiều biến thể (256GB và 512GB, hai màu). Giá, giá gốc và tồn kho ở đây
-                // là số tổng hợp; SeedBienThe tính lại từ các biến thể nên hai bên luôn khớp.
-                Tao("iPhone 17 Pro Max", 34_990_000m, 37_990_000m, 19, 70,
+                Tao("iPhone 17 Pro Max", 70,
                     dienThoai, apple, "iphone-17-pro-max", true,
                     "Chip A19 Pro, màn 6.9 inch ProMotion 120Hz, khung titan. Máy chính hãng VN/A.",
-                    "8GB", "256GB", "iOS 19", "Titan Tự nhiên"),
+                    "8GB", "iOS 19"),
 
-                Tao("iPhone 17 128GB", 24_990_000m, null, 20, 31,
+                Tao("iPhone 17 128GB", 31,
                     dienThoai, apple, "iphone-17", true,
                     "Chip A19, màn 6.3 inch, camera kép 48MP. Bản quốc tế, bảo hành 12 tháng.",
-                    "8GB", "128GB", "iOS 19", "Đen"),
+                    "8GB", "iOS 19"),
 
-                Tao("Samsung Galaxy S26 Ultra 512GB", 31_490_000m, 33_990_000m, 8, 27,
+                Tao("Samsung Galaxy S26 Ultra 512GB", 27,
                     dienThoai, samsung, "galaxy-s26-ultra", true,
                     "Snapdragon 8 Elite, bút S Pen, camera 200MP, màn Dynamic AMOLED 2X.",
-                    "12GB", "512GB", "Android 16", "Xám"),
+                    "12GB", "Android 16"),
 
-                Tao("Samsung Galaxy A17 5G 128GB", 5_690_000m, 6_290_000m, 45, 86,
+                Tao("Samsung Galaxy A17 5G 128GB", 86,
                     dienThoai, samsung, "galaxy-a17-5g", false,
                     "Màn Super AMOLED 6.7 inch, pin 5000mAh, hỗ trợ 5G.",
-                    "6GB", "128GB", "Android 15", "Xanh"),
+                    "6GB", "Android 15"),
 
-                Tao("Xiaomi 15T 256GB", 12_990_000m, null, 0, 19,
+                Tao("Xiaomi 15T 256GB", 19,
                     dienThoai, xiaomi, "xiaomi-15t", false,
                     "Dimensity 8400 Ultra, camera Leica, sạc nhanh 67W. Hiện đang hết hàng.",
-                    "12GB", "256GB", "Android 15", "Đen"),
+                    "12GB", "Android 15"),
 
-                Tao("iPad Air M3 11 inch WiFi", 16_990_000m, 18_490_000m, 10, 14,
+                Tao("iPad Air M3 11 inch WiFi", 14,
                     tablet, apple, "ipad-air-m3", true,
                     "Chip M3, màn Liquid Retina 11 inch, hỗ trợ Apple Pencil Pro.",
-                    "8GB", "128GB", "iPadOS 19", "Xám"),
+                    "8GB", "iPadOS 19"),
 
-                Tao("MacBook Air M4 13 inch 16GB", 27_990_000m, null, 6, 9,
+                Tao("MacBook Air M4 13 inch 16GB", 9,
                     laptop, apple, "macbook-air-m4", false,
                     "Chip M4, RAM 16GB, SSD 256GB, pin tới 18 giờ, nặng 1.24kg.",
-                    "16GB", "256GB", "macOS Sequoia", "Bạc"),
+                    "16GB", "macOS Sequoia"),
 
-                Tao("Củ cáp sạc nhanh Xiaomi 67W", 390_000m, 550_000m, 120, 203,
+                Tao("Củ cáp sạc nhanh Xiaomi 67W", 203,
                     phuKien, xiaomi, "cu-sac-67w", false,
                     "Bộ củ cáp sạc nhanh 67W chính hãng.",
-                    null, null, null, "Trắng")
+                    null, null)
             };
 
             // MacBook Air (vị trí 6) ẩn đi để kiểm chứng phía khách không thấy mà admin vẫn thấy
             ds[6].IsActive = false;
 
             // Ảnh phụ (gallery). Pro Max có đủ ảnh theo màu và ảnh mặt trước, để biến thể chọn ảnh riêng.
-            // S26 Ultra không có biến thể: thử nhánh sản phẩm nhiều ảnh nhưng giá và tồn kho nhập tay.
+            // S26 Ultra có nhiều ảnh nhưng biến thể không gắn ảnh riêng: thử nhánh biến thể dùng ảnh chính.
             ds[0].GalleryUrls = "/images/products/iphone-17-pro-max-tu-nhien.svg;"
                               + "/images/products/iphone-17-pro-max-den.svg;"
                               + "/images/products/iphone-17-pro-max-mat-truoc.svg";
@@ -305,16 +305,16 @@ namespace ShopBanHang.Data
             db.SaveChanges();
         }
 
-        /// <summary>Một dòng cấu hình biến thể mẫu. Gia và GiaGoc để trống thì lấy theo sản phẩm.</summary>
+        /// <summary>Một dòng cấu hình biến thể mẫu.</summary>
         private sealed record BienTheMau(
             string DungLuong, string MauSac, int Ton,
-            decimal? Gia = null, decimal? GiaGoc = null, string? Anh = null, bool DangBan = true);
+            decimal Gia, decimal? GiaGoc = null, string? Anh = null, bool DangBan = true);
 
         /// <summary>
-        /// Biến thể mẫu cho 4 điện thoại, đủ các tình huống để thử: nhiều dung lượng với giá khác nhau
-        /// (iPhone 17 Pro Max), ảnh riêng theo màu, biến thể đã tắt (iPhone 17 màu Hồng không tính vào
-        /// tồn kho), biến thể còn ít hàng và hết hàng. Các sản phẩm còn lại để trống biến thể, dùng để
-        /// thử nhánh "giá và tồn kho nhập tay".
+        /// Biến thể mẫu cho cả 8 sản phẩm (sản phẩm nào cũng phải có ít nhất một biến thể thì mới có giá).
+        /// Đủ các tình huống để thử: nhiều dung lượng với giá khác nhau (iPhone 17 Pro Max), ảnh riêng
+        /// theo màu, biến thể đã tắt (iPhone 17 màu Hồng không tính vào tồn kho), biến thể hết hàng
+        /// (Xiaomi 15T), và phụ kiện không có dung lượng thật (củ sạc dùng "Tiêu chuẩn").
         /// </summary>
         private static void SeedBienThe(ShopContext db)
         {
@@ -326,27 +326,43 @@ namespace ShopBanHang.Data
             {
                 ["iPhone 17 Pro Max"] = new[]
                 {
-                    new BienTheMau("256GB", "Titan Tự nhiên", 7, Anh: AnhProMax + "tu-nhien.svg"),
-                    new BienTheMau("256GB", "Titan Đen", 5, Anh: AnhProMax + "den.svg"),
-                    new BienTheMau("512GB", "Titan Tự nhiên", 3, Gia: 39_990_000m, GiaGoc: 42_990_000m, Anh: AnhProMax + "tu-nhien.svg"),
-                    new BienTheMau("512GB", "Titan Đen", 4, Gia: 39_990_000m, GiaGoc: 42_990_000m, Anh: AnhProMax + "den.svg")
+                    new BienTheMau("256GB", "Titan Tự nhiên", 7, 34_990_000m, 37_990_000m, Anh: AnhProMax + "tu-nhien.svg"),
+                    new BienTheMau("256GB", "Titan Đen", 5, 34_990_000m, 37_990_000m, Anh: AnhProMax + "den.svg"),
+                    new BienTheMau("512GB", "Titan Tự nhiên", 3, 39_990_000m, 42_990_000m, Anh: AnhProMax + "tu-nhien.svg"),
+                    new BienTheMau("512GB", "Titan Đen", 4, 39_990_000m, 42_990_000m, Anh: AnhProMax + "den.svg")
                 },
                 ["iPhone 17 128GB"] = new[]
                 {
-                    new BienTheMau("128GB", "Đen", 10),
-                    new BienTheMau("128GB", "Trắng", 6),
-                    new BienTheMau("128GB", "Xanh", 4),
-                    new BienTheMau("128GB", "Hồng", 3, DangBan: false)
+                    new BienTheMau("128GB", "Đen", 10, 24_990_000m),
+                    new BienTheMau("128GB", "Trắng", 6, 24_990_000m),
+                    new BienTheMau("128GB", "Xanh", 4, 24_990_000m),
+                    new BienTheMau("128GB", "Hồng", 3, 24_990_000m, DangBan: false)
+                },
+                ["Samsung Galaxy S26 Ultra 512GB"] = new[]
+                {
+                    new BienTheMau("512GB", "Xám", 8, 31_490_000m, 33_990_000m)
                 },
                 ["Samsung Galaxy A17 5G 128GB"] = new[]
                 {
-                    new BienTheMau("128GB", "Xanh", 25),
-                    new BienTheMau("128GB", "Đen", 20)
+                    new BienTheMau("128GB", "Xanh", 25, 5_690_000m, 6_290_000m),
+                    new BienTheMau("128GB", "Đen", 20, 5_690_000m, 6_290_000m)
                 },
                 ["Xiaomi 15T 256GB"] = new[]
                 {
-                    new BienTheMau("256GB", "Đen", 0),
-                    new BienTheMau("256GB", "Xanh", 0)
+                    new BienTheMau("256GB", "Đen", 0, 12_990_000m),
+                    new BienTheMau("256GB", "Xanh", 0, 12_990_000m)
+                },
+                ["iPad Air M3 11 inch WiFi"] = new[]
+                {
+                    new BienTheMau("128GB", "Xám", 10, 16_990_000m, 18_490_000m)
+                },
+                ["MacBook Air M4 13 inch 16GB"] = new[]
+                {
+                    new BienTheMau("256GB", "Bạc", 6, 27_990_000m)
+                },
+                ["Củ cáp sạc nhanh Xiaomi 67W"] = new[]
+                {
+                    new BienTheMau("Tiêu chuẩn", "Trắng", 120, 390_000m, 550_000m)
                 }
             };
 
@@ -360,22 +376,13 @@ namespace ShopBanHang.Data
                     ProductId = sp.Id,
                     Storage = c.DungLuong,
                     Color = c.MauSac,
-                    Price = c.Gia ?? sp.Price,
-                    OldPrice = c.Gia.HasValue ? c.GiaGoc : sp.OldPrice,
+                    Price = c.Gia,
+                    OldPrice = c.GiaGoc,
                     Stock = c.Ton,
                     ImageUrl = c.Anh,
                     IsActive = c.DangBan
                 }).ToList();
                 db.ProductVariants.AddRange(ds);
-
-                // Cùng luật với service: giá thấp nhất, tổng tồn kho của các biến thể đang bán
-                var tong = TongHopBienThe.Tinh(ds);
-                if (tong != null)
-                {
-                    sp.Price = tong.Gia;
-                    sp.OldPrice = tong.GiaGoc;
-                    sp.Stock = tong.TonKho;
-                }
             }
             db.SaveChanges();
         }
@@ -500,16 +507,13 @@ namespace ShopBanHang.Data
             db.SaveChanges();
         }
 
-        private static Product Tao(string ten, decimal gia, decimal? giaGoc, int tonKho, int daBan,
+        private static Product Tao(string ten, int daBan,
                                    int idDanhMuc, int idThuongHieu, string anh, bool noiBat, string moTa,
-                                   string? ram, string? storage, string? os, string? color)
+                                   string? ram, string? os)
             => new()
             {
                 Name = ten,
                 Slug = SlugHelper.Tao(ten),
-                Price = gia,
-                OldPrice = giaGoc,
-                Stock = tonKho,
                 SoldCount = daBan,
                 CategoryId = idDanhMuc,
                 BrandId = idThuongHieu,
@@ -518,9 +522,7 @@ namespace ShopBanHang.Data
                 IsActive = true,
                 Description = moTa,
                 Ram = ram,
-                Storage = storage,
                 Os = os,
-                Color = color,
                 CreatedAt = DateTime.Now.AddDays(-daBan % 30)
             };
     }

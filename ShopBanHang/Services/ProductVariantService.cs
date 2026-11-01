@@ -1,6 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using ShopBanHang.Data;
-using ShopBanHang.Helpers;
 using ShopBanHang.Models.Entities;
 using ShopBanHang.Services.Interfaces;
 
@@ -37,7 +36,7 @@ namespace ShopBanHang.Services
             if (bienThe.Price <= 0) return (false, "Giá bán phải lớn hơn 0.");
             if (bienThe.Stock < 0) return (false, "Tồn kho không được âm.");
 
-            // Cùng luật với giá gốc của sản phẩm: có giá gốc thì phải lớn hơn giá bán
+            // Có giá gốc thì phải lớn hơn giá bán, không thì để trống (không giảm giá)
             decimal? giaGoc = bienThe.OldPrice is > 0 ? bienThe.OldPrice : null;
             if (giaGoc.HasValue && giaGoc.Value <= bienThe.Price)
                 return (false, "Giá gốc phải lớn hơn giá bán, hoặc để trống nếu không giảm giá.");
@@ -86,7 +85,8 @@ namespace ShopBanHang.Services
                 hienCo.IsActive = bienThe.IsActive;
             }
 
-            return await LuuVaDongBoAsync(productId);
+            await _db.SaveChangesAsync();
+            return (true, null);
         }
 
         public async Task<(bool ok, string? loi)> DoiTrangThaiAsync(int id)
@@ -95,7 +95,8 @@ namespace ShopBanHang.Services
             if (v == null) return (false, "Không tìm thấy biến thể.");
 
             v.IsActive = !v.IsActive;
-            return await LuuVaDongBoAsync(v.ProductId);
+            await _db.SaveChangesAsync();
+            return (true, null);
         }
 
         public async Task<(bool ok, string? loi)> XoaAsync(int id)
@@ -106,28 +107,9 @@ namespace ShopBanHang.Services
             // Khi OrderDetails có VariantId (phần của đơn hàng), chặn xoá biến thể đã nằm trong đơn
             // và báo "hãy tắt biến thể thay vì xoá", giống cách sản phẩm và tài khoản đang làm.
 
-            int productId = v.ProductId;
             _db.ProductVariants.Remove(v);
-            return await LuuVaDongBoAsync(productId);
-        }
-
-        public async Task DongBoSanPhamAsync(int productId)
-        {
-            var bienThe = await _db.ProductVariants
-                .AsNoTracking()
-                .Where(v => v.ProductId == productId)
-                .ToListAsync();
-
-            var tong = TongHopBienThe.Tinh(bienThe);
-            if (tong == null) return;   // chưa có biến thể: giữ giá và tồn kho nhập tay
-
-            var sp = await _db.Products.FindAsync(productId);
-            if (sp == null) return;
-
-            sp.Price = tong.Gia;
-            sp.OldPrice = tong.GiaGoc;
-            sp.Stock = tong.TonKho;
             await _db.SaveChangesAsync();
+            return (true, null);
         }
 
         public async Task GoAnhAsync(int productId, IEnumerable<string> cacAnh)
@@ -145,16 +127,6 @@ namespace ShopBanHang.Services
 
             foreach (var v in bienThe) v.ImageUrl = null;
             await _db.SaveChangesAsync();
-        }
-
-        /// <summary>Lưu thay đổi biến thể và đồng bộ giá, tồn kho của sản phẩm trong cùng một transaction.</summary>
-        private async Task<(bool ok, string? loi)> LuuVaDongBoAsync(int productId)
-        {
-            await using var tx = await _db.Database.BeginTransactionAsync();
-            await _db.SaveChangesAsync();
-            await DongBoSanPhamAsync(productId);
-            await tx.CommitAsync();
-            return (true, null);
         }
     }
 }

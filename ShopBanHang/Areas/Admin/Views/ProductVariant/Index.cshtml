@@ -28,15 +28,15 @@
         @if (Model.CacBienThe.Count == 0)
         {
             <span class="text-muted">
-                Sản phẩm chưa có biến thể nên giá (@sp.Price.ToString("N0", vi)đ) và tồn kho (@sp.Stock)
-                đang nhập tay trên trang sửa sản phẩm. Khi thêm biến thể đầu tiên, hai số này sẽ tự tính từ các biến thể.
+                Sản phẩm chưa có biến thể nên chưa có giá và chưa bán được. Giá và tồn kho chỉ nhập ở biến thể,
+                hãy thêm biến thể đầu tiên (dung lượng, màu, giá, tồn kho).
             </span>
         }
         else
         {
             <span class="text-muted">
                 Giá và tồn kho của sản phẩm tự tính từ các biến thể đang bán:
-                giá thấp nhất <b>@sp.Price.ToString("N0", vi)đ</b>, tổng tồn kho <b>@sp.Stock</b>.
+                giá thấp nhất <b>@sp.DisplayPrice.ToString("N0", vi)đ</b>, tổng tồn kho <b>@sp.TotalStock</b>.
                 Biến thể đã tắt không được tính.
             </span>
         }

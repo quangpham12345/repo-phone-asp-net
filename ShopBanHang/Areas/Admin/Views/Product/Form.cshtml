@@ -45,42 +45,22 @@
             <div class="form-text">Đường dẫn sinh tự động từ tên, không được trùng sản phẩm khác.</div>
         </div>
 
-        @if (Model.SoBienThe > 0)
+        @if (Model.LaThemMoi)
         {
             <div class="alert alert-info py-2 small">
-                Sản phẩm có @Model.SoBienThe biến thể nên giá bán, giá gốc và tồn kho tự tính từ các biến thể
-                (giá thấp nhất, tổng tồn kho các biến thể đang bán). Muốn đổi, sửa ở trang
-                <a asp-controller="ProductVariant" asp-action="Index" asp-route-productId="@Model.Id">Biến thể</a>.
+                Giá bán, giá gốc, tồn kho, dung lượng và màu sắc nhập ở <b>biến thể</b>, không nhập ở đây.
+                Bấm Lưu xong hệ thống chuyển sang trang thêm biến thể đầu tiên cho sản phẩm này.
             </div>
         }
-
-        <div class="row">
-            <div class="col-md-4 mb-3">
-                <label asp-for="Price" class="form-label"></label>
-                <div class="input-group">
-                    <input asp-for="Price" type="number" class="form-control" min="0" step="1000" readonly="@(Model.SoBienThe > 0)" />
-                    <span class="input-group-text">đ</span>
-                </div>
-                <span asp-validation-for="Price" class="text-danger small"></span>
+        else
+        {
+            <div class="alert alert-info py-2 small">
+                Giá bán, giá gốc, tồn kho, dung lượng và màu sắc quản lý ở trang
+                <a asp-controller="ProductVariant" asp-action="Index" asp-route-productId="@Model.Id">Biến thể</a>
+                (hiện có @Model.SoBienThe biến thể). Giá hiển thị của sản phẩm là giá thấp nhất trong các biến thể đang bán,
+                tồn kho là tổng tồn kho của chúng.
             </div>
-
-            <div class="col-md-4 mb-3">
-                <label asp-for="OldPrice" class="form-label"></label>
-                <div class="input-group">
-                    <input asp-for="OldPrice" type="number" class="form-control" min="0" step="1000" readonly="@(Model.SoBienThe > 0)" />
-                    <span class="input-group-text">đ</span>
-                </div>
-                <span asp-validation-for="OldPrice" class="text-danger small"></span>
-                <div class="form-text">Để trống nếu không giảm giá. Phải lớn hơn giá bán.</div>
-            </div>
-
-            <div class="col-md-4 mb-3">
-                <label asp-for="Stock" class="form-label"></label>
-                <input asp-for="Stock" type="number" class="form-control" min="0" readonly="@(Model.SoBienThe > 0)" />
-                <span asp-validation-for="Stock" class="text-danger small"></span>
-                <div class="form-text">Bằng 0 thì phía khách hiện "Hết hàng".</div>
-            </div>
-        </div>
+        }
 
         <div class="row">
             <div class="col-md-6 mb-3">
@@ -162,27 +142,16 @@
         </div>
 
         <h6 class="mt-4 mb-3">Thông số kỹ thuật</h6>
-        @if (Model.SoBienThe > 0)
-        {
-            <div class="form-text mb-2">Sản phẩm có biến thể: dung lượng và màu cụ thể lấy từ các biến thể.</div>
-        }
+        <div class="form-text mb-2">Dung lượng và màu sắc cụ thể nằm ở các biến thể.</div>
 
         <div class="row">
-            <div class="col-md-3 mb-3">
+            <div class="col-md-6 mb-3">
                 <label asp-for="Ram" class="form-label"></label>
                 <input asp-for="Ram" class="form-control" placeholder="8GB" />
             </div>
-            <div class="col-md-3 mb-3">
-                <label asp-for="Storage" class="form-label"></label>
-                <input asp-for="Storage" class="form-control" placeholder="256GB" />
-            </div>
-            <div class="col-md-3 mb-3">
+            <div class="col-md-6 mb-3">
                 <label asp-for="Os" class="form-label"></label>
                 <input asp-for="Os" class="form-control" placeholder="iOS 19" />
-            </div>
-            <div class="col-md-3 mb-3">
-                <label asp-for="Color" class="form-label"></label>
-                <input asp-for="Color" class="form-control" placeholder="Đen" />
             </div>
         </div>
 
