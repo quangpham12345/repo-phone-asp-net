@@ -1,14 +1,19 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using ShopBanHang.Models.Entities;
 
 namespace ShopBanHang.Data
 {
-    public class ShopContext : DbContext
+    /// <summary>
+    /// Kế thừa IdentityDbContext để có sẵn các bảng tài khoản của Identity
+    /// (AspNetUsers, AspNetRoles, AspNetUserRoles, AspNetUserClaims,
+    /// AspNetRoleClaims, AspNetUserLogins, AspNetUserTokens).
+    /// Các bảng nghiệp vụ của shop khai thêm bên dưới.
+    /// </summary>
+    public class ShopContext : IdentityDbContext<User, Role, int>
     {
         public ShopContext(DbContextOptions<ShopContext> options) : base(options) { }
 
-        public DbSet<Role> Roles => Set<Role>();
-        public DbSet<User> Users => Set<User>();
         public DbSet<Category> Categories => Set<Category>();
         public DbSet<Brand> Brands => Set<Brand>();
         public DbSet<Product> Products => Set<Product>();
@@ -18,14 +23,17 @@ namespace ShopBanHang.Data
         public DbSet<ChatConversation> ChatConversations => Set<ChatConversation>();
         public DbSet<ChatMessage> ChatMessages => Set<ChatMessage>();
         public DbSet<Banner> Banners => Set<Banner>();
+        public DbSet<Address> Addresses => Set<Address>();
+        public DbSet<Review> Reviews => Set<Review>();
         public DbSet<Coupon> Coupons => Set<Coupon>();
         public DbSet<ProductVariant> ProductVariants => Set<ProductVariant>();
 
         protected override void OnModelCreating(ModelBuilder b)
         {
+            // Phải gọi trước, nếu không các bảng của Identity sẽ không được cấu hình
+            base.OnModelCreating(b);
+
             // Tên bảng số ít cho khớp tên entity
-            b.Entity<Role>().ToTable("Roles");
-            b.Entity<User>().ToTable("Users");
             b.Entity<Category>().ToTable("Categories");
             b.Entity<Brand>().ToTable("Brands");
             b.Entity<Product>().ToTable("Products");
@@ -35,12 +43,13 @@ namespace ShopBanHang.Data
             b.Entity<ChatConversation>().ToTable("ChatConversations");
             b.Entity<ChatMessage>().ToTable("ChatMessages");
             b.Entity<Banner>().ToTable("Banners");
+            b.Entity<Address>().ToTable("Addresses");
+            b.Entity<Review>().ToTable("Reviews");
             b.Entity<Coupon>().ToTable("Coupons");
             b.Entity<ProductVariant>().ToTable("ProductVariants");
 
-            // Không cho trùng: mỗi email một tài khoản, mỗi slug một đường dẫn
-            b.Entity<Role>().HasIndex(x => x.Name).IsUnique();
-            b.Entity<User>().HasIndex(x => x.Email).IsUnique();
+            // Không cho trùng đường dẫn. Email đã được Identity lo bằng
+            // chỉ mục trên NormalizedEmail nên không khai lại ở đây.
             b.Entity<Category>().HasIndex(x => x.Slug).IsUnique();
             b.Entity<Brand>().HasIndex(x => x.Slug).IsUnique();
             b.Entity<Product>().HasIndex(x => x.Slug).IsUnique();
@@ -48,13 +57,6 @@ namespace ShopBanHang.Data
             b.Entity<Order>().HasIndex(x => x.OrderCode).IsUnique();
             b.Entity<Coupon>().HasIndex(x => x.Code).IsUnique();
             b.Entity<ProductVariant>().HasIndex(v => new { v.ProductId, v.Storage, v.Color }).IsUnique();
-
-            // Xoá vai trò đang có người dùng thì chặn, không xoá lan sang Users
-            b.Entity<User>()
-                .HasOne(u => u.Role)
-                .WithMany(r => r.Users)
-                .HasForeignKey(u => u.RoleId)
-                .OnDelete(DeleteBehavior.Restrict);
 
             // Đơn của khách không đăng nhập thì UserId null
             b.Entity<Order>()
@@ -108,6 +110,31 @@ namespace ShopBanHang.Data
                 .WithMany(c => c.Messages)
                 .HasForeignKey(m => m.ConversationId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            // Xoá tài khoản thì xoá luôn sổ địa chỉ của người đó
+            b.Entity<Address>()
+                .HasOne(a => a.User)
+                .WithMany()
+                .HasForeignKey(a => a.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            b.Entity<Review>()
+                .HasOne(r => r.Product)
+                .WithMany()
+                .HasForeignKey(r => r.ProductId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            b.Entity<Review>()
+                .HasOne(r => r.User)
+                .WithMany()
+                .HasForeignKey(r => r.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Mỗi khách chỉ đánh giá một sản phẩm một lần
+            b.Entity<Review>().HasIndex(r => new { r.ProductId, r.UserId }).IsUnique();
+
+            // Tra sổ địa chỉ theo chủ sở hữu
+            b.Entity<Address>().HasIndex(a => a.UserId);
 
             // Tra hội thoại của khách lẻ theo cookie, và xếp danh sách theo tin mới nhất
             b.Entity<ChatConversation>().HasIndex(c => c.GuestToken);

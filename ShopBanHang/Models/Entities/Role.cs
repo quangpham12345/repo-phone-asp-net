@@ -1,22 +1,24 @@
 using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Identity;
 
 namespace ShopBanHang.Models.Entities
 {
-    /// <summary>Vai trò người dùng: Admin và Customer.</summary>
-    public class Role
+    /// <summary>
+    /// Vai trò người dùng: Admin và Customer.
+    ///
+    /// Kế thừa IdentityRole&lt;int&gt; để khoá chính là int, khớp với User.
+    /// Identity nối User với Role qua bảng AspNetUserRoles, nên User không
+    /// còn cột RoleId nữa - một người về lý thuyết giữ được nhiều vai trò.
+    /// </summary>
+    public class Role : IdentityRole<int>
     {
-        public int Id { get; set; }
+        public Role() { }
 
-        [Required(ErrorMessage = "Tên vai trò bắt buộc nhập")]
-        [StringLength(50)]
-        [Display(Name = "Tên vai trò")]
-        public string Name { get; set; } = string.Empty;
+        public Role(string ten) : base(ten) { }
 
         [StringLength(100)]
         [Display(Name = "Mô tả")]
         public string? Description { get; set; }
-
-        public virtual ICollection<User> Users { get; set; } = new List<User>();
 
         // Dùng hằng số thay vì gõ chuỗi rải rác trong [Authorize(Roles = ...)]
         public const string Admin = "Admin";

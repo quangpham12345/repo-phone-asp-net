@@ -1,0 +1,68 @@
+@model List<Address>
+
+<div class="d-flex align-items-center justify-content-between mb-3">
+    <h1 class="h5 mb-0">Sổ địa chỉ giao hàng</h1>
+    <div class="d-flex gap-2">
+        <a asp-action="Profile" class="btn btn-sm btn-light">Tài khoản của tôi</a>
+        <a asp-action="AddressCreate" class="btn btn-sm btn-mc-cta">
+            <i class="bi bi-plus-lg"></i> Thêm địa chỉ
+        </a>
+    </div>
+</div>
+
+@if (!Model.Any())
+{
+    <div class="alert alert-light border">
+        Bạn chưa có địa chỉ nào. Thêm một địa chỉ để lần sau đặt hàng khỏi phải gõ lại.
+    </div>
+}
+
+<div class="row g-3">
+    @foreach (var dc in Model)
+    {
+        <div class="col-md-6">
+            <div class="card h-100 @(dc.IsDefault ? "border-warning" : "")">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <b>@dc.ReceiverName</b>
+                        @if (dc.IsDefault)
+                        {
+                            <span class="badge bg-warning text-dark">Mặc định</span>
+                        }
+                    </div>
+
+                    <div class="small text-muted mb-1"><i class="bi bi-telephone"></i> @dc.Phone</div>
+                    <div class="small mb-3"><i class="bi bi-geo-alt"></i> @dc.Detail</div>
+
+                    <div class="d-flex flex-wrap gap-2">
+                        @if (!dc.IsDefault)
+                        {
+                            <form asp-action="AddressSetDefault" asp-route-id="@dc.Id" method="post" class="d-inline">
+                                <button type="submit" class="btn btn-sm btn-outline-warning">
+                                    <i class="bi bi-star"></i> Đặt mặc định
+                                </button>
+                            </form>
+                        }
+
+                        <a asp-action="AddressEdit" asp-route-id="@dc.Id"
+                           class="btn btn-sm btn-outline-secondary">
+                            <i class="bi bi-pencil"></i> Sửa
+                        </a>
+
+                        <form asp-action="AddressDelete" asp-route-id="@dc.Id" method="post" class="d-inline"
+                              onsubmit="return confirm('Xoa dia chi nay?');">
+                            <button type="submit" class="btn btn-sm btn-outline-danger">
+                                <i class="bi bi-trash"></i> Xoá
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+<p class="text-muted small mt-3 mb-0">
+    Địa chỉ mặc định sẽ được chọn sẵn khi đặt hàng. Xoá địa chỉ mặc định thì
+    hệ thống tự chuyển cờ sang địa chỉ còn lại mới nhất.
+</p>

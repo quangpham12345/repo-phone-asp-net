@@ -1,5 +1,15 @@
-namespace ShopBanHang.Models.ViewModels
+﻿namespace ShopBanHang.Models.ViewModels
 {
+    /// <summary>Doanh thu một ngày, dùng vẽ biểu đồ đường 30 ngày gần nhất.</summary>
+    public class DoanhThuNgay
+    {
+        public DateTime Ngay { get; set; }
+        public decimal DoanhThu { get; set; }
+        public int SoDon { get; set; }
+
+        public string Nhan => Ngay.ToString("dd/MM");
+    }
+
     /// <summary>Doanh thu một tháng, dùng vẽ cột trên trang tổng quan.</summary>
     public class DoanhThuThang
     {
@@ -55,6 +65,7 @@ namespace ShopBanHang.Models.ViewModels
         public int DonDaHuy { get; set; }
 
         // Bảng và biểu đồ
+        public List<DoanhThuNgay> DoanhThu30Ngay { get; set; } = new();
         public List<DoanhThuThang> DoanhThu12Thang { get; set; } = new();
         public List<SanPhamBanChay> TopSanPham { get; set; } = new();
         public List<KhachHangTop> TopKhachHang { get; set; } = new();

@@ -1,45 +1,40 @@
 using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Identity;
 
 namespace ShopBanHang.Models.Entities
 {
-    public class User
+    /// <summary>
+    /// Tài khoản người dùng.
+    ///
+    /// Kế thừa IdentityUser&lt;int&gt; chứ không phải IdentityUser mặc định:
+    /// bản mặc định dùng khoá chính kiểu string (GUID), sẽ kéo theo việc đổi
+    /// Orders.UserId và ChatConversations.UserId sang string. Giữ int thì hai
+    /// bảng đó không phải sửa gì.
+    ///
+    /// Email, PasswordHash, PhoneNumber, LockoutEnd... đã có sẵn trong lớp cha.
+    /// Dưới đây chỉ khai thêm cột riêng của shop.
+    /// </summary>
+    public class User : IdentityUser<int>
     {
-        public int Id { get; set; }
-
         [Required(ErrorMessage = "Họ tên bắt buộc nhập")]
         [StringLength(100, MinimumLength = 2, ErrorMessage = "Họ tên từ 2 đến 100 ký tự")]
         [Display(Name = "Họ tên")]
         public string FullName { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "Email bắt buộc nhập")]
-        [EmailAddress(ErrorMessage = "Email không đúng định dạng")]
-        [StringLength(150)]
-        [Display(Name = "Email")]
-        public string Email { get; set; } = string.Empty;
-
-        /// <summary>Mật khẩu đã băm PBKDF2, không bao giờ lưu dạng thô. Xem PasswordHelper.</summary>
-        [Required]
-        [StringLength(200)]
-        public string PasswordHash { get; set; } = string.Empty;
-
-        [Phone(ErrorMessage = "Số điện thoại không đúng định dạng")]
-        [StringLength(20)]
-        [Display(Name = "Số điện thoại")]
-        public string? Phone { get; set; }
-
         [StringLength(250)]
         [Display(Name = "Địa chỉ")]
         public string? Address { get; set; }
 
+        /// <summary>
+        /// Cờ bật tắt của shop, tách khỏi cơ chế Lockout của Identity.
+        /// Lockout dùng cho việc khoá tạm khi nhập sai mật khẩu nhiều lần,
+        /// còn cờ này là admin chủ động ngừng cho tài khoản hoạt động.
+        /// </summary>
         [Display(Name = "Đang hoạt động")]
         public bool IsActive { get; set; } = true;
 
         [Display(Name = "Ngày tạo")]
         public DateTime CreatedAt { get; set; } = DateTime.Now;
-
-        [Display(Name = "Vai trò")]
-        public int RoleId { get; set; }
-        public virtual Role? Role { get; set; }
 
         public virtual ICollection<Order> Orders { get; set; } = new List<Order>();
     }

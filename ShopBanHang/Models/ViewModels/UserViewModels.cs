@@ -1,4 +1,4 @@
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using ShopBanHang.Models.Entities;
 
 namespace ShopBanHang.Models.ViewModels
@@ -18,6 +18,16 @@ namespace ShopBanHang.Models.ViewModels
         public bool? IsActive { get; set; }
 
         public List<Role> CacVaiTro { get; set; } = new();
+
+        /// <summary>
+        /// Tên vai trò của từng tài khoản trên trang, tra theo Id.
+        /// Identity để vai trò ở bảng nối riêng nên User không còn cột RoleId
+        /// để view đọc thẳng như trước.
+        /// </summary>
+        public Dictionary<int, string> VaiTroCuaUser { get; set; } = new();
+
+        public string TenVaiTro(int userId)
+            => VaiTroCuaUser.TryGetValue(userId, out var ten) ? ten : "";
     }
 
     /// <summary>

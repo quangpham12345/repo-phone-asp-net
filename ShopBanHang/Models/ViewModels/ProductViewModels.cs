@@ -1,4 +1,4 @@
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using ShopBanHang.Models.Entities;
 
 namespace ShopBanHang.Models.ViewModels
@@ -78,6 +78,18 @@ namespace ShopBanHang.Models.ViewModels
     {
         public Product SanPham { get; set; } = null!;
         public List<Product> LienQuan { get; set; } = new();
+
+        // ===== Phần đánh giá =====
+
+        public List<Review> DanhGia { get; set; } = new();
+        public double DiemTrungBinh { get; set; }
+        public int SoLuotDanhGia { get; set; }
+
+        /// <summary>Khách đang xem đã mua và nhận hàng sản phẩm này chưa.</summary>
+        public bool DuocDanhGia { get; set; }
+
+        /// <summary>Đánh giá cũ của chính khách đang xem, có thì form sẽ điền sẵn.</summary>
+        public Review? DanhGiaCuaToi { get; set; }
         public List<Product> PhienBanKhac { get; set; } = new();
     }
 

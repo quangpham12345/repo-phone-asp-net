@@ -1,3 +1,5 @@
+﻿using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Identity.Client.Extensions.Msal;
 using ShopBanHang.Models.ViewModels;
@@ -13,8 +15,13 @@ namespace ShopBanHang.Controllers
         private const int CoTrang = 8;
 
         private readonly IProductService _productService;
+        private readonly IReviewService _reviewService;
 
-        public ProductController(IProductService productService) => _productService = productService;
+        public ProductController(IProductService productService, IReviewService reviewService)
+        {
+            _productService = productService;
+            _reviewService = reviewService;
+        }
 
         [HttpGet]
         public async Task<IActionResult> Index([FromQuery] ProductFilter loc, int page = 1)
@@ -60,13 +67,29 @@ namespace ShopBanHang.Controllers
             var sp = await _productService.LayTheoSlugAsync(slug);
             if (sp == null) return NotFound();
             ViewData["Title"] = sp.Name;
-            return View(new ProductDetailViewModel
+            var (trungBinh, soLuot) = await _reviewService.ThongKeAsync(sp.Id);
+
+            var vm = new ProductDetailViewModel
             {
                 SanPham = sp,
                 LienQuan = await _productService.LayLienQuanAsync(sp, 4),
-                PhienBanKhac = await _productService.LayPhienBanKhacAsync(sp, 6)
-            });
+                PhienBanKhac = await _productService.LayPhienBanKhacAsync(sp, 6),
+                DanhGia = await _reviewService.LayCuaSanPhamAsync(sp.Id),
+                DiemTrungBinh = trungBinh,
+                SoLuotDanhGia = soLuot
+            };
+
+            // Chỉ khách đã đăng nhập mới có chuyện được hay không được đánh giá
+            int idToi = LayIdDangNhap();
+            if (idToi > 0)
+            {
+                vm.DuocDanhGia = await _reviewService.DaMuaAsync(sp.Id, idToi);
+                vm.DanhGiaCuaToi = await _reviewService.LayCuaToiAsync(sp.Id, idToi);
+            }
+
+            return View(vm);
         }
+
         [HttpGet]
         public async Task<IActionResult> GoiY(string q)
         {
@@ -91,5 +114,35 @@ namespace ShopBanHang.Controllers
             ViewData["Title"] = "So sánh sản phẩm";
             return View(new ProductCompareViewModel { SanPham = list });
         }
+
+        /// <summary>Gửi hoặc sửa đánh giá. Quyền đánh giá do service kiểm lại lần nữa.</summary>
+        [Authorize]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Review(int productId, string slug, int soSao, string? nhanXet)
+        {
+            var (ok, loi) = await _reviewService.LuuAsync(productId, LayIdDangNhap(), soSao, nhanXet);
+
+            if (!ok) TempData["Loi"] = loi;
+            else TempData["ThanhCong"] = "Cảm ơn bạn đã đánh giá sản phẩm.";
+
+            return RedirectToAction(nameof(Detail), new { slug });
+        }
+
+        [Authorize]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ReviewDelete(int productId, string slug)
+        {
+            var (ok, loi) = await _reviewService.XoaCuaToiAsync(productId, LayIdDangNhap());
+
+            if (!ok) TempData["Loi"] = loi;
+            else TempData["ThanhCong"] = "Đã xoá đánh giá của bạn.";
+
+            return RedirectToAction(nameof(Detail), new { slug });
+        }
+
+        private int LayIdDangNhap()
+            => int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out int id) ? id : 0;
     }
 }

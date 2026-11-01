@@ -4,20 +4,20 @@ using ShopBanHang.Models.ViewModels;
 namespace ShopBanHang.Services.Interfaces
 {
     /// <summary>
-    /// Nghiệp vụ tài khoản. Cả MVC controller và API controller đều gọi vào đây,
-    /// nên luật chỉ viết một lần.
+    /// Nghiệp vụ tài khoản. Bọc quanh UserManager của Identity để controller
+    /// không phải gọi thẳng, và để chỗ nào cũng dùng chung một luật.
     /// </summary>
     public interface IUserService
     {
-        Task<PagedResult<User>> LayDanhSachAsync(string? tuKhoa, int? roleId, bool? isActive,
+        Task<UserListViewModel> LayDanhSachAsync(string? tuKhoa, int? roleId, bool? isActive,
                                                  int page, int pageSize);
 
         Task<User?> LayTheoIdAsync(int id);
         Task<User?> LayTheoEmailAsync(string email);
         Task<List<Role>> LayVaiTroAsync();
 
-        /// <summary>Kiểm email và mật khẩu. Trả về null nếu sai, hoặc tài khoản đang bị tắt.</summary>
-        Task<User?> XacThucAsync(string email, string matKhau);
+        /// <summary>Tên vai trò của một tài khoản. Shop chỉ gán mỗi người một vai.</summary>
+        Task<string?> LayTenVaiTroAsync(User user);
 
         /// <summary>Khách tự đăng ký, luôn nhận vai trò Customer.</summary>
         Task<(bool ok, string? loi)> DangKyAsync(RegisterViewModel vm);
