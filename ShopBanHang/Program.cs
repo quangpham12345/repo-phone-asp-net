@@ -1,6 +1,7 @@
-﻿using Microsoft.AspNetCore.Authentication.Cookies;
+﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using ShopBanHang.Data;
+using ShopBanHang.Models.Entities;
 using ShopBanHang.Services;
 using ShopBanHang.Services.Interfaces;
 
@@ -28,6 +29,8 @@ namespace ShopBanHang
             builder.Services.AddScoped<INewsService, NewsService>();
             builder.Services.AddScoped<IOrderService, OrderService>();
             builder.Services.AddScoped<IThongKeService, ThongKeService>();
+            builder.Services.AddScoped<IAddressService, AddressService>();
+            builder.Services.AddScoped<IReviewService, ReviewService>();
             builder.Services.AddScoped<ICouponService, CouponService>();
             builder.Services.AddScoped<IProductVariantService, ProductVariantService>();
 
@@ -40,20 +43,39 @@ namespace ShopBanHang
                 o.Cookie.IsEssential = true;
             });
 
-            // Xác thực bằng cookie, tự quản hai bảng Users và Roles
+            // Xác thực bằng ASP.NET Core Identity.
+            // Dùng IdentityUser<int> nên khoá chính vẫn là int, Orders.UserId và
+            // ChatConversations.UserId không phải đổi kiểu.
             builder.Services
-                .AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
-                .AddCookie(o =>
+                .AddIdentity<User, Role>(o =>
                 {
-                    o.LoginPath = "/Account/Login";
-                    o.LogoutPath = "/Account/Logout";
-                    o.AccessDeniedPath = "/Account/AccessDenied";
-                    o.ExpireTimeSpan = TimeSpan.FromHours(8);
-                    o.SlidingExpiration = true;
-                    o.Cookie.Name = "ShopBanHang.Auth";
-                    o.Cookie.HttpOnly = true;
-                });
-            builder.Services.AddAuthorization();
+                    // Nới quy tắc mật khẩu cho vừa bài tập: tối thiểu 6 ký tự,
+                    // không bắt ký tự đặc biệt hay chữ hoa
+                    o.Password.RequiredLength = 6;
+                    o.Password.RequireNonAlphanumeric = false;
+                    o.Password.RequireUppercase = false;
+                    o.Password.RequireLowercase = false;
+                    o.Password.RequireDigit = false;
+
+                    o.User.RequireUniqueEmail = true;
+
+                    // Sai mật khẩu 5 lần thì khoá tạm 5 phút
+                    o.Lockout.MaxFailedAccessAttempts = 5;
+                    o.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(5);
+                })
+                .AddEntityFrameworkStores<ShopContext>()
+                .AddDefaultTokenProviders();
+
+            builder.Services.ConfigureApplicationCookie(o =>
+            {
+                o.LoginPath = "/Account/Login";
+                o.LogoutPath = "/Account/Logout";
+                o.AccessDeniedPath = "/Account/AccessDenied";
+                o.ExpireTimeSpan = TimeSpan.FromHours(8);
+                o.SlidingExpiration = true;
+                o.Cookie.Name = "ShopBanHang.Auth";
+                o.Cookie.HttpOnly = true;
+            });
 
             var app = builder.Build();
 

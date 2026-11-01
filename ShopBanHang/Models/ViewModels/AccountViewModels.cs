@@ -1,4 +1,4 @@
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace ShopBanHang.Models.ViewModels
 {
@@ -96,6 +96,42 @@ namespace ShopBanHang.Models.ViewModels
         [DataType(DataType.Password)]
         [Display(Name = "Nhập lại mật khẩu mới")]
         [Compare(nameof(NewPassword), ErrorMessage = "Hai lần nhập mật khẩu không giống nhau")]
+        public string ConfirmPassword { get; set; } = string.Empty;
+    }
+
+    public class ForgotPasswordViewModel
+    {
+        [Required(ErrorMessage = "Email bắt buộc nhập")]
+        [EmailAddress(ErrorMessage = "Email không đúng định dạng")]
+        [Display(Name = "Email đã đăng ký")]
+        public string Email { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Hệ thống thật gửi liên kết này qua email. Bài tập lớn chưa cấu hình
+        /// máy chủ thư nên hiện thẳng ra màn hình để còn thử được.
+        /// </summary>
+        public string? LienKetDatLai { get; set; }
+    }
+
+    public class ResetPasswordViewModel
+    {
+        [Required]
+        [EmailAddress]
+        public string Email { get; set; } = string.Empty;
+
+        /// <summary>Mã do Identity sinh, chỉ dùng được một lần và có hạn.</summary>
+        [Required]
+        public string Token { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Mật khẩu mới bắt buộc nhập")]
+        [StringLength(100, MinimumLength = 6, ErrorMessage = "Mật khẩu ít nhất 6 ký tự")]
+        [DataType(DataType.Password)]
+        [Display(Name = "Mật khẩu mới")]
+        public string Password { get; set; } = string.Empty;
+
+        [DataType(DataType.Password)]
+        [Display(Name = "Nhập lại mật khẩu mới")]
+        [Compare(nameof(Password), ErrorMessage = "Hai lần nhập mật khẩu không giống nhau")]
         public string ConfirmPassword { get; set; } = string.Empty;
     }
 }

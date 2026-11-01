@@ -1,7 +1,6 @@
-using System.Security.Claims;
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authentication.Cookies;
+﻿using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using ShopBanHang.Models.Entities;
 using ShopBanHang.Models.ViewModels;
@@ -10,22 +9,36 @@ using ShopBanHang.Services.Interfaces;
 namespace ShopBanHang.Controllers
 {
     /// <summary>
-    /// Đăng nhập, đăng ký, đăng xuất và trang tài khoản của người dùng.
+    /// Đăng nhập, đăng ký, đăng xuất, quên mật khẩu và trang tài khoản.
+    ///
+    /// Dùng SignInManager/UserManager của Identity nhưng vẫn giữ controller
+    /// của mình, không scaffold Identity UI. Nhờ vậy chỗ gộp giỏ hàng và gộp
+    /// chat của khách lẻ sau khi đăng nhập vẫn nằm ngay trong file này.
     /// </summary>
     public class AccountController : Controller
     {
         private readonly IUserService _userService;
+        private readonly IAddressService _addressService;
+        private readonly UserManager<User> _userManager;
+        private readonly SignInManager<User> _signInManager;
 
-        public AccountController(IUserService userService) => _userService = userService;
+        public AccountController(IUserService userService,
+                                 IAddressService addressService,
+                                 UserManager<User> userManager,
+                                 SignInManager<User> signInManager)
+        {
+            _userService = userService;
+            _addressService = addressService;
+            _userManager = userManager;
+            _signInManager = signInManager;
+        }
 
         // ===== Đăng nhập =====
 
         [HttpGet]
         public IActionResult Login(string? returnUrl = null)
         {
-            // Đã đăng nhập rồi thì không cần vào lại trang này
             if (User.Identity?.IsAuthenticated == true) return RedirectTheoVaiTro();
-
             return View(new LoginViewModel { ReturnUrl = returnUrl });
         }
 
@@ -35,23 +48,41 @@ namespace ShopBanHang.Controllers
         {
             if (!ModelState.IsValid) return View(vm);
 
-            var user = await _userService.XacThucAsync(vm.Email, vm.Password);
-            if (user == null)
+            var user = await _userManager.FindByEmailAsync(vm.Email.Trim());
+
+            // Cờ IsActive là của shop, SignInManager không biết nên phải tự kiểm.
+            // Không nói rõ sai email hay sai mật khẩu, tránh để người ngoài dò email có tồn tại.
+            if (user == null || !user.IsActive)
             {
-                // Không nói rõ sai email hay sai mật khẩu, tránh để người ngoài dò email có tồn tại
                 ModelState.AddModelError(string.Empty,
                     "Email hoặc mật khẩu không đúng, hoặc tài khoản đã bị tắt.");
                 return View(vm);
             }
 
-            await DangNhapBangCookie(user, vm.RememberMe);
+            var kq = await _signInManager.PasswordSignInAsync(
+                user, vm.Password, vm.RememberMe, lockoutOnFailure: true);
+
+            if (kq.IsLockedOut)
+            {
+                ModelState.AddModelError(string.Empty,
+                    "Tài khoản tạm bị khoá do nhập sai mật khẩu nhiều lần. Thử lại sau ít phút.");
+                return View(vm);
+            }
+            if (!kq.Succeeded)
+            {
+                ModelState.AddModelError(string.Empty,
+                    "Email hoặc mật khẩu không đúng, hoặc tài khoản đã bị tắt.");
+                return View(vm);
+            }
+
+            await GopDuLieuKhachLe(user);
 
             // Quay lại đúng trang người dùng định vào trước khi bị chặn.
             // Chỉ nhận đường dẫn nội bộ, chặn chuyển hướng ra ngoài tên miền.
             if (!string.IsNullOrEmpty(vm.ReturnUrl) && Url.IsLocalUrl(vm.ReturnUrl))
                 return Redirect(vm.ReturnUrl);
 
-            return RedirectTheoVaiTro(user.Role?.Name);
+            return RedirectTheoVaiTro(await _userService.LayTenVaiTroAsync(user));
         }
 
         // ===== Đăng ký =====
@@ -77,8 +108,12 @@ namespace ShopBanHang.Controllers
             }
 
             // Đăng ký xong cho vào luôn, khỏi bắt đăng nhập lại
-            var user = await _userService.LayTheoEmailAsync(vm.Email.Trim());
-            if (user != null) await DangNhapBangCookie(user, false);
+            var user = await _userManager.FindByEmailAsync(vm.Email.Trim());
+            if (user != null)
+            {
+                await _signInManager.SignInAsync(user, isPersistent: false);
+                await GopDuLieuKhachLe(user);
+            }
 
             TempData["ThanhCong"] = "Đăng ký thành công. Chào mừng bạn đến với ShopBanHang.";
             return RedirectToAction("Index", "Home");
@@ -90,12 +125,85 @@ namespace ShopBanHang.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Logout()
         {
-            await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+            await _signInManager.SignOutAsync();
             return RedirectToAction("Index", "Home");
         }
 
         [HttpGet]
         public IActionResult AccessDenied() => View();
+
+        // ===== Quên mật khẩu =====
+
+        [HttpGet]
+        public IActionResult ForgotPassword() => View(new ForgotPasswordViewModel());
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ForgotPassword(ForgotPasswordViewModel vm)
+        {
+            if (!ModelState.IsValid) return View(vm);
+
+            var user = await _userManager.FindByEmailAsync(vm.Email.Trim());
+
+            // Luôn báo cùng một câu dù email có tồn tại hay không, để người ngoài
+            // không dùng trang này mà dò xem email nào đã đăng ký.
+            if (user == null || !user.IsActive)
+            {
+                TempData["ThanhCong"] = "Nếu email tồn tại trong hệ thống, hướng dẫn đặt lại mật khẩu đã được gửi.";
+                return RedirectToAction(nameof(Login));
+            }
+
+            string token = await _userManager.GeneratePasswordResetTokenAsync(user);
+
+            // Hệ thống thật sẽ gửi liên kết này qua email. Bài tập lớn chưa cấu hình
+            // máy chủ thư nên hiện thẳng liên kết ra màn hình để còn thử được.
+            vm.LienKetDatLai = Url.Action(nameof(ResetPassword), "Account",
+                new { email = user.Email, token }, Request.Scheme);
+
+            return View(vm);
+        }
+
+        [HttpGet]
+        public IActionResult ResetPassword(string? email, string? token)
+        {
+            if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(token))
+            {
+                TempData["Loi"] = "Liên kết đặt lại mật khẩu không hợp lệ.";
+                return RedirectToAction(nameof(Login));
+            }
+
+            return View(new ResetPasswordViewModel { Email = email, Token = token });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ResetPassword(ResetPasswordViewModel vm)
+        {
+            if (!ModelState.IsValid) return View(vm);
+
+            var user = await _userManager.FindByEmailAsync(vm.Email.Trim());
+            if (user == null)
+            {
+                // Không lộ chuyện email không tồn tại
+                TempData["ThanhCong"] = "Đặt lại mật khẩu thành công. Mời bạn đăng nhập.";
+                return RedirectToAction(nameof(Login));
+            }
+
+            var kq = await _userManager.ResetPasswordAsync(user, vm.Token, vm.Password);
+            if (!kq.Succeeded)
+            {
+                ModelState.AddModelError(string.Empty,
+                    "Liên kết đã hết hạn hoặc không hợp lệ. Hãy yêu cầu lại.");
+                return View(vm);
+            }
+
+            // Đặt lại mật khẩu xong thì bỏ luôn trạng thái khoá tạm nếu có
+            await _userManager.ResetAccessFailedCountAsync(user);
+            await _userManager.SetLockoutEndDateAsync(user, null);
+
+            TempData["ThanhCong"] = "Đặt lại mật khẩu thành công. Mời bạn đăng nhập.";
+            return RedirectToAction(nameof(Login));
+        }
 
         // ===== Tài khoản của tôi =====
 
@@ -109,11 +217,11 @@ namespace ShopBanHang.Controllers
             return View(new ProfileViewModel
             {
                 Id = user.Id,
-                Email = user.Email,
+                Email = user.Email ?? "",
                 FullName = user.FullName,
-                Phone = user.Phone,
+                Phone = user.PhoneNumber,
                 Address = user.Address,
-                RoleName = user.Role?.Name,
+                RoleName = await _userService.LayTenVaiTroAsync(user),
                 CreatedAt = user.CreatedAt
             });
         }
@@ -161,33 +269,96 @@ namespace ShopBanHang.Controllers
             return RedirectToAction(nameof(Profile));
         }
 
+        // ===== Sổ địa chỉ giao hàng =====
+
+        [Authorize]
+        [HttpGet]
+        public async Task<IActionResult> Addresses()
+        {
+            ViewData["Title"] = "Sổ địa chỉ";
+            return View(await _addressService.LayCuaUserAsync(LayIdDangNhap()));
+        }
+
+        [Authorize]
+        [HttpGet]
+        public IActionResult AddressCreate()
+        {
+            ViewData["Title"] = "Thêm địa chỉ";
+            return View("AddressForm", new Address());
+        }
+
+        [Authorize]
+        [HttpGet]
+        public async Task<IActionResult> AddressEdit(int id)
+        {
+            var dc = await _addressService.LayTheoIdAsync(id, LayIdDangNhap());
+            if (dc == null)
+            {
+                TempData["Loi"] = "Không tìm thấy địa chỉ.";
+                return RedirectToAction(nameof(Addresses));
+            }
+
+            ViewData["Title"] = "Sửa địa chỉ";
+            return View("AddressForm", dc);
+        }
+
+        [Authorize]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> AddressSave(Address dc)
+        {
+            if (!ModelState.IsValid)
+            {
+                ViewData["Title"] = dc.Id == 0 ? "Thêm địa chỉ" : "Sửa địa chỉ";
+                return View("AddressForm", dc);
+            }
+
+            var (ok, loi) = await _addressService.LuuAsync(dc, LayIdDangNhap());
+            if (!ok)
+            {
+                ModelState.AddModelError(string.Empty, loi!);
+                ViewData["Title"] = dc.Id == 0 ? "Thêm địa chỉ" : "Sửa địa chỉ";
+                return View("AddressForm", dc);
+            }
+
+            TempData["ThanhCong"] = dc.Id == 0 ? "Đã thêm địa chỉ." : "Đã cập nhật địa chỉ.";
+            return RedirectToAction(nameof(Addresses));
+        }
+
+        [Authorize]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> AddressSetDefault(int id)
+        {
+            var (ok, loi) = await _addressService.DatMacDinhAsync(id, LayIdDangNhap());
+            if (!ok) TempData["Loi"] = loi; else TempData["ThanhCong"] = "Đã đặt làm địa chỉ mặc định.";
+            return RedirectToAction(nameof(Addresses));
+        }
+
+        [Authorize]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> AddressDelete(int id)
+        {
+            var (ok, loi) = await _addressService.XoaAsync(id, LayIdDangNhap());
+            if (!ok) TempData["Loi"] = loi; else TempData["ThanhCong"] = "Đã xoá địa chỉ.";
+            return RedirectToAction(nameof(Addresses));
+        }
+
         // ===== Hàm dùng chung =====
 
         /// <summary>
-        /// Phát cookie đăng nhập kèm các claim. Vai trò đi vào ClaimTypes.Role
-        /// nên [Authorize(Roles = "Admin")] và User.IsInRole dùng được ngay.
+        /// Gộp dữ liệu khách lẻ vào tài khoản vừa đăng nhập.
+        ///
+        /// Đây là chỗ duy nhất làm việc đó, gọi từ cả Login và Register.
+        /// Giỏ hàng nằm trong Session, đoạn chat neo bằng cookie - ASP.NET Core
+        /// không xoay session id khi đăng nhập nên cả hai đều còn nguyên ở đây.
         /// </summary>
-        private async Task DangNhapBangCookie(User user, bool ghiNho)
+        private Task GopDuLieuKhachLe(User user)
         {
-            var claims = new List<Claim>
-            {
-                new(ClaimTypes.NameIdentifier, user.Id.ToString()),
-                new(ClaimTypes.Name, user.FullName),
-                new(ClaimTypes.Email, user.Email),
-                new(ClaimTypes.Role, user.Role?.Name ?? Role.Customer)
-            };
-
-            var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
-
-            await HttpContext.SignInAsync(
-                CookieAuthenticationDefaults.AuthenticationScheme,
-                new ClaimsPrincipal(identity),
-                new AuthenticationProperties
-                {
-                    // Ghi nhớ thì cookie sống qua lần tắt trình duyệt, không thì hết phiên là mất
-                    IsPersistent = ghiNho,
-                    ExpiresUtc = ghiNho ? DateTimeOffset.UtcNow.AddDays(14) : null
-                });
+            // GIAI ĐOẠN SAU: gộp giỏ hàng trong Session vào giỏ của tài khoản
+            // GIAI ĐOẠN SAU: gán UserId cho ChatConversation đang neo bằng cookie
+            return Task.CompletedTask;
         }
 
         /// <summary>Rẽ nhánh sau đăng nhập: Admin vào khu quản trị, khách về trang bán hàng.</summary>

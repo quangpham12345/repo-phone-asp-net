@@ -1,4 +1,4 @@
-using System.Security.Claims;
+﻿using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ShopBanHang.Models.Entities;
@@ -27,16 +27,7 @@ namespace ShopBanHang.Areas.Admin.Controllers
             ViewData["Title"] = "Tài khoản";
             ViewData["ActiveMenu"] = "tai-khoan";
 
-            var vm = new UserListViewModel
-            {
-                TuKhoa = tuKhoa,
-                RoleId = roleId,
-                IsActive = isActive,
-                CacVaiTro = await _userService.LayVaiTroAsync(),
-                KetQua = await _userService.LayDanhSachAsync(tuKhoa, roleId, isActive, page, CoTrang)
-            };
-
-            return View(vm);
+            return View(await _userService.LayDanhSachAsync(tuKhoa, roleId, isActive, page, CoTrang));
         }
 
         [HttpGet]
@@ -64,16 +55,19 @@ namespace ShopBanHang.Areas.Admin.Controllers
             ViewData["Title"] = "Sửa tài khoản";
             ViewData["ActiveMenu"] = "tai-khoan";
 
+            var cacVaiTro = await _userService.LayVaiTroAsync();
+            string? tenVaiTro = await _userService.LayTenVaiTroAsync(u);
+
             return View("Form", new UserFormViewModel
             {
                 Id = u.Id,
                 FullName = u.FullName,
-                Email = u.Email,
-                Phone = u.Phone,
+                Email = u.Email ?? "",
+                Phone = u.PhoneNumber,
                 Address = u.Address,
-                RoleId = u.RoleId,
+                RoleId = cacVaiTro.FirstOrDefault(r => r.Name == tenVaiTro)?.Id ?? 0,
                 IsActive = u.IsActive,
-                CacVaiTro = await _userService.LayVaiTroAsync()
+                CacVaiTro = cacVaiTro
                 // Password để trống: bỏ trống khi lưu là giữ mật khẩu cũ
             });
         }

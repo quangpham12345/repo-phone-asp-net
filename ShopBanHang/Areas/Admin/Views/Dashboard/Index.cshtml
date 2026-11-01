@@ -1,4 +1,4 @@
-@model DashboardViewModel
+﻿@model DashboardViewModel
 @using ShopBanHang.Helpers
 
 <div class="adm-cards">
@@ -123,36 +123,25 @@
     }
 </div>
 
-@* ===== Doanh thu 12 tháng: cột vẽ bằng CSS, không cần thư viện biểu đồ ===== *@
+
+@* ===== Hai biểu đồ vẽ bằng Chart.js ===== *@
 <div class="adm-panel mt-3">
     <div class="adm-panel-head">
-        <h2>Doanh thu 12 tháng gần nhất</h2>
+        <h2>Doanh thu 30 ngày gần nhất</h2>
         <span class="adm-badge">chỉ tính đơn đã hoàn thành</span>
     </div>
     <div class="p-3">
-        <div class="d-flex align-items-end gap-2" style="height:200px">
-            @foreach (var t in Model.DoanhThu12Thang)
-            {
-                @* Chiều cao theo tỉ lệ với tháng cao nhất; tháng 0 đồng vẫn để vạch mỏng cho thấy có cột *@
-                var phanTram = Model.DoanhThuCaoNhat > 0
-                    ? (int)(t.DoanhThu / Model.DoanhThuCaoNhat * 100)
-                    : 0;
+        <canvas id="bieuDoNgay" height="90"></canvas>
+    </div>
+</div>
 
-                <div class="flex-fill text-center" style="min-width:0">
-                    <div class="adm-thanh-day d-flex align-items-end justify-content-center"
-                         style="height:150px">
-                        <div class="adm-thanh w-75"
-                             style="height:@(phanTram < 2 ? 2 : phanTram)%;background:#c69a39;border-radius:3px 3px 0 0"
-                             title="@t.Nhan: @TienViet.Dinh(t.DoanhThu) · @t.SoDon đơn"></div>
-                    </div>
-                    <div class="small text-muted mt-1" style="font-size:.7rem">@t.Nhan</div>
-                </div>
-            }
-        </div>
-        <p class="text-muted small mt-3 mb-0">
-            Cao nhất: <b>@TienViet.Dinh(Model.DoanhThuCaoNhat)</b>.
-            Đưa con trỏ vào từng cột để xem doanh thu và số đơn của tháng đó.
-        </p>
+<div class="adm-panel mt-3">
+    <div class="adm-panel-head">
+        <h2>Doanh thu 12 tháng gần nhất</h2>
+        <span class="adm-badge">cao nhất @TienViet.Dinh(Model.DoanhThuCaoNhat)</span>
+    </div>
+    <div class="p-3">
+        <canvas id="bieuDoThang" height="90"></canvas>
     </div>
 </div>
 
@@ -233,3 +222,69 @@
     Khách mua nhiều nhất gom theo <b>số điện thoại</b> chứ không theo tài khoản,
     vì khách không đăng nhập vẫn đặt được hàng.
 </p>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+    <script>
+        // Số liệu do Razor đổ thẳng xuống dạng JSON, không cần gọi thêm API
+        var nhanNgay = @Html.Raw(Json.Serialize(Model.DoanhThu30Ngay.Select(x => x.Nhan)));
+        var tienNgay = @Html.Raw(Json.Serialize(Model.DoanhThu30Ngay.Select(x => x.DoanhThu)));
+        var donNgay  = @Html.Raw(Json.Serialize(Model.DoanhThu30Ngay.Select(x => x.SoDon)));
+
+        var nhanThang = @Html.Raw(Json.Serialize(Model.DoanhThu12Thang.Select(x => x.Nhan)));
+        var tienThang = @Html.Raw(Json.Serialize(Model.DoanhThu12Thang.Select(x => x.DoanhThu)));
+        var donThang  = @Html.Raw(Json.Serialize(Model.DoanhThu12Thang.Select(x => x.SoDon)));
+
+        // Định dạng tiền kiểu Việt cho nhãn trục và chú thích
+        function dinhTien(v) {
+            return new Intl.NumberFormat('vi-VN').format(v) + ' đ';
+        }
+
+        function chuThich(ctx, soDon) {
+            return dinhTien(ctx.parsed.y) + ' · ' + soDon[ctx.dataIndex] + ' đơn';
+        }
+
+        new Chart(document.getElementById('bieuDoNgay'), {
+            type: 'line',
+            data: {
+                labels: nhanNgay,
+                datasets: [{
+                    label: 'Doanh thu',
+                    data: tienNgay,
+                    borderColor: '#c69a39',
+                    backgroundColor: 'rgba(198,154,57,.15)',
+                    fill: true,
+                    tension: .3,
+                    pointRadius: 2
+                }]
+            },
+            options: {
+                plugins: {
+                    legend: { display: false },
+                    tooltip: { callbacks: { label: function (c) { return chuThich(c, donNgay); } } }
+                },
+                scales: { y: { beginAtZero: true, ticks: { callback: dinhTien } } }
+            }
+        });
+
+        new Chart(document.getElementById('bieuDoThang'), {
+            type: 'bar',
+            data: {
+                labels: nhanThang,
+                datasets: [{
+                    label: 'Doanh thu',
+                    data: tienThang,
+                    backgroundColor: '#c69a39',
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                plugins: {
+                    legend: { display: false },
+                    tooltip: { callbacks: { label: function (c) { return chuThich(c, donThang); } } }
+                },
+                scales: { y: { beginAtZero: true, ticks: { callback: dinhTien } } }
+            }
+        });
+    </script>
+}

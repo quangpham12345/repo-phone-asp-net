@@ -1,4 +1,4 @@
-@model LoginViewModel
+﻿@model LoginViewModel
 @{
     ViewData["Title"] = "Đăng nhập";
 }
@@ -38,9 +38,12 @@
                 </form>
 
                 <hr class="my-4" />
-                <p class="mb-0 small">
+                <p class="mb-1 small">
                     Chưa có tài khoản?
                     <a asp-action="Register">Đăng ký ngay</a>
+                </p>
+                <p class="mb-0 small">
+                    <a asp-action="ForgotPassword">Quên mật khẩu?</a>
                 </p>
             </div>
         </div>

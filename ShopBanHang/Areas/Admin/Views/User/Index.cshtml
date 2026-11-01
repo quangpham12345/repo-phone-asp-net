@@ -1,4 +1,4 @@
-@model UserListViewModel
+﻿@model UserListViewModel
 
 <div class="adm-panel">
     <div class="adm-panel-head">
@@ -66,11 +66,10 @@
                         <td class="text-center">@stt</td>
                         <td><b>@u.FullName</b></td>
                         <td>@u.Email</td>
-                        <td>@u.Phone</td>
+                        <td>@u.PhoneNumber</td>
                         <td>
-                            <span class="st @(u.Role?.Name == Role.Admin ? "st-done" : "st-wait")">
-                                @u.Role?.Name
-                            </span>
+                            @{ string tenVai = Model.TenVaiTro(u.Id); }
+                            <span class="st @(tenVai == Role.Admin ? "st-done" : "st-wait")">@tenVai</span>
                         </td>
                         <td>
                             @if (u.IsActive)

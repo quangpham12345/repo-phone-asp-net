@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using ShopBanHang.Data;
 using ShopBanHang.Models.Enums;
 using ShopBanHang.Models.ViewModels;
@@ -23,8 +23,8 @@ namespace ShopBanHang.Services
             var vm = new DashboardViewModel
             {
                 SoSanPham = await _db.Products.CountAsync(),
-                SoKhachHang = await _db.Users.CountAsync(u => u.Role!.Name == "Customer"),
-                SoAdmin = await _db.Users.CountAsync(u => u.Role!.Name == "Admin"),
+                SoKhachHang = await DemTheoVaiAsync("Customer"),
+                SoAdmin = await DemTheoVaiAsync("Admin"),
                 SoBanner = await _db.Banners.CountAsync(b => b.IsActive),
                 SoDon = await _db.Orders.CountAsync(),
 
@@ -40,11 +40,52 @@ namespace ShopBanHang.Services
                 .Where(o => o.Status == OrderStatus.HoanThanh && o.CreatedAt >= dauThangNay)
                 .SumAsync(o => (decimal?)o.Total) ?? 0;
 
+            vm.DoanhThu30Ngay = await LayDoanhThu30NgayAsync();
             vm.DoanhThu12Thang = await LayDoanhThu12ThangAsync();
             vm.TopSanPham = await LayTopSanPhamAsync(5);
             vm.TopKhachHang = await LayTopKhachHangAsync(5);
 
             return vm;
+        }
+
+        /// <summary>
+        /// Đếm người dùng theo vai trò. Identity để vai trò ở bảng nối
+        /// AspNetUserRoles nên phải đi qua đó chứ không có cột RoleId.
+        /// </summary>
+        private async Task<int> DemTheoVaiAsync(string tenVaiTro)
+            => await (from ur in _db.UserRoles
+                      join r in _db.Roles on ur.RoleId equals r.Id
+                      where r.Name == tenVaiTro
+                      select ur.UserId).CountAsync();
+
+        /// <summary>
+        /// Doanh thu 30 ngày gần nhất. Ngày không có đơn vẫn phải có mặt với
+        /// giá trị 0, nếu không đường biểu đồ sẽ nối tắt qua và đọc sai.
+        /// </summary>
+        public async Task<List<DoanhThuNgay>> LayDoanhThu30NgayAsync()
+        {
+            DateTime dau = DateTime.Today.AddDays(-29);
+
+            var theoNgay = await _db.Orders
+                .Where(o => o.Status == OrderStatus.HoanThanh && o.CreatedAt >= dau)
+                .GroupBy(o => o.CreatedAt.Date)
+                .Select(g => new { Ngay = g.Key, Tong = g.Sum(x => x.Total), SoDon = g.Count() })
+                .ToListAsync();
+
+            var ds = new List<DoanhThuNgay>();
+            for (int i = 0; i < 30; i++)
+            {
+                DateTime n = dau.AddDays(i);
+                var co = theoNgay.FirstOrDefault(x => x.Ngay == n);
+
+                ds.Add(new DoanhThuNgay
+                {
+                    Ngay = n,
+                    DoanhThu = co?.Tong ?? 0,
+                    SoDon = co?.SoDon ?? 0
+                });
+            }
+            return ds;
         }
 
         /// <summary>

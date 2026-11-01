@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using ShopBanHang.Helpers;
 using ShopBanHang.Models.Entities;
 using ShopBanHang.Models.Enums;
@@ -15,10 +16,12 @@ namespace ShopBanHang.Data
         {
             using var scope = services.CreateScope();
             var db = scope.ServiceProvider.GetRequiredService<ShopContext>();
+            var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
+            var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<Role>>();
 
             db.Database.Migrate();
 
-            SeedRolesVaUsers(db);
+            SeedRolesVaUsers(db, userManager, roleManager).GetAwaiter().GetResult();
             SeedDanhMucVaThuongHieu(db);
             SeedSanPham(db);
             SeedBanner(db);
@@ -138,51 +141,51 @@ namespace ShopBanHang.Data
             db.SaveChanges();
         }
 
-        private static void SeedRolesVaUsers(ShopContext db)
+        /// <summary>
+        /// Tạo 2 vai trò và 3 tài khoản mẫu qua UserManager để mật khẩu được
+        /// băm đúng cách của Identity, và vai trò được ghi vào bảng nối.
+        /// </summary>
+        private static async Task SeedRolesVaUsers(ShopContext db,
+                                                   UserManager<User> userManager,
+                                                   RoleManager<Role> roleManager)
         {
-            if (!db.Roles.Any())
-            {
-                db.Roles.AddRange(
-                    new Role { Name = Role.Admin, Description = "Quản trị hệ thống" },
-                    new Role { Name = Role.Customer, Description = "Khách hàng" });
-                db.SaveChanges();
-            }
+            if (!await roleManager.RoleExistsAsync(Role.Admin))
+                await roleManager.CreateAsync(new Role(Role.Admin) { Description = "Quản trị hệ thống" });
+
+            if (!await roleManager.RoleExistsAsync(Role.Customer))
+                await roleManager.CreateAsync(new Role(Role.Customer) { Description = "Khách hàng" });
 
             if (db.Users.Any()) return;
 
-            int idAdmin = db.Roles.First(r => r.Name == Role.Admin).Id;
-            int idKhach = db.Roles.First(r => r.Name == Role.Customer).Id;
+            await TaoUser(userManager, "admin@shop.com", "Admin@123", "Quản trị viên",
+                          "0900000001", "Hà Nội", Role.Admin, true);
 
-            db.Users.AddRange(
-                new User
-                {
-                    FullName = "Quản trị viên",
-                    Email = "admin@shop.com",
-                    PasswordHash = PasswordHelper.Hash("Admin@123"),
-                    Phone = "0900000001",
-                    Address = "Hà Nội",
-                    RoleId = idAdmin
-                },
-                new User
-                {
-                    FullName = "Nguyễn Văn Khách",
-                    Email = "khach1@shop.com",
-                    PasswordHash = PasswordHelper.Hash("Khach@123"),
-                    Phone = "0900000002",
-                    Address = "Số 1 Cầu Giấy, Hà Nội",
-                    RoleId = idKhach
-                },
-                new User
-                {
-                    FullName = "Trần Thị Mai",
-                    Email = "khach2@shop.com",
-                    PasswordHash = PasswordHelper.Hash("Khach@123"),
-                    Phone = "0900000003",
-                    Address = "Số 2 Thanh Xuân, Hà Nội",
-                    RoleId = idKhach,
-                    IsActive = false        // để sẵn một tài khoản bị tắt, tiện thử bộ lọc
-                });
-            db.SaveChanges();
+            await TaoUser(userManager, "khach1@shop.com", "Khach@123", "Nguyễn Văn Khách",
+                          "0900000002", "Số 1 Cầu Giấy, Hà Nội", Role.Customer, true);
+
+            // Để sẵn một tài khoản bị tắt, tiện thử bộ lọc và thử chặn đăng nhập
+            await TaoUser(userManager, "khach2@shop.com", "Khach@123", "Trần Thị Mai",
+                          "0900000003", "Số 2 Thanh Xuân, Hà Nội", Role.Customer, false);
+        }
+
+        private static async Task TaoUser(UserManager<User> userManager, string email, string matKhau,
+                                          string hoTen, string dienThoai, string diaChi,
+                                          string vaiTro, bool dangHoatDong)
+        {
+            var u = new User
+            {
+                UserName = email,
+                Email = email,
+                EmailConfirmed = true,
+                FullName = hoTen,
+                PhoneNumber = dienThoai,
+                Address = diaChi,
+                IsActive = dangHoatDong,
+                CreatedAt = DateTime.Now
+            };
+
+            var kq = await userManager.CreateAsync(u, matKhau);
+            if (kq.Succeeded) await userManager.AddToRoleAsync(u, vaiTro);
         }
 
         /// <summary>

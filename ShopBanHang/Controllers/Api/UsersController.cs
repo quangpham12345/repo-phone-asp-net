@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ShopBanHang.Models.Dtos;
 using ShopBanHang.Models.Entities;
@@ -36,7 +36,8 @@ namespace ShopBanHang.Controllers.Api
         {
             if (pageSize is < 1 or > 100) pageSize = 10;   // chặn gọi pageSize quá lớn
 
-            var kq = await _userService.LayDanhSachAsync(tuKhoa, roleId, isActive, page, pageSize);
+            var vm = await _userService.LayDanhSachAsync(tuKhoa, roleId, isActive, page, pageSize);
+            var kq = vm.KetQua;
 
             return Ok(new PagedDto<UserDto>
             {
@@ -44,7 +45,7 @@ namespace ShopBanHang.Controllers.Api
                 PageSize = kq.PageSize,
                 TotalItems = kq.TotalItems,
                 TotalPages = kq.TotalPages,
-                Items = kq.Items.Select(ToDto).ToList()
+                Items = kq.Items.Select(u => ToDto(u, vm.TenVaiTro(u.Id))).ToList()
             });
         }
 
@@ -52,17 +53,19 @@ namespace ShopBanHang.Controllers.Api
         public async Task<ActionResult<UserDto>> GetById(int id)
         {
             var u = await _userService.LayTheoIdAsync(id);
-            return u == null ? NotFound() : Ok(ToDto(u));
+            if (u == null) return NotFound();
+
+            return Ok(ToDto(u, await _userService.LayTenVaiTroAsync(u)));
         }
 
-        private static UserDto ToDto(User u) => new()
+        private static UserDto ToDto(User u, string? tenVaiTro) => new()
         {
             Id = u.Id,
             FullName = u.FullName,
-            Email = u.Email,
-            Phone = u.Phone,
+            Email = u.Email ?? "",
+            Phone = u.PhoneNumber,
             Address = u.Address,
-            RoleName = u.Role?.Name,
+            RoleName = tenVaiTro,
             IsActive = u.IsActive,
             CreatedAt = u.CreatedAt
         };
