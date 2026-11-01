@@ -1,0 +1,118 @@
+@model PagedResult<News>
+
+<div class="adm-panel">
+    <div class="adm-panel-head">
+        <h2>Tin tức</h2>
+        <div class="d-flex align-items-center gap-2">
+            <span class="adm-badge">@Model.TotalItems bài</span>
+            <a asp-action="Create" class="btn btn-sm btn-primary">
+                <i class="bi bi-plus-lg"></i> Thêm bài viết
+            </a>
+        </div>
+    </div>
+
+    <form asp-action="Index" method="get" class="d-flex flex-wrap gap-2 p-3 border-bottom">
+        <input type="text" name="tuKhoa" value="@ViewBag.TuKhoa" class="form-control"
+               style="max-width:280px" placeholder="Tìm theo tiêu đề" />
+        <select name="active" class="form-select" style="max-width:180px">
+            <option value="">— Mọi trạng thái —</option>
+            <option value="true" selected="@(ViewBag.Active as bool? == true)">Đang hiện</option>
+            <option value="false" selected="@(ViewBag.Active as bool? == false)">Đã ẩn</option>
+        </select>
+        <button type="submit" class="btn btn-primary"><i class="bi bi-search"></i> Tìm</button>
+        <a asp-action="Index" class="btn btn-light">Bỏ lọc</a>
+    </form>
+
+    <div class="table-responsive">
+        <table class="table adm-table mb-0">
+            <thead>
+                <tr>
+                    <th style="width:52px">STT</th>
+                    <th style="width:80px">Ảnh</th>
+                    <th>Tiêu đề</th>
+                    <th style="width:120px">Ngày đăng</th>
+                    <th style="width:110px">Trạng thái</th>
+                    <th style="width:150px" class="text-end">Thao tác</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.Items.Any())
+                {
+                    <tr><td colspan="6" class="text-center text-muted py-4">Chưa có bài viết nào</td></tr>
+                }
+
+                @{ int stt = Model.SttDau; }
+                @foreach (var n in Model.Items)
+                {
+                    stt++;
+                    <tr class="@(n.IsActive ? "" : "adm-dong-an")">
+                        <td class="text-center">@stt</td>
+                        <td>
+                            @if (!string.IsNullOrEmpty(n.ImageUrl))
+                            {
+                                <img src="@n.ImageUrl" alt="@n.Title"
+                                     style="width:60px;height:38px;object-fit:cover;border-radius:4px" />
+                            }
+                            else
+                            {
+                                <span class="text-muted small">—</span>
+                            }
+                        </td>
+                        <td>
+                            <b>@n.Title</b>
+                            @if (!string.IsNullOrEmpty(n.Summary))
+                            {
+                                <div class="small text-muted adm-rut-gon">@n.Summary</div>
+                            }
+                        </td>
+                        <td>@n.CreatedAt.ToString("dd/MM/yyyy")</td>
+                        <td>
+                            @if (n.IsActive)
+                            {
+                                <span class="text-success"><i class="bi bi-check-circle"></i> Đang hiện</span>
+                            }
+                            else
+                            {
+                                <span class="text-muted"><i class="bi bi-slash-circle"></i> Đã ẩn</span>
+                            }
+                        </td>
+                        <td class="text-end text-nowrap">
+                            <form asp-action="ToggleActive" asp-route-id="@n.Id" method="post" class="d-inline">
+                                <button type="submit" class="btn btn-sm @(n.IsActive ? "btn-outline-danger" : "btn-outline-success")"
+                                        title="@(n.IsActive ? "Ẩn" : "Hiện")">
+                                    <i class="bi @(n.IsActive ? "bi-toggle-on" : "bi-toggle-off")"></i>
+                                </button>
+                            </form>
+                            <a asp-action="Edit" asp-route-id="@n.Id"
+                               class="btn btn-sm btn-outline-secondary" title="Sửa">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                            <form asp-action="Delete" asp-route-id="@n.Id" method="post" class="d-inline"
+                                  onsubmit="return confirm('Xoa bai viet nay?');">
+                                <button type="submit" class="btn btn-sm btn-outline-danger" title="Xoá">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    @if (Model.TotalPages > 1)
+    {
+        <nav class="p-3 border-top">
+            <ul class="pagination mb-0">
+                @for (int i = 1; i <= Model.TotalPages; i++)
+                {
+                    <li class="page-item @(i == Model.Page ? "active" : "")">
+                        <a class="page-link" asp-action="Index" asp-route-page="@i"
+                           asp-route-tuKhoa="@ViewBag.TuKhoa"
+                           asp-route-active="@ViewBag.Active">@i</a>
+                    </li>
+                }
+            </ul>
+        </nav>
+    }
+</div>

@@ -1,0 +1,248 @@
+@using ShopBanHang.Helpers
+@model ProductFormViewModel
+@{
+    // Bộ ảnh hiện có: ảnh đại diện đứng đầu, sau đó đến ảnh phụ
+    var cacAnh = ProductGallery.Tach(Model.GalleryUrls);
+    if (!string.IsNullOrWhiteSpace(Model.ImageUrl)) cacAnh.Insert(0, Model.ImageUrl.Trim());
+    cacAnh = cacAnh.Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+
+    // Form lỗi phải vẽ lại thì giữ đúng lựa chọn admin vừa bấm
+    string? anhChinhDangChon = !string.IsNullOrWhiteSpace(Model.AnhChinh) ? Model.AnhChinh : Model.ImageUrl;
+}
+
+<div class="adm-panel adm-form-panel adm-form-wide">
+    <div class="adm-panel-head">
+        <h2>@(Model.LaThemMoi ? "Thêm sản phẩm" : "Sửa sản phẩm")</h2>
+        <div class="d-flex gap-2">
+            @if (!Model.LaThemMoi)
+            {
+                <a asp-controller="ProductVariant" asp-action="Index" asp-route-productId="@Model.Id"
+                   class="btn btn-sm btn-outline-primary">
+                    <i class="bi bi-layers"></i> Biến thể (@Model.SoBienThe)
+                </a>
+            }
+            <a asp-action="Index" class="btn btn-sm btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i> Quay lại
+            </a>
+        </div>
+    </div>
+
+    <form asp-action="Save" method="post" enctype="multipart/form-data" class="p-3">
+        <input type="hidden" asp-for="Id" />
+        <input type="hidden" asp-for="SoldCount" />
+        <input type="hidden" asp-for="SoBienThe" />
+
+        @* Hai ô ẩn giữ bộ ảnh hiện tại; việc xoá, đổi ảnh chính, thêm ảnh gửi kèm bên dưới rồi service gộp lại *@
+        <input type="hidden" asp-for="ImageUrl" />
+        <input type="hidden" asp-for="GalleryUrls" />
+
+        <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 small"></div>
+
+        <div class="mb-3">
+            <label asp-for="Name" class="form-label"></label>
+            <input asp-for="Name" class="form-control" placeholder="iPhone 17 Pro Max 256GB" />
+            <span asp-validation-for="Name" class="text-danger small"></span>
+            <div class="form-text">Đường dẫn sinh tự động từ tên, không được trùng sản phẩm khác.</div>
+        </div>
+
+        @if (Model.SoBienThe > 0)
+        {
+            <div class="alert alert-info py-2 small">
+                Sản phẩm có @Model.SoBienThe biến thể nên giá bán, giá gốc và tồn kho tự tính từ các biến thể
+                (giá thấp nhất, tổng tồn kho các biến thể đang bán). Muốn đổi, sửa ở trang
+                <a asp-controller="ProductVariant" asp-action="Index" asp-route-productId="@Model.Id">Biến thể</a>.
+            </div>
+        }
+
+        <div class="row">
+            <div class="col-md-4 mb-3">
+                <label asp-for="Price" class="form-label"></label>
+                <div class="input-group">
+                    <input asp-for="Price" type="number" class="form-control" min="0" step="1000" readonly="@(Model.SoBienThe > 0)" />
+                    <span class="input-group-text">đ</span>
+                </div>
+                <span asp-validation-for="Price" class="text-danger small"></span>
+            </div>
+
+            <div class="col-md-4 mb-3">
+                <label asp-for="OldPrice" class="form-label"></label>
+                <div class="input-group">
+                    <input asp-for="OldPrice" type="number" class="form-control" min="0" step="1000" readonly="@(Model.SoBienThe > 0)" />
+                    <span class="input-group-text">đ</span>
+                </div>
+                <span asp-validation-for="OldPrice" class="text-danger small"></span>
+                <div class="form-text">Để trống nếu không giảm giá. Phải lớn hơn giá bán.</div>
+            </div>
+
+            <div class="col-md-4 mb-3">
+                <label asp-for="Stock" class="form-label"></label>
+                <input asp-for="Stock" type="number" class="form-control" min="0" readonly="@(Model.SoBienThe > 0)" />
+                <span asp-validation-for="Stock" class="text-danger small"></span>
+                <div class="form-text">Bằng 0 thì phía khách hiện "Hết hàng".</div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label asp-for="CategoryId" class="form-label"></label>
+                <select asp-for="CategoryId" class="form-select"
+                        asp-items="@(new SelectList(Model.CacDanhMuc, "Id", "Name"))">
+                    <option value="">— Chọn danh mục —</option>
+                </select>
+                <span asp-validation-for="CategoryId" class="text-danger small"></span>
+            </div>
+
+            <div class="col-md-6 mb-3">
+                <label asp-for="BrandId" class="form-label"></label>
+                <select asp-for="BrandId" class="form-select"
+                        asp-items="@(new SelectList(Model.CacThuongHieu, "Id", "Name"))">
+                    <option value="">— Chọn thương hiệu —</option>
+                </select>
+                <span asp-validation-for="BrandId" class="text-danger small"></span>
+            </div>
+        </div>
+
+        @* ===== Ảnh sản phẩm: nhiều ảnh, chọn ảnh đại diện, xoá từng ảnh ===== *@
+        <div class="mb-3">
+            <label class="form-label">Ảnh sản phẩm</label>
+
+            @if (cacAnh.Count > 0)
+            {
+                <div class="row g-2 mb-2">
+                    @for (int i = 0; i < cacAnh.Count; i++)
+                    {
+                        string u = cacAnh[i];
+                        bool laChinh = string.Equals(u, anhChinhDangChon, StringComparison.OrdinalIgnoreCase);
+
+                        <div class="col-6 col-md-3">
+                            <div class="border rounded p-2 h-100 @(laChinh ? "border-primary" : "")">
+                                <img src="@u" alt="@Model.Name" class="w-100"
+                                     style="height:110px;object-fit:contain" />
+
+                                <div class="form-check mt-2">
+                                    <input class="form-check-input" type="radio" name="AnhChinh"
+                                           id="anhChinh-@i" value="@u" checked="@laChinh" />
+                                    <label class="form-check-label" for="anhChinh-@i">Ảnh đại diện</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="AnhXoa"
+                                           id="anhXoa-@i" value="@u" checked="@Model.AnhXoa.Contains(u)" />
+                                    <label class="form-check-label text-danger" for="anhXoa-@i">Xoá ảnh này</label>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+                <div class="form-text mb-2">
+                    Ảnh tích "Xoá" sẽ bị gỡ khỏi sản phẩm khi bấm Lưu (file tải lên từ máy sẽ bị xoá hẳn,
+                    ảnh mẫu và link ngoài chỉ bị gỡ). Ảnh bị xoá không còn là ảnh đại diện.
+                </div>
+            }
+            else
+            {
+                <div class="text-muted small mb-2">Sản phẩm chưa có ảnh nào.</div>
+            }
+
+            <input type="file" name="anhTaiLen" class="form-control" accept="image/*" multiple />
+            <span asp-validation-for="ImageUrl" class="text-danger small"></span>
+            <div class="form-text">
+                Chọn được nhiều ảnh cùng lúc, mỗi ảnh tối đa 4 MB. Mỗi sản phẩm có tối đa
+                @ProductGallery.ToiDaAnhPhu ảnh phụ ngoài ảnh đại diện. Sản phẩm chưa có ảnh đại diện
+                thì ảnh đầu tiên được chọn tự động.
+            </div>
+
+            <input asp-for="AnhUrlMoi" class="form-control mt-2"
+                   placeholder="Hoặc dán đường dẫn ảnh, nhiều ảnh cách nhau bằng ;" />
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="Description" class="form-label"></label>
+            <textarea asp-for="Description" class="form-control" rows="5"></textarea>
+            <span asp-validation-for="Description" class="text-danger small"></span>
+        </div>
+
+        <h6 class="mt-4 mb-3">Thông số kỹ thuật</h6>
+        @if (Model.SoBienThe > 0)
+        {
+            <div class="form-text mb-2">Sản phẩm có biến thể: dung lượng và màu cụ thể lấy từ các biến thể.</div>
+        }
+
+        <div class="row">
+            <div class="col-md-3 mb-3">
+                <label asp-for="Ram" class="form-label"></label>
+                <input asp-for="Ram" class="form-control" placeholder="8GB" />
+            </div>
+            <div class="col-md-3 mb-3">
+                <label asp-for="Storage" class="form-label"></label>
+                <input asp-for="Storage" class="form-control" placeholder="256GB" />
+            </div>
+            <div class="col-md-3 mb-3">
+                <label asp-for="Os" class="form-label"></label>
+                <input asp-for="Os" class="form-control" placeholder="iOS 19" />
+            </div>
+            <div class="col-md-3 mb-3">
+                <label asp-for="Color" class="form-label"></label>
+                <input asp-for="Color" class="form-control" placeholder="Đen" />
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label asp-for="Screen" class="form-label"></label>
+                <input asp-for="Screen" class="form-control" placeholder="6.9 inch OLED 120Hz" />
+                <span asp-validation-for="Screen" class="text-danger small"></span>
+            </div>
+            <div class="col-md-6 mb-3">
+                <label asp-for="Chip" class="form-label"></label>
+                <input asp-for="Chip" class="form-control" placeholder="Apple A19 Pro" />
+                <span asp-validation-for="Chip" class="text-danger small"></span>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-4 mb-3">
+                <label asp-for="Battery" class="form-label"></label>
+                <input asp-for="Battery" class="form-control" placeholder="5000mAh" />
+                <span asp-validation-for="Battery" class="text-danger small"></span>
+            </div>
+            <div class="col-md-8 mb-3">
+                <label asp-for="Camera" class="form-label"></label>
+                <input asp-for="Camera" class="form-control" placeholder="48MP + 12MP + 12MP" />
+                <span asp-validation-for="Camera" class="text-danger small"></span>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-4 mb-3">
+                <label class="form-label d-block">Hiển thị</label>
+                <div class="form-check">
+                    <input asp-for="IsActive" class="form-check-input" />
+                    <label asp-for="IsActive" class="form-check-label"></label>
+                </div>
+                <div class="form-check">
+                    <input asp-for="IsFeatured" class="form-check-input" />
+                    <label asp-for="IsFeatured" class="form-check-label"></label>
+                </div>
+            </div>
+
+            @if (!Model.LaThemMoi)
+            {
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Đã bán</label>
+                    @* Chỉ để xem: số này hệ thống cộng dồn khi đơn hoàn thành *@
+                    <input value="@Model.SoldCount" class="form-control" disabled />
+                    <div class="form-text">Hệ thống tự cộng khi đơn hoàn thành, không sửa tay.</div>
+                </div>
+            }
+        </div>
+
+        <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-primary"><i class="bi bi-save"></i> Lưu</button>
+            <a asp-action="Index" class="btn btn-light">Huỷ</a>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

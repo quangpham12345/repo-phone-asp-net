@@ -1,0 +1,26 @@
+## Thu muc build
+bin/
+obj/
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+
+## Visual Studio
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+## Rider / VS Code
+.idea/
+.vscode/
+
+## Anh admin tai len khi chay thu - khong dua vao repo
+wwwroot/uploads/*
+!wwwroot/uploads/.gitkeep
+
+## File tam
+*.log
+*.tmp

@@ -1,0 +1,265 @@
+﻿@model ProductDetailViewModel
+@using ShopBanHang.Helpers
+@{
+    var sp = Model.SanPham;
+    int phanTramGiam = TienViet.PhanTramGiam(sp.Price, sp.OldPrice);
+    bool hetHang = sp.Stock <= 0;
+    var anh = sp.TatCaAnh;
+    if (anh.Count == 0) anh.Add("/images/products/no-image.svg");
+}
+
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb small">
+        <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">Trang chủ</a></li>
+        <li class="breadcrumb-item">
+            <a asp-controller="Product" asp-action="Index" asp-route-danhMuc="@sp.Category?.Slug">
+                @sp.Category?.Name
+            </a>
+        </li>
+        <li class="breadcrumb-item active" aria-current="page">@sp.Name</li>
+    </ol>
+</nav>
+
+<div class="card shadow-sm mb-4">
+    <div class="row g-0">
+        <div class="col-md-5 p-3">
+            <div class="mb-2 text-center">
+                <img id="anhChinh" src="@anh[0]" class="img-fluid rounded" style="max-height:360px;object-fit:contain" alt="@sp.Name" />
+            </div>
+            @if (anh.Count > 1)
+            {
+                <div class="d-flex gap-2 flex-wrap justify-content-center">
+                    @for (int i = 0; i < anh.Count; i++)
+                    {
+                        <img src="@anh[i]" class="rounded border thumb-gallery @(i == 0 ? "border-primary" : "")"
+                             style="width:64px;height:64px;object-fit:cover;cursor:pointer"
+                             data-src="@anh[i]" alt="Ảnh @(i + 1)" />
+                    }
+                </div>
+            }
+        </div>
+
+        <div class="col-md-7 p-4">
+            <h1 class="h4">@sp.Name</h1>
+
+            <div class="small text-muted mb-3">
+                Thương hiệu <b>@sp.Brand?.Name</b> ·
+                Danh mục <b>@sp.Category?.Name</b> ·
+                Đã bán <b>@sp.SoldCount</b>
+                @if (Model.SoLuotDanhGia > 0)
+                {
+                    <text> · </text>
+                    <span class="text-warning">
+                        @for (int i = 1; i <= 5; i++)
+                        {
+                            <i class="bi @(i <= Math.Round(Model.DiemTrungBinh) ? "bi-star-fill" : "bi-star")"></i>
+                        }
+                    </span>
+                    <b>@Model.DiemTrungBinh</b> <text>(@Model.SoLuotDanhGia lượt)</text>
+                }
+            </div>
+
+            <div class="mb-3">
+                <span class="h3 text-danger fw-bold">@TienViet.Dinh(sp.Price)</span>
+                @if (phanTramGiam > 0)
+                {
+                    <del class="text-muted ms-2">@TienViet.Dinh(sp.OldPrice)</del>
+                    <span class="badge bg-danger ms-2">-@phanTramGiam%</span>
+                }
+            </div>
+
+            <div class="mb-3">
+                @if (hetHang)
+                {
+                    <span class="badge bg-secondary">Hết hàng</span>
+                }
+                else
+                {
+                    <span class="badge bg-success">Còn @sp.Stock sản phẩm</span>
+                }
+            </div>
+
+            @if (Model.PhienBanKhac.Any())
+            {
+                <div class="mb-3">
+                    <div class="small fw-semibold mb-2">Chọn phiên bản (màu / dung lượng)</div>
+                    <div class="d-flex flex-wrap gap-2">
+                        <a class="btn btn-sm btn-outline-primary active" asp-action="Detail" asp-route-slug="@sp.Slug">
+                            @(sp.Storage ?? "") @(sp.Color ?? "Hiện tại")
+                        </a>
+                        @foreach (var pb in Model.PhienBanKhac)
+                        {
+                            <a class="btn btn-sm btn-outline-secondary" asp-action="Detail" asp-route-slug="@pb.Slug"
+                               title="@pb.Name — @TienViet.Dinh(pb.Price)">
+                                @(pb.Storage ?? "") @(pb.Color ?? pb.Name)
+                            </a>
+                        }
+                    </div>
+                </div>
+            }
+
+            @if (!string.IsNullOrWhiteSpace(sp.Description))
+            {
+                <p class="mb-4">@sp.Description</p>
+            }
+
+            <div class="d-flex gap-2 flex-wrap">
+                @* GIAI ĐOẠN SAU: hai nút này sẽ gọi AJAX thêm vào giỏ hàng *@
+                <button class="btn btn-mc-cta" disabled="@hetHang">
+                    <i class="bi bi-cart-plus"></i> Thêm vào giỏ
+                </button>
+                <a asp-controller="Product" asp-action="Index" class="btn btn-light">
+                    Xem sản phẩm khác
+                </a>
+            </div>
+            <div class="form-text mt-2">Chức năng giỏ hàng sẽ làm ở giai đoạn sau.</div>
+        </div>
+    </div>
+</div>
+
+<div class="card shadow-sm mb-4">
+    <div class="card-header bg-white fw-semibold">Thông số kỹ thuật</div>
+    <div class="card-body p-0">
+        <table class="table table-bordered mb-0">
+            <tbody>
+                <tr><th class="w-25 bg-light">Thương hiệu</th><td>@(sp.Brand?.Name ?? "—")</td></tr>
+                <tr><th class="bg-light">Danh mục</th><td>@(sp.Category?.Name ?? "—")</td></tr>
+                <tr><th class="bg-light">Màu sắc</th><td>@(sp.Color ?? "—")</td></tr>
+                <tr><th class="bg-light">RAM</th><td>@(sp.Ram ?? "—")</td></tr>
+                <tr><th class="bg-light">Dung lượng</th><td>@(sp.Storage ?? "—")</td></tr>
+                <tr><th class="bg-light">Hệ điều hành</th><td>@(sp.Os ?? "—")</td></tr>
+                <tr><th class="bg-light">Tồn kho</th><td>@sp.Stock</td></tr>
+                <tr><th class="bg-light">Đã bán</th><td>@sp.SoldCount</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@* ===== Đánh giá sản phẩm ===== *@
+<div class="card shadow-sm mb-4">
+    <div class="card-body">
+        <h2 class="h5 mb-3">
+            Đánh giá sản phẩm
+            @if (Model.SoLuotDanhGia > 0)
+            {
+                <span class="text-muted small">— @Model.DiemTrungBinh/5 từ @Model.SoLuotDanhGia lượt</span>
+            }
+        </h2>
+
+        @if (User.Identity?.IsAuthenticated != true)
+        {
+            <div class="alert alert-light border py-2 small mb-3">
+                <a asp-controller="Account" asp-action="Login">Đăng nhập</a>
+                để đánh giá sản phẩm này.
+            </div>
+        }
+        else if (!Model.DuocDanhGia)
+        {
+            @* Chốt chặn thật nằm ở service, đây chỉ là lời giải thích cho khách *@
+            <div class="alert alert-light border py-2 small mb-3">
+                <i class="bi bi-info-circle"></i>
+                Chỉ khách đã mua và nhận hàng thành công sản phẩm này mới được đánh giá.
+            </div>
+        }
+        else
+        {
+            <form asp-action="Review" method="post" class="border rounded p-3 mb-3">
+                <input type="hidden" name="productId" value="@sp.Id" />
+                <input type="hidden" name="slug" value="@sp.Slug" />
+
+                <div class="mb-2">
+                    <label class="form-label mb-1">Số sao</label>
+                    <select name="soSao" class="form-select form-select-sm" style="max-width:160px">
+                        @for (int i = 5; i >= 1; i--)
+                        {
+                            <option value="@i" selected="@(Model.DanhGiaCuaToi?.Rating == i)">@i sao</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="mb-2">
+                    <label class="form-label mb-1">Nhận xét</label>
+                    <textarea name="nhanXet" class="form-control" rows="3" maxlength="1000"
+                              placeholder="Máy dùng thế nào?">@Model.DanhGiaCuaToi?.Comment</textarea>
+                </div>
+
+                <button type="submit" class="btn btn-sm btn-mc-cta">
+                    <i class="bi bi-send"></i>
+                    @(Model.DanhGiaCuaToi == null ? "Gửi đánh giá" : "Cập nhật đánh giá")
+                </button>
+
+                @if (Model.DanhGiaCuaToi != null)
+                {
+                    <span class="small text-muted ms-2">Bạn đã đánh giá sản phẩm này.</span>
+                }
+            </form>
+
+            @if (Model.DanhGiaCuaToi != null)
+            {
+                <form asp-action="ReviewDelete" method="post" class="mb-3"
+                      onsubmit="return confirm('Xoa danh gia cua ban?');">
+                    <input type="hidden" name="productId" value="@sp.Id" />
+                    <input type="hidden" name="slug" value="@sp.Slug" />
+                    <button type="submit" class="btn btn-sm btn-outline-danger">
+                        <i class="bi bi-trash"></i> Xoá đánh giá của tôi
+                    </button>
+                </form>
+            }
+        }
+
+        @if (!Model.DanhGia.Any())
+        {
+            <p class="text-muted small mb-0">Chưa có đánh giá nào cho sản phẩm này.</p>
+        }
+        else
+        {
+            <div class="d-flex flex-column gap-3">
+                @foreach (var dg in Model.DanhGia)
+                {
+                    <div class="border-bottom pb-2">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <b>@(dg.User?.FullName ?? "Khách hàng")</b>
+                            <span class="small text-muted">@dg.CreatedAt.ToString("dd/MM/yyyy HH:mm")</span>
+                        </div>
+                        <div class="text-warning small">
+                            @for (int i = 1; i <= 5; i++)
+                            {
+                                <i class="bi @(i <= dg.Rating ? "bi-star-fill" : "bi-star")"></i>
+                            }
+                        </div>
+                        @if (!string.IsNullOrWhiteSpace(dg.Comment))
+                        {
+                            <div class="small mt-1">@dg.Comment</div>
+                        }
+                    </div>
+                }
+            </div>
+        }
+    </div>
+</div>
+
+@if (Model.LienQuan.Any())
+{
+    <h2 class="h5 mb-3">Sản phẩm cùng danh mục</h2>
+    <div class="row row-cols-2 row-cols-md-4 g-3">
+        @foreach (var lq in Model.LienQuan)
+        {
+            <div class="col">
+                <partial name="_ProductCard" model="lq" />
+            </div>
+        }
+    </div>
+}
+
+
+@section Scripts {
+    <script>
+        document.querySelectorAll('.thumb-gallery').forEach(function (el) {
+            el.addEventListener('click', function () {
+                document.getElementById('anhChinh').src = this.dataset.src;
+                document.querySelectorAll('.thumb-gallery').forEach(t => t.classList.remove('border-primary'));
+                this.classList.add('border-primary');
+            });
+        });
+    </script>
+}

@@ -1,0 +1,104 @@
+@model UserFormViewModel
+
+<div class="adm-panel adm-form-panel adm-form-wide">
+    <div class="adm-panel-head">
+        <h2>@(Model.LaThemMoi ? "Thêm tài khoản" : "Sửa tài khoản")</h2>
+        <a asp-action="Index" class="btn btn-sm btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Quay lại
+        </a>
+    </div>
+
+    <form asp-action="Save" method="post" class="p-3">
+        <input type="hidden" asp-for="Id" />
+
+        <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 small"></div>
+
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label asp-for="FullName" class="form-label"></label>
+                <input asp-for="FullName" class="form-control" />
+                <span asp-validation-for="FullName" class="text-danger small"></span>
+            </div>
+
+            <div class="col-md-6 mb-3">
+                <label asp-for="Email" class="form-label"></label>
+                <input asp-for="Email" class="form-control" />
+                <span asp-validation-for="Email" class="text-danger small"></span>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label asp-for="Password" class="form-label"></label>
+                <input asp-for="Password" class="form-control" autocomplete="new-password" />
+                <span asp-validation-for="Password" class="text-danger small"></span>
+                <div class="form-text">
+                    @(Model.LaThemMoi
+                        ? "Bắt buộc nhập khi thêm tài khoản mới."
+                        : "Để trống nếu không muốn đổi mật khẩu.")
+                </div>
+            </div>
+
+            <div class="col-md-6 mb-3">
+                <label asp-for="Phone" class="form-label"></label>
+                <input asp-for="Phone" class="form-control" />
+                <span asp-validation-for="Phone" class="text-danger small"></span>
+            </div>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="Address" class="form-label"></label>
+            <textarea asp-for="Address" class="form-control" rows="2"></textarea>
+            <span asp-validation-for="Address" class="text-danger small"></span>
+        </div>
+
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label asp-for="RoleId" class="form-label"></label>
+                <select asp-for="RoleId" class="form-select"
+                        asp-items="@(new SelectList(Model.CacVaiTro, "Id", "Name"))">
+                    <option value="">— Chọn vai trò —</option>
+                </select>
+                <span asp-validation-for="RoleId" class="text-danger small"></span>
+            </div>
+
+            <div class="col-md-6 mb-3">
+                <label class="form-label d-block">Trạng thái</label>
+                <div class="form-check mt-2">
+                    <input asp-for="IsActive" class="form-check-input" />
+                    <label asp-for="IsActive" class="form-check-label"></label>
+                </div>
+            </div>
+        </div>
+
+        <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-primary"><i class="bi bi-save"></i> Lưu</button>
+            <a asp-action="Index" class="btn btn-light">Huỷ</a>
+        </div>
+    </form>
+</div>
+
+@* Đặt lại mật khẩu tách riêng khỏi form chính, chỉ hiện khi đang sửa *@
+@if (!Model.LaThemMoi)
+{
+    <div class="adm-panel adm-form-panel adm-form-wide mt-3">
+        <div class="adm-panel-head">
+            <h2>Đặt lại mật khẩu</h2>
+        </div>
+        <form asp-action="ResetPassword" asp-route-id="@Model.Id" method="post"
+              class="p-3 d-flex flex-wrap gap-2 align-items-start">
+            <input type="password" name="matKhauMoi" class="form-control" style="max-width:280px"
+                   placeholder="Mật khẩu mới, ít nhất 6 ký tự" required minlength="6" />
+            <button type="submit" class="btn btn-outline-danger">
+                <i class="bi bi-key"></i> Đặt lại
+            </button>
+            <div class="form-text w-100">
+                Dùng khi người dùng quên mật khẩu. Mật khẩu cũ sẽ bị thay ngay.
+            </div>
+        </form>
+    </div>
+}
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

@@ -1,0 +1,169 @@
+﻿@model ProductListViewModel
+@using ShopBanHang.Helpers
+
+<div class="adm-panel">
+    <div class="adm-panel-head">
+        <h2>Danh sách sản phẩm</h2>
+        <div class="d-flex align-items-center gap-2">
+            <span class="adm-badge">@Model.KetQua.TotalItems sản phẩm</span>
+            <a asp-action="Create" class="btn btn-sm btn-primary">
+                <i class="bi bi-plus-lg"></i> Thêm sản phẩm
+            </a>
+        </div>
+    </div>
+
+    <form asp-action="Index" method="get" class="d-flex flex-wrap gap-2 p-3 border-bottom">
+        <input type="text" name="tuKhoa" value="@Model.Loc.TuKhoa" class="form-control"
+               style="max-width:240px" placeholder="Tìm theo tên sản phẩm" />
+
+        <select name="danhMuc" class="form-select" style="max-width:170px">
+            <option value="">— Mọi danh mục —</option>
+            @foreach (var dm in Model.CacDanhMuc)
+            {
+                <option value="@dm.Slug" selected="@(Model.Loc.DanhMuc == dm.Slug)">@dm.Name</option>
+            }
+        </select>
+
+        <select name="thuongHieu" class="form-select" style="max-width:170px">
+            <option value="">— Mọi thương hiệu —</option>
+            @foreach (var th in Model.CacThuongHieu)
+            {
+                <option value="@th.Slug" selected="@(Model.Loc.ThuongHieu == th.Slug)">@th.Name</option>
+            }
+        </select>
+
+        <select name="sapXep" class="form-select" style="max-width:170px">
+            @foreach (ProductSort sx in Enum.GetValues<ProductSort>())
+            {
+                <option value="@((int)sx)" selected="@(Model.Loc.SapXep == sx)">@sx.Nhan()</option>
+            }
+        </select>
+
+        <button type="submit" class="btn btn-primary"><i class="bi bi-search"></i> Tìm</button>
+        <a asp-action="Index" class="btn btn-light">Bỏ lọc</a>
+    </form>
+
+    <div class="table-responsive">
+        <table class="table adm-table mb-0">
+            <thead>
+                <tr>
+                    <th style="width:52px">STT</th>
+                    <th style="width:70px">Ảnh</th>
+                    <th>Tên sản phẩm</th>
+                    <th style="width:130px">Danh mục</th>
+                    <th style="width:110px">Thương hiệu</th>
+                    <th style="width:130px" class="text-end">Giá</th>
+                    <th style="width:90px" class="text-end">Tồn kho</th>
+                    <th style="width:80px" class="text-end">Đã bán</th>
+                    <th style="width:100px">Trạng thái</th>
+                    <th style="width:190px" class="text-end">Thao tác</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.KetQua.Items.Any())
+                {
+                    <tr><td colspan="10" class="text-center text-muted py-4">Không có sản phẩm nào khớp điều kiện</td></tr>
+                }
+
+                @{
+                    int stt = Model.KetQua.SttDau;
+                }
+                @foreach (var sp in Model.KetQua.Items)
+                {
+                    stt++;
+                    <tr class="@(sp.IsActive ? "" : "adm-dong-an")">
+                        <td class="text-center">@stt</td>
+                        <td>
+                            <img src="@(string.IsNullOrEmpty(sp.ImageUrl) ? "/images/products/no-image.svg" : sp.ImageUrl)"
+                                 alt="@sp.Name" class="adm-logo-thumb"
+                                 style="width:44px;height:44px;object-fit:cover;border-radius:4px" />
+                        </td>
+                        <td>
+                            <b>@sp.Name</b>
+                            @if (sp.IsFeatured)
+                            {
+                                <span class="adm-badge ms-1">Nổi bật</span>
+                            }
+                        </td>
+                        <td>@sp.Category?.Name</td>
+                        <td>@sp.Brand?.Name</td>
+                        <td class="text-end adm-tien">@TienViet.Dinh(sp.Price)</td>
+                        <td class="text-end">
+                            @if (sp.Stock <= 0)
+                            {
+                                <span class="text-danger">Hết</span>
+                            }
+                            else
+                            {
+                                @sp.Stock
+                                @if (Model.SanPhamCanhBao.Contains(sp.Id))
+                                {
+                                    <a asp-controller="ProductVariant" asp-action="Index" asp-route-productId="@sp.Id"
+                                       class="st st-wait text-decoration-none ms-1"
+                                       title="Có biến thể sắp hết hàng">Sắp hết</a>
+                                }
+                            }
+                        </td>
+                        <td class="text-end">@sp.SoldCount</td>
+                        <td>
+                            @if (sp.IsActive)
+                            {
+                                <span class="st st-done">Đang bán</span>
+                            }
+                            else
+                            {
+                                <span class="st st-wait">Đã ẩn</span>
+                            }
+                        </td>
+                        <td class="text-end text-nowrap">
+                            <form asp-action="ToggleFeatured" asp-route-id="@sp.Id" method="post" class="d-inline">
+                                <button type="submit" class="btn btn-sm @(sp.IsFeatured ? "btn-warning" : "btn-outline-secondary")"
+                                        title="@(sp.IsFeatured ? "Bỏ nổi bật" : "Đặt nổi bật")">
+                                    <i class="bi @(sp.IsFeatured ? "bi-star-fill" : "bi-star")"></i>
+                                </button>
+                            </form>
+                            <form asp-action="ToggleActive" asp-route-id="@sp.Id" method="post" class="d-inline">
+                                <button type="submit" class="btn btn-sm @(sp.IsActive ? "btn-outline-danger" : "btn-outline-success")"
+                                        title="@(sp.IsActive ? "Ẩn sản phẩm" : "Hiện sản phẩm")">
+                                    <i class="bi @(sp.IsActive ? "bi-toggle-on" : "bi-toggle-off")"></i>
+                                </button>
+                            </form>
+                            <a asp-controller="ProductVariant" asp-action="Index" asp-route-productId="@sp.Id"
+                               class="btn btn-sm btn-outline-primary" title="Biến thể (dung lượng, màu)">
+                                <i class="bi bi-layers"></i>
+                            </a>
+                            <a asp-action="Edit" asp-route-id="@sp.Id"
+                               class="btn btn-sm btn-outline-secondary" title="Sửa">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    @if (Model.KetQua.TotalPages > 1)
+    {
+        <nav class="p-3 border-top">
+            <ul class="pagination mb-0">
+                @for (int i = 1; i <= Model.KetQua.TotalPages; i++)
+                {
+                    <li class="page-item @(i == Model.KetQua.Page ? "active" : "")">
+                        <a class="page-link" asp-action="Index"
+                           asp-route-page="@i"
+                           asp-route-tuKhoa="@Model.Loc.TuKhoa"
+                           asp-route-danhMuc="@Model.Loc.DanhMuc"
+                           asp-route-thuongHieu="@Model.Loc.ThuongHieu"
+                           asp-route-sapXep="@((int)Model.Loc.SapXep)">@i</a>
+                    </li>
+                }
+            </ul>
+        </nav>
+    }
+</div>
+
+<p class="text-muted small mt-3 mb-0">
+    Danh sách này hiện cả hàng đã ẩn, khác phía khách chỉ thấy hàng đang bán.
+    Sản phẩm chỉ ẩn được chứ không xoá hẳn, vì bảng đơn hàng đang trỏ tới sản phẩm.
+</p>

@@ -1,0 +1,144 @@
+@using System.Globalization
+@using ShopBanHang.Helpers
+@model ProductVariantListViewModel
+@{
+    var vi = new CultureInfo("vi-VN");
+    var sp = Model.SanPham;
+
+    // Chỉ đếm biến thể đang bán, cùng luật với trang Tổng quan
+    int soCanhBao = Model.CacBienThe.Count(v => v.IsActive && v.Stock <= NguongTonKho.Nguong);
+}
+
+<div class="adm-panel">
+    <div class="adm-panel-head">
+        <h2>Biến thể: @sp.Name</h2>
+        <div class="d-flex align-items-center gap-2">
+            <span class="adm-badge">@Model.CacBienThe.Count biến thể</span>
+            <a asp-controller="Product" asp-action="Edit" asp-route-id="@sp.Id"
+               class="btn btn-sm btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i> Về sản phẩm
+            </a>
+            <a asp-action="Create" asp-route-productId="@sp.Id" class="btn btn-sm btn-primary">
+                <i class="bi bi-plus-lg"></i> Thêm biến thể
+            </a>
+        </div>
+    </div>
+
+    <div class="p-3 border-bottom small">
+        @if (Model.CacBienThe.Count == 0)
+        {
+            <span class="text-muted">
+                Sản phẩm chưa có biến thể nên giá (@sp.Price.ToString("N0", vi)đ) và tồn kho (@sp.Stock)
+                đang nhập tay trên trang sửa sản phẩm. Khi thêm biến thể đầu tiên, hai số này sẽ tự tính từ các biến thể.
+            </span>
+        }
+        else
+        {
+            <span class="text-muted">
+                Giá và tồn kho của sản phẩm tự tính từ các biến thể đang bán:
+                giá thấp nhất <b>@sp.Price.ToString("N0", vi)đ</b>, tổng tồn kho <b>@sp.Stock</b>.
+                Biến thể đã tắt không được tính.
+            </span>
+        }
+    </div>
+
+    @if (soCanhBao > 0)
+    {
+        <div class="alert alert-warning small mx-3 mt-3 mb-0 py-2">
+            <i class="bi bi-exclamation-triangle"></i>
+            Có <b>@soCanhBao</b> biến thể sắp hết hoặc đã hết hàng (tồn ≤ @NguongTonKho.Nguong). Bấm <i class="bi bi-pencil"></i> để cập nhật tồn kho.
+        </div>
+    }
+
+    <div class="table-responsive">
+        <table class="table adm-table mb-0">
+            <thead>
+                <tr>
+                    <th style="width:70px">Ảnh</th>
+                    <th>Dung lượng</th>
+                    <th>Màu sắc</th>
+                    <th style="width:150px">Giá bán</th>
+                    <th style="width:150px">Giá gốc</th>
+                    <th style="width:90px">Tồn kho</th>
+                    <th style="width:120px">Trạng thái</th>
+                    <th style="width:130px" class="text-end">Thao tác</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.CacBienThe.Count == 0)
+                {
+                    <tr>
+                        <td colspan="8" class="text-center text-muted py-4">Chưa có biến thể nào</td>
+                    </tr>
+                }
+
+                @foreach (var v in Model.CacBienThe)
+                {
+                    string? anh = string.IsNullOrWhiteSpace(v.ImageUrl) ? sp.ImageUrl : v.ImageUrl;
+
+                    <tr class="@(v.IsActive ? "" : "adm-dong-an")">
+                        <td>
+                            @if (!string.IsNullOrEmpty(anh))
+                            {
+                                <img src="@anh" alt="@v.Color" style="height:44px;width:44px;object-fit:contain" />
+                            }
+                        </td>
+                        <td>@v.Storage</td>
+                        <td>@v.Color</td>
+                        <td>@v.Price.ToString("N0", vi)đ</td>
+                        <td>@(v.OldPrice.HasValue ? v.OldPrice.Value.ToString("N0", vi) + "đ" : "—")</td>
+                        <td class="text-nowrap">
+                            @if (!v.IsActive)
+                            {
+                                <span class="text-muted">@v.Stock</span>
+                            }
+                            else if (v.Stock <= 0)
+                            {
+                                <span class="st" style="background:#fde8e8;color:#c0392b">Hết hàng</span>
+                            }
+                            else if (v.Stock <= NguongTonKho.Nguong)
+                            {
+                                <b>@v.Stock</b> <span class="st st-wait ms-1">Sắp hết</span>
+                            }
+                            else
+                            {
+                                @v.Stock
+                            }
+                        </td>
+                        <td>
+                            @if (v.IsActive)
+                            {
+                                <span class="text-success"><i class="bi bi-check-circle"></i> Đang bán</span>
+                            }
+                            else
+                            {
+                                <span class="text-muted"><i class="bi bi-slash-circle"></i> Đã tắt</span>
+                            }
+                        </td>
+                        <td class="text-end text-nowrap">
+                            <form asp-action="ToggleActive" asp-route-id="@v.Id" asp-route-productId="@sp.Id"
+                                  method="post" class="d-inline">
+                                <button type="submit"
+                                        class="btn btn-sm @(v.IsActive ? "btn-outline-danger" : "btn-outline-success")"
+                                        title="@(v.IsActive ? "Tắt biến thể" : "Bật biến thể")">
+                                    <i class="bi @(v.IsActive ? "bi-toggle-on" : "bi-toggle-off")"></i>
+                                </button>
+                            </form>
+                            <a asp-action="Edit" asp-route-id="@v.Id"
+                               class="btn btn-sm btn-outline-secondary" title="Sửa">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                            <form asp-action="Delete" asp-route-id="@v.Id" asp-route-productId="@sp.Id"
+                                  method="post" class="d-inline"
+                                  onsubmit="return confirm('Xoá biến thể @v.Storage - @v.Color?');">
+                                <button type="submit" class="btn btn-sm btn-outline-danger" title="Xoá">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
