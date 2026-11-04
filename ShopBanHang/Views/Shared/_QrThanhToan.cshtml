@@ -1,0 +1,48 @@
+@model MyOrderDetailViewModel
+@using ShopBanHang.Helpers
+@* Khối mã VietQR cho đơn chuyển khoản chưa thanh toán. Dùng ở trang đặt hàng thành công và chi tiết đơn. *@
+@if (Model.QrUrl != null && Model.ChuyenKhoan != null)
+{
+    var ck = Model.ChuyenKhoan;
+    <div class="card shadow-sm border-warning mb-4">
+        <div class="card-body">
+            <h2 class="h6 mb-3"><i class="bi bi-qr-code-scan"></i> Thanh toán chuyển khoản</h2>
+            <div class="row g-3 align-items-center">
+                <div class="col-md-5 text-center">
+                    <img src="@Model.QrUrl" alt="Mã QR chuyển khoản cho đơn @Model.Don.OrderCode"
+                         class="img-fluid border rounded" style="max-width:260px" />
+                </div>
+                <div class="col-md-7">
+                    <p class="small text-muted">
+                        Mở app ngân hàng, chọn quét mã QR. Số tiền và nội dung đã được điền sẵn.
+                        Nếu chuyển tay, vui lòng ghi <b>đúng nội dung</b> để shop đối soát.
+                    </p>
+                    <dl class="row small mb-0">
+                        <dt class="col-5">Ngân hàng</dt>
+                        <dd class="col-7">@ck.NganHang</dd>
+                        <dt class="col-5">Số tài khoản</dt>
+                        <dd class="col-7"><code>@ck.SoTaiKhoan</code></dd>
+                        <dt class="col-5">Chủ tài khoản</dt>
+                        <dd class="col-7">@ck.ChuTaiKhoan</dd>
+                        <dt class="col-5">Số tiền</dt>
+                        <dd class="col-7 text-danger fw-bold">@TienViet.Dinh(ck.SoTien)</dd>
+                        <dt class="col-5">Nội dung</dt>
+                        <dd class="col-7"><code>@ck.NoiDung</code></dd>
+                    </dl>
+                    <div class="alert alert-light border small mt-3 mb-0">
+                        Shop sẽ xác nhận trong giờ làm việc sau khi nhận được tiền. Trạng thái thanh toán
+                        cập nhật ở trang
+                        @if (Model.LaKhachLe)
+                        {
+                            <a asp-controller="Order" asp-action="Guest" asp-route-code="@Model.Don.OrderCode">chi tiết đơn</a><text>.</text>
+                        }
+                        else
+                        {
+                            <a asp-controller="Order" asp-action="Detail" asp-route-code="@Model.Don.OrderCode">chi tiết đơn</a><text>.</text>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}

@@ -131,16 +131,45 @@
                 <p class="mb-4">@sp.Description</p>
             }
 
-            <div class="d-flex gap-2 flex-wrap">
-                @* GIAI ĐOẠN SAU: hai nút này sẽ gọi AJAX thêm vào giỏ hàng *@
-                <button id="btnThemGio" class="btn btn-mc-cta" disabled="@hetHang">
-                    <i class="bi bi-cart-plus"></i> Thêm vào giỏ
-                </button>
+            @if (cacBienThe.Count > 0)
+            {
+                @* Form thật, chạy được cả khi tắt JavaScript. Có JS thì nút "Thêm vào giỏ" gửi bằng AJAX,
+                   còn "Mua ngay" vẫn submit bình thường để đi thẳng sang bước đặt hàng. *@
+                <form id="formGioHang" asp-controller="Cart" asp-action="Add" method="post">
+                    <input type="hidden" name="variantId" id="variantIdInput" value="@cacBienThe[0].Id" />
+                    <input type="hidden" name="returnUrl" value="@($"{Context.Request.Path}{Context.Request.QueryString}")" />
+
+                    <div class="d-flex align-items-center gap-2 mb-3">
+                        <label for="soLuongInput" class="small fw-semibold mb-0">Số lượng</label>
+                        <div class="input-group input-group-sm" style="width:130px">
+                            <button type="button" class="btn btn-outline-secondary" id="btnGiam" aria-label="Giảm">−</button>
+                            <input type="number" name="soLuong" id="soLuongInput" value="1" min="1" max="99"
+                                   class="form-control text-center" />
+                            <button type="button" class="btn btn-outline-secondary" id="btnTang" aria-label="Tăng">+</button>
+                        </div>
+                    </div>
+
+                    <div class="d-flex gap-2 flex-wrap">
+                        <button type="submit" id="btnThemGio" name="muaNgay" value="false"
+                                class="btn btn-outline-warning fw-semibold" disabled="@hetHang">
+                            <i class="bi bi-cart-plus"></i> Thêm vào giỏ
+                        </button>
+                        <button type="submit" id="btnMuaNgay" name="muaNgay" value="true"
+                                class="btn btn-mc-cta" disabled="@hetHang">
+                            <i class="bi bi-lightning-charge"></i> Mua ngay
+                        </button>
+                        <a asp-controller="Product" asp-action="Index" class="btn btn-light">
+                            Xem sản phẩm khác
+                        </a>
+                    </div>
+                </form>
+            }
+            else
+            {
                 <a asp-controller="Product" asp-action="Index" class="btn btn-light">
                     Xem sản phẩm khác
                 </a>
-            </div>
-            <div class="form-text mt-2">Chức năng giỏ hàng sẽ làm ở giai đoạn sau.</div>
+            }
         </div>
     </div>
 </div>
@@ -363,6 +392,9 @@
             var elGiam = document.getElementById('phanTramGiam');
             var elTon = document.getElementById('tonKho');
             var btnGio = document.getElementById('btnThemGio');
+            var btnMua = document.getElementById('btnMuaNgay');
+            var inputVariant = document.getElementById('variantIdInput');
+            var inputSoLuong = document.getElementById('soLuongInput');
             var anhChinh = document.getElementById('anhChinh');
 
             var dinhDang = function (n) { return Number(n).toLocaleString('de-DE') + ' đ'; };
@@ -439,10 +471,13 @@
                     elTon.textContent = 'Hết hàng';
                 }
 
-                // Giai đoạn giỏ hàng sẽ đọc data-variant-id để biết khách đang mua biến thể nào
-                if (btnGio) {
-                    btnGio.disabled = chon.stock <= 0;
-                    btnGio.dataset.variantId = chon.id;
+                // Form giỏ hàng gửi đúng biến thể đang chọn; hết hàng thì khoá hai nút
+                if (inputVariant) inputVariant.value = chon.id;
+                if (btnGio) btnGio.disabled = chon.stock <= 0;
+                if (btnMua) btnMua.disabled = chon.stock <= 0;
+                if (inputSoLuong) {
+                    inputSoLuong.max = Math.max(1, Math.min(99, chon.stock));
+                    if (Number(inputSoLuong.value) > Number(inputSoLuong.max)) inputSoLuong.value = inputSoLuong.max;
                 }
 
                 // Biến thể có ảnh riêng thì đổi ảnh chính theo
@@ -455,6 +490,50 @@
             }
 
             capNhat();
+        })();
+
+        // ===== Số lượng và thêm vào giỏ bằng AJAX =====
+        (function () {
+            var form = document.getElementById('formGioHang');
+            if (!form) return;
+
+            var input = document.getElementById('soLuongInput');
+            var doiSoLuong = function (buoc) {
+                var max = Number(input.max) || 99;
+                var n = (Number(input.value) || 1) + buoc;
+                input.value = Math.min(max, Math.max(1, n));
+            };
+            document.getElementById('btnGiam').addEventListener('click', function () { doiSoLuong(-1); });
+            document.getElementById('btnTang').addEventListener('click', function () { doiSoLuong(1); });
+
+            form.addEventListener('submit', function (e) {
+                // "Mua ngay" để form submit thường, đi thẳng sang trang đặt hàng
+                if (e.submitter && e.submitter.id === 'btnMuaNgay') return;
+
+                e.preventDefault();
+                var btn = document.getElementById('btnThemGio');
+                btn.disabled = true;
+
+                var duLieu = new FormData(form);      // đã có sẵn __RequestVerificationToken
+                duLieu.set('muaNgay', 'false');
+
+                fetch(form.action, {
+                    method: 'POST',
+                    body: duLieu,
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                })
+                    .then(function (r) { return r.json(); })
+                    .then(function (kq) {
+                        if (kq.ok) {
+                            mcToast(kq.message, 'success');
+                            mcCapNhatGio(kq.soLuongGio);
+                        } else {
+                            mcToast(kq.message, 'warning');
+                        }
+                    })
+                    .catch(function () { mcToast('Không thêm được vào giỏ, vui lòng thử lại.', 'danger'); })
+                    .finally(function () { btn.disabled = false; });
+            });
         })();
     </script>
 }
