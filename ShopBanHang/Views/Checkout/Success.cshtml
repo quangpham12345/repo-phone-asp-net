@@ -34,6 +34,8 @@
             <dd class="col-sm-9">@don.CustomerName · @don.Phone</dd>
             <dt class="col-sm-3">Địa chỉ</dt>
             <dd class="col-sm-9">@don.Address</dd>
+            <dt class="col-sm-3">Email</dt>
+            <dd class="col-sm-9">@don.Email</dd>
             <dt class="col-sm-3">Thanh toán</dt>
             <dd class="col-sm-9">@don.PaymentMethod.Nhan()</dd>
         </dl>
@@ -41,9 +43,27 @@
     <partial name="_DongHangDon" model="don" />
 </div>
 
+@if (Model.LaKhachLe)
+{
+    <div class="alert alert-info small">
+        <i class="bi bi-info-circle"></i> Bạn đặt hàng không cần tài khoản. Hãy <b>lưu lại mã đơn @don.OrderCode</b>:
+        để xem lại đơn sau này, vào <a asp-controller="Order" asp-action="Lookup">Tra cứu đơn hàng</a>
+        và nhập mã đơn cùng số điện thoại <b>@don.Phone</b>.
+    </div>
+}
+
 <div class="d-flex gap-2 justify-content-center">
-    <a asp-controller="Order" asp-action="Detail" asp-route-code="@don.OrderCode" class="btn btn-mc-cta">
-        Xem đơn hàng
-    </a>
+    @if (Model.LaKhachLe)
+    {
+        <a asp-controller="Order" asp-action="Guest" asp-route-code="@don.OrderCode" class="btn btn-mc-cta">
+            Xem đơn hàng
+        </a>
+    }
+    else
+    {
+        <a asp-controller="Order" asp-action="Detail" asp-route-code="@don.OrderCode" class="btn btn-mc-cta">
+            Xem đơn hàng
+        </a>
+    }
     <a asp-controller="Product" asp-action="Index" class="btn btn-light">Tiếp tục mua sắm</a>
 </div>

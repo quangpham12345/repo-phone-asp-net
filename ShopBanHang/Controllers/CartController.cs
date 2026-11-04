@@ -9,7 +9,7 @@ namespace ShopBanHang.Controllers
     /// Giỏ hàng theo biến thể.
     ///
     /// Chưa đăng nhập vẫn thêm được vào giỏ: giỏ nằm trong Session, đăng nhập thì
-    /// AccountController gộp sang bảng CartItems. Bước đặt hàng mới bắt đăng nhập.
+    /// AccountController gộp sang bảng CartItems. Đặt hàng cũng không bắt đăng nhập.
     ///
     /// Thêm vào giỏ trả JSON nếu gọi bằng AJAX (nút trên trang chi tiết), còn lại thì redirect.
     /// </summary>
@@ -64,7 +64,7 @@ namespace ShopBanHang.Controllers
                 return Url.IsLocalUrl(returnUrl) ? Redirect(returnUrl!) : RedirectToAction(nameof(Index));
             }
 
-            // "Mua ngay" đi thẳng sang bước đặt hàng (chưa đăng nhập thì [Authorize] ở đó tự đưa về trang đăng nhập)
+            // "Mua ngay" đi thẳng sang bước đặt hàng (khách vãng lai cũng đặt được, không cần đăng nhập)
             if (muaNgay) return RedirectToAction("Index", "Checkout");
 
             TempData["ThanhCong"] = "Đã thêm vào giỏ hàng.";

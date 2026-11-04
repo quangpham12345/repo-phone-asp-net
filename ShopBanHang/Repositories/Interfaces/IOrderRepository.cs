@@ -19,6 +19,9 @@ namespace ShopBanHang.Repositories.Interfaces
         /// <summary>Như LayChiTietAsync nhưng tìm theo mã đơn và chỉ trả về nếu đơn thuộc người này.</summary>
         Task<Order?> LayChiTietTheoMaAsync(string orderCode, int userId);
 
+        /// <summary>Tìm theo mã đơn, không lọc chủ đơn. Chỉ dùng sau khi đã kiểm quyền (tra cứu bằng số điện thoại).</summary>
+        Task<Order?> LayChiTietTheoMaAsync(string orderCode);
+
         /// <summary>Đơn kèm dòng hàng, có theo dõi để sửa rồi lưu.</summary>
         Task<Order?> LayDeSuaAsync(int id);
 

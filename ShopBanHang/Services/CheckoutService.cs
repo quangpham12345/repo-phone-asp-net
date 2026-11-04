@@ -34,19 +34,29 @@ namespace ShopBanHang.Services
             _log = log;
         }
 
-        public async Task<CheckoutViewModel> ChuanBiAsync(int userId, CheckoutForm? form = null)
+        public async Task<CheckoutViewModel> ChuanBiAsync(int userId, IReadOnlyList<GuestCartLine> gioKhach,
+                                                          CheckoutForm? form = null)
         {
-            var dong = await _cart.LayCuaUserAsync(userId);
+            bool daDangNhap = userId > 0;
+            var dong = await LayDongGioAsync(userId, gioKhach);
+
             var vm = new CheckoutViewModel
             {
-                Gio = new CartViewModel { Lines = dong.Where(c => c.ProductVariant?.Product != null).Select(CartService.TaoDong).ToList() },
-                CacDiaChi = await _addresses.LayCuaUserAsync(userId)
+                DaDangNhap = daDangNhap,
+                Gio = new CartViewModel { Lines = dong.Select(CartService.TaoDong).ToList() },
+                CacDiaChi = daDangNhap ? await _addresses.LayCuaUserAsync(userId) : new List<Address>()
             };
 
             if (form != null)
             {
                 // Trang được vẽ lại sau lỗi: giữ nguyên những gì khách đã nhập
                 vm.Form = form;
+                if (!daDangNhap) vm.Form.AddressId = null;
+            }
+            else if (!daDangNhap)
+            {
+                // Khách vãng lai: form trống, tự điền hết. Không có sổ địa chỉ nên không lưu được.
+                vm.Form = new CheckoutForm { LuuDiaChi = false };
             }
             else
             {
@@ -73,9 +83,9 @@ namespace ShopBanHang.Services
             return vm;
         }
 
-        public async Task<ApMaResult> ApMaAsync(int userId, string? code)
+        public async Task<ApMaResult> ApMaAsync(int userId, IReadOnlyList<GuestCartLine> gioKhach, string? code)
         {
-            var dong = await _cart.LayCuaUserAsync(userId);
+            var dong = await LayDongGioAsync(userId, gioKhach);
             decimal tamTinh = dong.Where(c => c.ProductVariant != null).Sum(c => c.ProductVariant!.Price * c.Quantity);
 
             if (tamTinh <= 0)
@@ -91,11 +101,12 @@ namespace ShopBanHang.Services
                                   kq.SoTienGiam, tong, TienViet.Dinh(kq.SoTienGiam), TienViet.Dinh(tong));
         }
 
-        public async Task<DatHangResult> DatHangAsync(int userId, CheckoutForm form)
+        public async Task<DatHangResult> DatHangAsync(int userId, IReadOnlyList<GuestCartLine> gioKhach, CheckoutForm form)
         {
+            bool daDangNhap = userId > 0;
+
             // ===== 1. Đọc giỏ và kiểm tra từng dòng =====
-            var gio = await _cart.LayCuaUserAsync(userId);
-            gio = gio.Where(c => c.ProductVariant?.Product != null).ToList();
+            var gio = await LayDongGioAsync(userId, gioKhach);
             if (gio.Count == 0) return Loi("Giỏ hàng đang trống.");
 
             foreach (var c in gio)
@@ -105,8 +116,13 @@ namespace ShopBanHang.Services
             }
 
             // ===== 2. Địa chỉ nhận hàng =====
+            // Email bắt buộc cho mọi đơn: shop gửi xác nhận, và là cách liên lạc với khách vãng lai
+            string email = (form.Email ?? "").Trim();
+            if (email.Length == 0) return Loi("Vui lòng nhập email.");
+
             string tenNhan, sdt, diaChi;
-            if (form.AddressId.HasValue)
+            // Khách vãng lai không có sổ địa chỉ: bỏ qua AddressId nếu ai đó cố gửi lên
+            if (daDangNhap && form.AddressId.HasValue)
             {
                 var dc = await _addresses.LayTheoIdAsync(form.AddressId.Value, userId);
                 if (dc == null) return Loi("Địa chỉ đã chọn không tồn tại, vui lòng chọn lại.");
@@ -167,7 +183,7 @@ namespace ShopBanHang.Services
                     CustomerName = tenNhan,
                     Phone = sdt,
                     Address = diaChi,
-                    Email = string.IsNullOrWhiteSpace(form.Email) ? null : form.Email.Trim(),
+                    Email = email,
                     Note = string.IsNullOrWhiteSpace(form.Note) ? null : form.Note.Trim(),
                     PaymentMethod = form.PaymentMethod,
                     Status = OrderStatus.ChoXacNhan,
@@ -178,7 +194,8 @@ namespace ShopBanHang.Services
                     CouponCode = coupon?.Code,
                     IsPaid = false,
                     CreatedAt = DateTime.Now,
-                    UserId = userId
+                    // Khách vãng lai thì UserId null, admin thấy nhãn "khách lẻ"
+                    UserId = daDangNhap ? userId : null
                 };
 
                 foreach (var c in gio)
@@ -198,12 +215,16 @@ namespace ShopBanHang.Services
                 _orders.Them(don);
                 await LuuVoiMaDonMoiAsync(don);
 
-                // 4d. Làm trống giỏ
-                _cart.XoaNhieu(gio);
-                await _uow.SaveChangesAsync();
+                // 4d. Làm trống giỏ trong CSDL. Giỏ vãng lai là CartItem tạm, không có trong CSDL,
+                //     controller sẽ xoá giỏ Session sau khi đặt thành công.
+                if (daDangNhap)
+                {
+                    _cart.XoaNhieu(gio);
+                    await _uow.SaveChangesAsync();
+                }
 
-                // 4e. Địa chỉ mới thì lưu vào sổ nếu khách muốn
-                if (!form.AddressId.HasValue && form.LuuDiaChi)
+                // 4e. Địa chỉ mới thì lưu vào sổ nếu khách đã đăng nhập và muốn lưu
+                if (daDangNhap && !form.AddressId.HasValue && form.LuuDiaChi)
                 {
                     await _addresses.LuuAsync(new Address
                     {
@@ -218,7 +239,7 @@ namespace ShopBanHang.Services
             }
             catch (Exception ex)
             {
-                _log.LogError(ex, "Đặt hàng thất bại cho user {UserId}", userId);
+                _log.LogError(ex, "Đặt hàng thất bại (user {UserId}, 0 là khách vãng lai)", userId);
                 await tx.RollbackAsync();
                 return Loi("Có lỗi khi tạo đơn hàng, vui lòng thử lại.");
             }
@@ -249,6 +270,32 @@ namespace ShopBanHang.Services
                     // Trùng mã với đơn vừa được tạo cùng lúc, thử số tiếp theo
                 }
             }
+        }
+
+        /// <summary>
+        /// Các dòng giỏ kèm biến thể và sản phẩm. Khách đã đăng nhập đọc từ CartItems (có theo dõi,
+        /// để còn xoá sau khi đặt). Khách vãng lai dựng CartItem tạm từ danh sách trong Session.
+        /// </summary>
+        private async Task<List<CartItem>> LayDongGioAsync(int userId, IReadOnlyList<GuestCartLine> gioKhach)
+        {
+            if (userId > 0)
+                return (await _cart.LayCuaUserAsync(userId))
+                    .Where(c => c.ProductVariant?.Product != null)
+                    .ToList();
+
+            var bienThe = (await _variants.LayNhieuKemSanPhamAsync(gioKhach.Select(x => x.VariantId)))
+                .ToDictionary(v => v.Id);
+
+            return gioKhach
+                .Where(x => x.Quantity > 0 && bienThe.TryGetValue(x.VariantId, out var v) && v.Product != null)
+                .Select(x => new CartItem
+                {
+                    Id = x.VariantId,
+                    ProductVariantId = x.VariantId,
+                    ProductVariant = bienThe[x.VariantId],
+                    Quantity = x.Quantity
+                })
+                .ToList();
         }
 
         private static DatHangResult Loi(string loi) => new(false, loi, null);

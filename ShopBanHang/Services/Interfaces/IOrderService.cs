@@ -37,5 +37,19 @@ namespace ShopBanHang.Services.Interfaces
 
         /// <summary>Khách tự huỷ, chỉ được khi đơn còn Chờ xác nhận.</summary>
         Task<(bool ok, string? loi)> KhachHuyAsync(int userId, string orderCode, string? lyDo);
+
+        // ---------- Khách vãng lai (không đăng nhập) ----------
+
+        /// <summary>Tra cứu bằng mã đơn + số điện thoại đặt hàng. Sai một trong hai là không thấy.</summary>
+        Task<Order?> TraCuuAsync(string? orderCode, string? phone);
+
+        /// <summary>
+        /// Lấy đơn theo mã, không kiểm chủ đơn. Controller chỉ gọi khi phiên hiện tại đã được
+        /// cấp quyền xem mã này (vừa đặt xong hoặc vừa tra cứu đúng), xem Helpers/DonKhachLe.
+        /// </summary>
+        Task<Order?> LayTheoMaAsync(string orderCode);
+
+        /// <summary>Huỷ đơn theo mã khi còn Chờ xác nhận. Cùng điều kiện quyền như LayTheoMaAsync.</summary>
+        Task<(bool ok, string? loi)> KhachLeHuyAsync(string orderCode, string? lyDo);
     }
 }

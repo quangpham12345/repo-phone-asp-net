@@ -1,0 +1,50 @@
+@model OrderLookupForm
+
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb small">
+        <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">Trang chủ</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Tra cứu đơn hàng</li>
+    </ol>
+</nav>
+
+<div class="row justify-content-center">
+    <div class="col-md-6 col-lg-5">
+        <div class="card shadow-sm">
+            <div class="card-body p-4">
+                <h1 class="h5 mb-1"><i class="bi bi-search"></i> Tra cứu đơn hàng</h1>
+                <p class="small text-muted mb-4">
+                    Nhập mã đơn (ví dụ <code>DH20261104-0001</code>) và số điện thoại bạn đã dùng khi đặt hàng.
+                </p>
+
+                <form asp-action="Lookup" method="post">
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 small"></div>
+
+                    <div class="mb-3">
+                        <label asp-for="OrderCode" class="form-label"></label>
+                        <input asp-for="OrderCode" class="form-control text-uppercase" autocomplete="off" />
+                        <span asp-validation-for="OrderCode" class="text-danger small"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Phone" class="form-label"></label>
+                        <input asp-for="Phone" type="tel" class="form-control" autocomplete="tel" />
+                        <span asp-validation-for="Phone" class="text-danger small"></span>
+                    </div>
+
+                    <button type="submit" class="btn btn-mc-cta w-100">Tra cứu</button>
+                </form>
+
+                @if (User.Identity?.IsAuthenticated == true)
+                {
+                    <p class="small text-muted mt-3 mb-0">
+                        Đơn đặt khi đã đăng nhập xem ở <a asp-action="Index">Đơn hàng của tôi</a>.
+                    </p>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

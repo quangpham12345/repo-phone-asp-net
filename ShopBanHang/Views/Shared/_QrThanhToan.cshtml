@@ -31,7 +31,15 @@
                     </dl>
                     <div class="alert alert-light border small mt-3 mb-0">
                         Shop sẽ xác nhận trong giờ làm việc sau khi nhận được tiền. Trạng thái thanh toán
-                        cập nhật ở trang <a asp-controller="Order" asp-action="Detail" asp-route-code="@Model.Don.OrderCode">chi tiết đơn</a>.
+                        cập nhật ở trang
+                        @if (Model.LaKhachLe)
+                        {
+                            <a asp-controller="Order" asp-action="Guest" asp-route-code="@Model.Don.OrderCode">chi tiết đơn</a><text>.</text>
+                        }
+                        else
+                        {
+                            <a asp-controller="Order" asp-action="Detail" asp-route-code="@Model.Don.OrderCode">chi tiết đơn</a><text>.</text>
+                        }
                     </div>
                 </div>
             </div>

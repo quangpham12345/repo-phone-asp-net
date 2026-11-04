@@ -107,6 +107,36 @@ namespace ShopBanHang.Services
         {
             // Tìm theo mã + chủ đơn trước, để khách không huỷ được đơn của người khác bằng cách đoán Id
             var xem = await LayCuaToiTheoMaAsync(userId, orderCode);
+            return await HuyKhiChoXacNhanAsync(xem, lyDo);
+        }
+
+        // ====================== Khách vãng lai ======================
+
+        public async Task<Order?> TraCuuAsync(string? orderCode, string? phone)
+        {
+            if (string.IsNullOrWhiteSpace(orderCode) || string.IsNullOrWhiteSpace(phone)) return null;
+
+            var don = await _orders.LayChiTietTheoMaAsync(orderCode.Trim().ToUpperInvariant());
+            if (don == null) return null;
+
+            // So số điện thoại theo chữ số, để "0912 345 678" và "0912345678" coi là một
+            return ChiLaySo(don.Phone) == ChiLaySo(phone) ? don : null;
+        }
+
+        public async Task<Order?> LayTheoMaAsync(string orderCode)
+        {
+            if (string.IsNullOrWhiteSpace(orderCode)) return null;
+            return await _orders.LayChiTietTheoMaAsync(orderCode.Trim());
+        }
+
+        public async Task<(bool ok, string? loi)> KhachLeHuyAsync(string orderCode, string? lyDo)
+            => await HuyKhiChoXacNhanAsync(await LayTheoMaAsync(orderCode), lyDo);
+
+        // ====================== Nội bộ ======================
+
+        /// <summary>Luật chung cho khách tự huỷ (đăng nhập hay không): chỉ khi còn Chờ xác nhận.</summary>
+        private async Task<(bool ok, string? loi)> HuyKhiChoXacNhanAsync(Order? xem, string? lyDo)
+        {
             if (xem == null) return (false, "Không tìm thấy đơn hàng.");
 
             if (xem.Status != OrderStatus.ChoXacNhan)
@@ -118,7 +148,7 @@ namespace ShopBanHang.Services
             return await DoiTrangThaiAsync(xem.Id, OrderStatus.DaHuy, lyDoDayDu);
         }
 
-        // ====================== Nội bộ ======================
+        private static string ChiLaySo(string s) => new(s.Where(char.IsDigit).ToArray());
 
         /// <summary>
         /// Huỷ đơn: hoàn tồn kho cho các dòng đã trừ kho lúc đặt, trả lại lượt dùng mã.

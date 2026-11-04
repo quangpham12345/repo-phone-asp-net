@@ -138,7 +138,10 @@ else
                         @if (!daDangNhap)
                         {
                             <p class="small text-muted mt-2 mb-0">
-                                Bạn cần đăng nhập để đặt hàng. Giỏ hàng hiện tại sẽ được giữ nguyên sau khi đăng nhập.
+                                Không cần tài khoản vẫn đặt được.
+                                <a asp-controller="Account" asp-action="Login"
+                                   asp-route-returnUrl="@Url.Action("Index", "Cart")">Đăng nhập</a>
+                                để dùng sổ địa chỉ và theo dõi đơn dễ hơn — giỏ hàng được giữ nguyên.
                             </p>
                         }
                     }

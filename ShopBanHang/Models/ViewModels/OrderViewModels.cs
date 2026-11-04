@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using ShopBanHang.Models.Entities;
 using ShopBanHang.Models.Enums;
 
@@ -36,6 +37,26 @@ namespace ShopBanHang.Models.ViewModels
         public ThongTinChuyenKhoan? ChuyenKhoan { get; set; }
 
         public bool DuocHuy => Don.Status == OrderStatus.ChoXacNhan;
+
+        /// <summary>
+        /// Đang xem với tư cách khách vãng lai (qua tra cứu hoặc vừa đặt xong khi chưa đăng nhập).
+        /// View dùng cờ này để trỏ link và nút huỷ sang các action không cần đăng nhập.
+        /// </summary>
+        public bool LaKhachLe { get; set; }
+    }
+
+    /// <summary>Form tra cứu đơn cho khách không đăng nhập.</summary>
+    public class OrderLookupForm
+    {
+        [Required(ErrorMessage = "Vui lòng nhập mã đơn")]
+        [StringLength(20)]
+        [Display(Name = "Mã đơn hàng")]
+        public string? OrderCode { get; set; }
+
+        [Required(ErrorMessage = "Vui lòng nhập số điện thoại đặt hàng")]
+        [StringLength(20)]
+        [Display(Name = "Số điện thoại đặt hàng")]
+        public string? Phone { get; set; }
     }
 
     /// <summary>Màn chi tiết đơn ở khu quản trị.</summary>

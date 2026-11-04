@@ -7,16 +7,18 @@ namespace ShopBanHang.Models.ViewModels
     /// <summary>
     /// Dữ liệu khách gửi lên ở bước đặt hàng.
     ///
-    /// Địa chỉ có hai cách: chọn một địa chỉ trong sổ (AddressId), hoặc nhập địa chỉ mới
-    /// (AddressId = null, điền ba ô bên dưới). Validate() kiểm đúng nhánh khách đã chọn.
+    /// Địa chỉ có hai cách: chọn một địa chỉ trong sổ (AddressId, chỉ khách đã đăng nhập),
+    /// hoặc nhập địa chỉ mới (AddressId = null, bắt buộc điền họ tên, số điện thoại, địa chỉ).
+    /// Khách vãng lai không có sổ địa chỉ nên luôn đi nhánh nhập mới.
+    /// Email luôn bắt buộc để shop gửi xác nhận đơn và để khách lẻ còn cách liên lạc.
     /// </summary>
     public class CheckoutForm : IValidatableObject
     {
         [Display(Name = "Địa chỉ nhận hàng")]
         public int? AddressId { get; set; }
 
-        [StringLength(100, ErrorMessage = "Tên người nhận tối đa 100 ký tự")]
-        [Display(Name = "Người nhận")]
+        [StringLength(100, ErrorMessage = "Họ tên tối đa 100 ký tự")]
+        [Display(Name = "Họ tên người nhận")]
         public string? ReceiverName { get; set; }
 
         [Phone(ErrorMessage = "Số điện thoại không đúng định dạng")]
@@ -31,9 +33,10 @@ namespace ShopBanHang.Models.ViewModels
         [Display(Name = "Lưu địa chỉ này vào sổ địa chỉ")]
         public bool LuuDiaChi { get; set; } = true;
 
+        [Required(ErrorMessage = "Vui lòng nhập email")]
         [EmailAddress(ErrorMessage = "Email không đúng định dạng")]
         [StringLength(150)]
-        [Display(Name = "Email nhận thông báo")]
+        [Display(Name = "Email")]
         public string? Email { get; set; }
 
         [StringLength(500, ErrorMessage = "Ghi chú tối đa 500 ký tự")]
@@ -53,7 +56,7 @@ namespace ShopBanHang.Models.ViewModels
             if (AddressId.HasValue) yield break;
 
             if (string.IsNullOrWhiteSpace(ReceiverName) || ReceiverName.Trim().Length < 2)
-                yield return new ValidationResult("Vui lòng nhập tên người nhận.", new[] { nameof(ReceiverName) });
+                yield return new ValidationResult("Vui lòng nhập họ tên người nhận (ít nhất 2 ký tự).", new[] { nameof(ReceiverName) });
 
             if (string.IsNullOrWhiteSpace(Phone))
                 yield return new ValidationResult("Vui lòng nhập số điện thoại.", new[] { nameof(Phone) });
@@ -69,6 +72,9 @@ namespace ShopBanHang.Models.ViewModels
         public CartViewModel Gio { get; set; } = new();
         public List<Address> CacDiaChi { get; set; } = new();
         public CheckoutForm Form { get; set; } = new();
+
+        /// <summary>False là khách vãng lai: không có sổ địa chỉ, giỏ lấy từ Session.</summary>
+        public bool DaDangNhap { get; set; }
 
         /// <summary>Số tiền giảm nếu khách đã nhập mã hợp lệ (khi trang được vẽ lại sau lỗi).</summary>
         public decimal TienGiam { get; set; }

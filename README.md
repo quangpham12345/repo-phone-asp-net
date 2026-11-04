@@ -111,15 +111,19 @@ dotnet ef migrations script -o Data/Scripts/ShopBanHang.sql --idempotent
 - Trang chủ, danh sách sản phẩm có lọc, chi tiết sản phẩm theo biến thể, so sánh, gợi ý tìm kiếm, đánh giá
 - **Giỏ hàng theo biến thể** (`/Cart`): thêm (AJAX), sửa số lượng, xoá, tính tổng, kiểm tra tồn kho.
   Chưa đăng nhập thì giỏ nằm trong Session, đăng nhập thì gộp vào bảng `CartItems`
-- **Đặt hàng** (`/Checkout`): chọn địa chỉ trong sổ hoặc nhập mới, áp mã giảm giá (AJAX),
-  COD hoặc chuyển khoản QR (VietQR), tạo đơn + trừ tồn kho + cộng lượt mã trong một transaction
-- **Đơn hàng của tôi** (`/Order`): danh sách theo trạng thái, chi tiết + tiến trình, huỷ khi còn chờ xác nhận
+- **Đặt hàng** (`/Checkout`), **không bắt đăng nhập**: khách vãng lai tự nhập họ tên, số điện thoại,
+  địa chỉ, email (đều bắt buộc), đơn lưu với `UserId = null`; khách đã đăng nhập chọn được từ sổ địa chỉ.
+  Áp mã giảm giá (AJAX), COD hoặc chuyển khoản QR (VietQR), tạo đơn + trừ tồn kho + cộng lượt mã trong một transaction
+- **Đơn hàng của tôi** (`/Order`, cần đăng nhập): danh sách theo trạng thái, chi tiết + tiến trình, huỷ khi còn chờ xác nhận
+- **Tra cứu đơn** (`/Order/Lookup`, cho khách vãng lai): nhập mã đơn + số điện thoại để xem đơn, mã QR,
+  và huỷ khi còn chờ xác nhận. Trang đơn chỉ mở được trong phiên đã tra cứu đúng (hoặc vừa đặt xong),
+  nên biết mã đơn thôi chưa đủ để xem
 - **Khu quản trị**: tổng quan thống kê; đơn hàng (lọc theo trạng thái, hình thức, đã/chưa thanh toán,
   khoảng ngày; xác nhận đơn; xác nhận đã thanh toán; chuyển trạng thái; huỷ có lý do và hoàn tồn kho);
   sản phẩm, biến thể, danh mục, thương hiệu, tin tức, banner, mã giảm giá, tài khoản
 - `GET /api/users`, `GET /api/users/{id}`
 
-Chưa làm: trang tin tức phía khách, chat hỗ trợ, gửi email thật, quốc tế hóa.
+Chưa làm: trang tin tức phía khách, chat hỗ trợ, gửi email thật (email chỉ mới được lưu vào đơn), quốc tế hóa.
 
 ## Thanh toán chuyển khoản
 

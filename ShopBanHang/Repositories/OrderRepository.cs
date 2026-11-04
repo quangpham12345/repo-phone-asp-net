@@ -63,6 +63,9 @@ namespace ShopBanHang.Repositories
         public async Task<Order?> LayChiTietTheoMaAsync(string orderCode, int userId)
             => await QueryChiTiet().FirstOrDefaultAsync(o => o.OrderCode == orderCode && o.UserId == userId);
 
+        public async Task<Order?> LayChiTietTheoMaAsync(string orderCode)
+            => await QueryChiTiet().FirstOrDefaultAsync(o => o.OrderCode == orderCode);
+
         public async Task<Order?> LayDeSuaAsync(int id)
             => await _db.Orders
                 .Include(o => o.OrderDetails)

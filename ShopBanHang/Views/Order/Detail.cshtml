@@ -9,7 +9,14 @@
 <nav aria-label="breadcrumb">
     <ol class="breadcrumb small">
         <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">Trang chủ</a></li>
-        <li class="breadcrumb-item"><a asp-action="Index">Đơn hàng của tôi</a></li>
+        @if (Model.LaKhachLe)
+        {
+            <li class="breadcrumb-item"><a asp-action="Lookup">Tra cứu đơn hàng</a></li>
+        }
+        else
+        {
+            <li class="breadcrumb-item"><a asp-action="Index">Đơn hàng của tôi</a></li>
+        }
         <li class="breadcrumb-item active" aria-current="page">@don.OrderCode</li>
     </ol>
 </nav>
@@ -109,7 +116,7 @@
                 <div class="card-body">
                     <h2 class="h6">Huỷ đơn</h2>
                     <p class="small text-muted">Bạn chỉ tự huỷ được khi shop chưa xác nhận đơn.</p>
-                    <form asp-action="Cancel" asp-route-code="@don.OrderCode" method="post"
+                    <form asp-action="@(Model.LaKhachLe ? "GuestCancel" : "Cancel")" asp-route-code="@don.OrderCode" method="post"
                           onsubmit="return confirm('Bạn chắc chắn muốn huỷ đơn này?');">
                         <select name="lyDo" class="form-select form-select-sm mb-2" aria-label="Lý do huỷ">
                             <option value="">— Chọn lý do (không bắt buộc) —</option>

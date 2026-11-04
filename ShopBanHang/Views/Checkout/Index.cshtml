@@ -1,7 +1,9 @@
 @model CheckoutViewModel
 @using ShopBanHang.Helpers
 @{
-    bool diaChiMoi = Model.Form.AddressId == null;
+    // Khách vãng lai không có sổ địa chỉ: luôn hiện ô nhập địa chỉ, không có radio chọn
+    bool diaChiMoi = !Model.DaDangNhap || Model.Form.AddressId == null;
+    bool coSoDiaChi = Model.DaDangNhap && Model.CacDiaChi.Count > 0;
 }
 
 <nav aria-label="breadcrumb">
@@ -14,6 +16,18 @@
 
 <h1 class="h4 mb-3">Đặt hàng</h1>
 
+@if (!Model.DaDangNhap)
+{
+    <div class="alert alert-light border d-flex flex-wrap justify-content-between align-items-center gap-2 py-2">
+        <span class="small">
+            <i class="bi bi-person"></i> Bạn đang đặt hàng <b>không cần tài khoản</b>.
+            Sau khi đặt, tra cứu đơn bằng <b>mã đơn + số điện thoại</b>.
+        </span>
+        <a asp-controller="Account" asp-action="Login" asp-route-returnUrl="@Url.Action("Index", "Checkout")"
+           class="btn btn-sm btn-outline-secondary">Đăng nhập để dùng sổ địa chỉ</a>
+    </div>
+}
+
 <form asp-action="PlaceOrder" method="post" id="formDatHang">
     <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2"></div>
 
@@ -24,7 +38,10 @@
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-center mb-3">
                         <h2 class="h6 mb-0"><i class="bi bi-geo-alt"></i> Địa chỉ nhận hàng</h2>
-                        <a asp-controller="Account" asp-action="Addresses" class="small">Quản lý sổ địa chỉ</a>
+                        @if (Model.DaDangNhap)
+                        {
+                            <a asp-controller="Account" asp-action="Addresses" class="small">Quản lý sổ địa chỉ</a>
+                        }
                     </div>
 
                     @foreach (var dc in Model.CacDiaChi)
@@ -43,36 +60,47 @@
                         </label>
                     }
 
-                    <label class="d-flex gap-2 border rounded p-2 mb-2" style="cursor:pointer">
-                        <input type="radio" class="form-check-input mt-1 js-chon-dc" name="Form.AddressId"
-                               value="" checked="@diaChiMoi" id="radioDiaChiMoi" />
-                        <span><b>@(Model.CacDiaChi.Count == 0 ? "Nhập địa chỉ nhận hàng" : "Giao đến địa chỉ khác")</b></span>
-                    </label>
+                    @if (coSoDiaChi)
+                    {
+                        <label class="d-flex gap-2 border rounded p-2 mb-2" style="cursor:pointer">
+                            <input type="radio" class="form-check-input mt-1 js-chon-dc" name="Form.AddressId"
+                                   value="" checked="@diaChiMoi" id="radioDiaChiMoi" />
+                            <span><b>Giao đến địa chỉ khác</b></span>
+                        </label>
+                    }
 
-                    <div id="khungDiaChiMoi" class="border rounded p-3 bg-light @(diaChiMoi ? "" : "d-none")">
+                    @* Ô nhập địa chỉ. Bắt buộc khi đang hiện (khách vãng lai, hoặc chọn "địa chỉ khác").
+                       Thuộc tính required do script bật/tắt theo lựa chọn; server vẫn kiểm lại trong CheckoutForm.Validate(). *@
+                    <div id="khungDiaChiMoi" class="@(coSoDiaChi ? "border rounded p-3 bg-light" : "") @(diaChiMoi ? "" : "d-none")">
                         <div class="row g-3">
                             <div class="col-md-6">
-                                <label asp-for="Form.ReceiverName" class="form-label"></label>
-                                <input asp-for="Form.ReceiverName" class="form-control" />
+                                <label asp-for="Form.ReceiverName" class="form-label"></label> <span class="text-danger">*</span>
+                                <input asp-for="Form.ReceiverName" class="form-control js-bat-buoc" minlength="2"
+                                       autocomplete="name" />
                                 <span asp-validation-for="Form.ReceiverName" class="text-danger small"></span>
                             </div>
                             <div class="col-md-6">
-                                <label asp-for="Form.Phone" class="form-label"></label>
-                                <input asp-for="Form.Phone" class="form-control" />
+                                <label asp-for="Form.Phone" class="form-label"></label> <span class="text-danger">*</span>
+                                <input asp-for="Form.Phone" type="tel" class="form-control js-bat-buoc"
+                                       autocomplete="tel" />
                                 <span asp-validation-for="Form.Phone" class="text-danger small"></span>
                             </div>
                             <div class="col-12">
-                                <label asp-for="Form.AddressDetail" class="form-label"></label>
-                                <input asp-for="Form.AddressDetail" class="form-control"
+                                <label asp-for="Form.AddressDetail" class="form-label"></label> <span class="text-danger">*</span>
+                                <input asp-for="Form.AddressDetail" class="form-control js-bat-buoc"
+                                       autocomplete="street-address"
                                        placeholder="Số nhà, đường, phường/xã, quận/huyện, tỉnh/thành" />
                                 <span asp-validation-for="Form.AddressDetail" class="text-danger small"></span>
                             </div>
-                            <div class="col-12">
-                                <div class="form-check">
-                                    <input asp-for="Form.LuuDiaChi" class="form-check-input" />
-                                    <label asp-for="Form.LuuDiaChi" class="form-check-label"></label>
+                            @if (Model.DaDangNhap)
+                            {
+                                <div class="col-12">
+                                    <div class="form-check">
+                                        <input asp-for="Form.LuuDiaChi" class="form-check-input" />
+                                        <label asp-for="Form.LuuDiaChi" class="form-check-label"></label>
+                                    </div>
                                 </div>
-                            </div>
+                            }
                         </div>
                     </div>
                 </div>
@@ -83,8 +111,9 @@
                 <div class="card-body">
                     <h2 class="h6 mb-3"><i class="bi bi-chat-left-text"></i> Thông tin thêm</h2>
                     <div class="mb-3">
-                        <label asp-for="Form.Email" class="form-label"></label>
-                        <input asp-for="Form.Email" class="form-control" />
+                        <label asp-for="Form.Email" class="form-label"></label> <span class="text-danger">*</span>
+                        <input asp-for="Form.Email" type="email" class="form-control" autocomplete="email" required />
+                        <div class="form-text">Shop gửi xác nhận đơn và thông báo giao hàng qua email này.</div>
                         <span asp-validation-for="Form.Email" class="text-danger small"></span>
                     </div>
                     <div>
@@ -190,14 +219,22 @@
     <partial name="_ValidationScriptsPartial" />
     <script>
         (function () {
-            // Hiện ô nhập địa chỉ mới chỉ khi chọn "Giao đến địa chỉ khác"
+            // Khách có sổ địa chỉ: chỉ hiện (và bắt buộc) ô nhập khi chọn "Giao đến địa chỉ khác".
+            // Khách vãng lai không có radio nên ô nhập luôn hiện và luôn bắt buộc.
             var khung = document.getElementById('khungDiaChiMoi');
             var radioMoi = document.getElementById('radioDiaChiMoi');
-            document.querySelectorAll('.js-chon-dc').forEach(function (r) {
-                r.addEventListener('change', function () {
-                    khung.classList.toggle('d-none', !radioMoi.checked);
+            var batBuoc = function (co) {
+                document.querySelectorAll('.js-bat-buoc').forEach(function (o) { o.required = co; });
+            };
+            batBuoc(radioMoi ? radioMoi.checked : true);
+            if (radioMoi) {
+                document.querySelectorAll('.js-chon-dc').forEach(function (r) {
+                    r.addEventListener('change', function () {
+                        khung.classList.toggle('d-none', !radioMoi.checked);
+                        batBuoc(radioMoi.checked);
+                    });
                 });
-            });
+            }
 
             // Áp mã giảm giá bằng AJAX. Lúc đặt hàng server còn kiểm lại mã lần nữa.
             var form = document.getElementById('formDatHang');
