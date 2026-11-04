@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace ShopBanHang.Models.Entities
 {
@@ -17,7 +18,7 @@ namespace ShopBanHang.Models.Entities
         [Display(Name = "Đường dẫn")]
         public string Slug { get; set; } = string.Empty;
 
-        [StringLength(250)]
+        [Column(TypeName = "nvarchar(max)")]
         [Display(Name = "Logo")]
         public string? LogoUrl { get; set; }
 
