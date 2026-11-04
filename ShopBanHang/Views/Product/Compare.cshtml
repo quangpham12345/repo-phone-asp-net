@@ -1,128 +1,187 @@
 ﻿@model ProductCompareViewModel
 @using ShopBanHang.Helpers
+@{
+    ViewData["Title"] = "So sánh sản phẩm";
+}
 
-<nav aria-label="breadcrumb">
-    <ol class="breadcrumb small">
+<nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb small mb-0">
         <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">Trang chủ</a></li>
         <li class="breadcrumb-item"><a asp-controller="Product" asp-action="Index">Sản phẩm</a></li>
         <li class="breadcrumb-item active">So sánh</li>
     </ol>
 </nav>
 
-<h1 class="h4 mb-4">So sánh sản phẩm</h1>
+<div class="section-header">
+    <h1 class="section-title"><i class="bi bi-arrow-left-right"></i> So sánh sản phẩm</h1>
+    <a asp-action="Index" class="section-link"><i class="bi bi-arrow-left"></i> Quay lại danh sách</a>
+</div>
 
 @if (Model.SanPham.Count < 2)
 {
-    <div class="alert alert-warning">Cần ít nhất 2 sản phẩm để so sánh.</div>
+    <div class="alert alert-warning d-flex align-items-center">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+        Cần ít nhất 2 sản phẩm để so sánh. Hãy quay lại danh sách và chọn thêm.
+    </div>
 }
 else
 {
-    <div class="table-responsive">
-        <table class="table table-bordered align-middle text-center">
-            <thead class="table-light">
-                <tr>
-                    <th class="text-start">Thông số</th>
-                    @foreach (var sp in Model.SanPham)
-                    {
-                        <th style="min-width:180px">
-                            <a asp-action="Detail" asp-route-slug="@sp.Slug" class="text-decoration-none">
-                                <img src="@(string.IsNullOrEmpty(sp.ImageUrl) ? "/images/products/no-image.svg" : sp.ImageUrl)"
-                                     alt="@sp.Name" class="img-fluid mb-2 rounded" style="max-height:120px;object-fit:contain" />
-                                <div class="small fw-semibold">@sp.Name</div>
-                            </a>
-                        </th>
-                    }
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td class="text-start fw-semibold">Giá bán</td>
-                    @foreach (var sp in Model.SanPham)
-                    {
-                        <td class="text-danger fw-bold">
-                            @if (sp.HasVariants)
-                            {
-                                @(sp.HasPriceRange ? "Từ " : "")@TienViet.Dinh(sp.DisplayPrice)
-                            }
-                            else
-                            {
-                                <span class="text-muted fw-normal">Đang cập nhật</span>
-                            }
-                        </td>
-                    }
-                </tr>
-                <tr>
-                    <td class="text-start fw-semibold">Giá gốc</td>
-                    @foreach (var sp in Model.SanPham)
-                    {
-                        <td>@(sp.DisplayOldPrice.HasValue ? TienViet.Dinh(sp.DisplayOldPrice) : "—")</td>
-                    }
-                </tr>
-                <tr>
-                    <td class="text-start fw-semibold">Thương hiệu</td>
-                    @foreach (var sp in Model.SanPham)
-                    {
-                        <td>@(sp.Brand?.Name ?? "—")</td>
-                    }
-                </tr>
-                <tr>
-                    <td class="text-start fw-semibold">Danh mục</td>
-                    @foreach (var sp in Model.SanPham)
-                    {
-                        <td>@(sp.Category?.Name ?? "—")</td>
-                    }
-                </tr>
-                <tr>
-                    <td class="text-start fw-semibold">Màu sắc</td>
-                    @foreach (var sp in Model.SanPham)
-                    {
-                        <td>@(sp.ColorOptions.Any() ? string.Join(", ", sp.ColorOptions) : "—")</td>
-                    }
-                </tr>
-                <tr>
-                    <td class="text-start fw-semibold">RAM</td>
-                    @foreach (var sp in Model.SanPham)
-                    {
-                        <td>@(sp.Ram ?? "—")</td>
-                    }
-                </tr>
-                <tr>
-                    <td class="text-start fw-semibold">Dung lượng</td>
-                    @foreach (var sp in Model.SanPham)
-                    {
-                        <td>@(sp.StorageOptions.Any() ? string.Join(", ", sp.StorageOptions) : "—")</td>
-                    }
-                </tr>
-                <tr>
-                    <td class="text-start fw-semibold">Hệ điều hành</td>
-                    @foreach (var sp in Model.SanPham)
-                    {
-                        <td>@(sp.Os ?? "—")</td>
-                    }
-                </tr>
-                <tr>
-                    <td class="text-start fw-semibold">Tồn kho</td>
-                    @foreach (var sp in Model.SanPham)
-                    {
-                        <td>@(sp.TotalStock > 0 ? sp.TotalStock.ToString() : "Hết hàng")</td>
-                    }
-                </tr>
-                <tr>
-                    <td class="text-start fw-semibold">Đã bán</td>
-                    @foreach (var sp in Model.SanPham)
-                    {
-                        <td>@sp.SoldCount</td>
-                    }
-                </tr>
-                <tr>
-                    <td class="text-start"></td>
-                    @foreach (var sp in Model.SanPham)
-                    {
-                        <td><a asp-action="Detail" asp-route-slug="@sp.Slug" class="btn btn-sm btn-mc-buy">Xem chi tiết</a></td>
-                    }
-                </tr>
-            </tbody>
-        </table>
+    <div class="detail-info p-0 overflow-hidden">
+        <div class="table-responsive">
+            <table class="table table-borderless align-middle text-center mb-0 compare-table">
+                <thead>
+                    <tr style="background:#fafafa;">
+                        <th class="text-start ps-4 py-3" style="min-width:140px;width:18%;">Thông số</th>
+                        @foreach (var sp in Model.SanPham)
+                        {
+                            <th class="py-4 px-3" style="min-width:200px">
+                                <a asp-action="Detail" asp-route-slug="@sp.Slug" class="text-decoration-none d-block">
+                                    <div class="mx-auto mb-3 rounded-hh overflow-hidden"
+                                         style="width:140px;height:140px;background:#f5f5f5;display:flex;align-items:center;justify-content:center;">
+                                        <img src="@(string.IsNullOrEmpty(sp.ImageUrl) ? "/images/products/no-image.svg" : sp.ImageUrl)"
+                                             alt="@sp.Name"
+                                             style="max-width:90%;max-height:90%;object-fit:contain;" />
+                                    </div>
+                                    <div class="fw-semibold text-dark small">@sp.Name</div>
+                                </a>
+                            </th>
+                        }
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr class="border-top">
+                        <td class="text-start ps-4 fw-semibold text-secondary py-3">Giá bán</td>
+                        @foreach (var sp in Model.SanPham)
+                        {
+                            <td class="py-3">
+                                @if (sp.HasVariants)
+                                {
+                                    <span class="fw-bold text-primary-hh fs-5">
+                                        @(sp.HasPriceRange ? "Từ " : "")@TienViet.Dinh(sp.DisplayPrice)
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">Đang cập nhật</span>
+                                }
+                            </td>
+                        }
+                    </tr>
+                    <tr class="bg-light">
+                        <td class="text-start ps-4 fw-semibold text-secondary py-3">Giá gốc</td>
+                        @foreach (var sp in Model.SanPham)
+                        {
+                            <td class="py-3 text-muted">
+                                @(sp.DisplayOldPrice.HasValue ? TienViet.Dinh(sp.DisplayOldPrice) : "—")
+                            </td>
+                        }
+                    </tr>
+                    <tr>
+                        <td class="text-start ps-4 fw-semibold text-secondary py-3">Thương hiệu</td>
+                        @foreach (var sp in Model.SanPham)
+                        {
+                            <td class="py-3">@(sp.Brand?.Name ?? "—")</td>
+                        }
+                    </tr>
+                    <tr class="bg-light">
+                        <td class="text-start ps-4 fw-semibold text-secondary py-3">Danh mục</td>
+                        @foreach (var sp in Model.SanPham)
+                        {
+                            <td class="py-3">@(sp.Category?.Name ?? "—")</td>
+                        }
+                    </tr>
+                    <tr>
+                        <td class="text-start ps-4 fw-semibold text-secondary py-3">Màu sắc</td>
+                        @foreach (var sp in Model.SanPham)
+                        {
+                            <td class="py-3">@(sp.ColorOptions.Any() ? string.Join(", ", sp.ColorOptions) : "—")</td>
+                        }
+                    </tr>
+                    <tr class="bg-light">
+                        <td class="text-start ps-4 fw-semibold text-secondary py-3">RAM</td>
+                        @foreach (var sp in Model.SanPham)
+                        {
+                            <td class="py-3">@(sp.Ram ?? "—")</td>
+                        }
+                    </tr>
+                    <tr>
+                        <td class="text-start ps-4 fw-semibold text-secondary py-3">Dung lượng</td>
+                        @foreach (var sp in Model.SanPham)
+                        {
+                            <td class="py-3">@(sp.StorageOptions.Any() ? string.Join(", ", sp.StorageOptions) : "—")</td>
+                        }
+                    </tr>
+                    <tr class="bg-light">
+                        <td class="text-start ps-4 fw-semibold text-secondary py-3">Màn hình</td>
+                        @foreach (var sp in Model.SanPham)
+                        {
+                            <td class="py-3">@(sp.Screen ?? "—")</td>
+                        }
+                    </tr>
+                    <tr>
+                        <td class="text-start ps-4 fw-semibold text-secondary py-3">Chip</td>
+                        @foreach (var sp in Model.SanPham)
+                        {
+                            <td class="py-3">@(sp.Chip ?? "—")</td>
+                        }
+                    </tr>
+                    <tr class="bg-light">
+                        <td class="text-start ps-4 fw-semibold text-secondary py-3">Camera</td>
+                        @foreach (var sp in Model.SanPham)
+                        {
+                            <td class="py-3">@(sp.Camera ?? "—")</td>
+                        }
+                    </tr>
+                    <tr>
+                        <td class="text-start ps-4 fw-semibold text-secondary py-3">Pin</td>
+                        @foreach (var sp in Model.SanPham)
+                        {
+                            <td class="py-3">@(sp.Battery ?? "—")</td>
+                        }
+                    </tr>
+                    <tr class="bg-light">
+                        <td class="text-start ps-4 fw-semibold text-secondary py-3">Hệ điều hành</td>
+                        @foreach (var sp in Model.SanPham)
+                        {
+                            <td class="py-3">@(sp.Os ?? "—")</td>
+                        }
+                    </tr>
+                    <tr>
+                        <td class="text-start ps-4 fw-semibold text-secondary py-3">Tồn kho</td>
+                        @foreach (var sp in Model.SanPham)
+                        {
+                            <td class="py-3">
+                                @if (sp.TotalStock > 0)
+                                {
+                                    <span class="badge bg-success rounded-pill">Còn @sp.TotalStock</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary rounded-pill">Hết hàng</span>
+                                }
+                            </td>
+                        }
+                    </tr>
+                    <tr class="bg-light">
+                        <td class="text-start ps-4 fw-semibold text-secondary py-3">Đã bán</td>
+                        @foreach (var sp in Model.SanPham)
+                        {
+                            <td class="py-3">@sp.SoldCount</td>
+                        }
+                    </tr>
+                    <tr>
+                        <td class="text-start ps-4 py-4"></td>
+                        @foreach (var sp in Model.SanPham)
+                        {
+                            <td class="py-4 px-3">
+                                <a asp-action="Detail" asp-route-slug="@sp.Slug" class="btn btn-buy btn-sm px-4">
+                                    Xem chi tiết
+                                </a>
+                            </td>
+                        }
+                    </tr>
+                </tbody>
+            </table>
+        </div>
     </div>
 }
-<a asp-action="Index" class="btn btn-light mt-3"><i class="bi bi-arrow-left"></i> Quay lại danh sách</a>
