@@ -175,6 +175,13 @@ namespace ShopBanHang.Services
             return dong > 0;
         }
 
+        public async Task GiamLuotDungAsync(int id)
+        {
+            await _db.Coupons
+                .Where(c => c.Id == id && c.UsedCount > 0)
+                .ExecuteUpdateAsync(s => s.SetProperty(c => c.UsedCount, c => c.UsedCount - 1));
+        }
+
         // ====================== Nội bộ ======================
 
         private static CouponKetQua Loi(string loi) => new(false, loi, null, 0);

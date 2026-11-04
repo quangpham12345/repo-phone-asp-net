@@ -1,0 +1,112 @@
+@model MyOrdersViewModel
+@using ShopBanHang.Helpers
+@{
+    int Dem(OrderStatus tt) => Model.SoDonTheoTrangThai.TryGetValue(tt, out int n) ? n : 0;
+}
+
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb small">
+        <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">Trang chủ</a></li>
+        <li class="breadcrumb-item"><a asp-controller="Account" asp-action="Profile">Tài khoản</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Đơn hàng của tôi</li>
+    </ol>
+</nav>
+
+<h1 class="h4 mb-3"><i class="bi bi-receipt"></i> Đơn hàng của tôi</h1>
+
+@* Tab lọc theo trạng thái, kèm số đơn của từng trạng thái *@
+<ul class="nav nav-pills flex-nowrap overflow-auto mb-3 small">
+    <li class="nav-item">
+        <a class="nav-link text-nowrap @(Model.TrangThai == null ? "active" : "")" asp-action="Index">
+            Tất cả <span class="badge bg-light text-dark">@Model.TongSoDon</span>
+        </a>
+    </li>
+    @foreach (OrderStatus tt in Enum.GetValues<OrderStatus>())
+    {
+        <li class="nav-item">
+            <a class="nav-link text-nowrap @(Model.TrangThai == tt ? "active" : "")"
+               asp-action="Index" asp-route-trangThai="@((int)tt)">
+                @tt.Nhan() <span class="badge bg-light text-dark">@Dem(tt)</span>
+            </a>
+        </li>
+    }
+</ul>
+
+@if (!Model.KetQua.Items.Any())
+{
+    <div class="card shadow-sm">
+        <div class="card-body text-center py-5 text-muted">
+            <i class="bi bi-inbox display-5"></i>
+            <p class="mt-3 mb-3">Chưa có đơn hàng nào@(Model.TrangThai.HasValue ? " ở trạng thái này" : "").</p>
+            <a asp-controller="Product" asp-action="Index" class="btn btn-mc-cta">Mua sắm ngay</a>
+        </div>
+    </div>
+}
+
+@foreach (var don in Model.KetQua.Items)
+{
+    var dauTien = don.OrderDetails.FirstOrDefault();
+    int soDongKhac = don.OrderDetails.Count - 1;
+
+    <div class="card shadow-sm mb-3">
+        <div class="card-header bg-white d-flex flex-wrap justify-content-between align-items-center gap-2">
+            <div class="small">
+                <b><code>@don.OrderCode</code></b>
+                <span class="text-muted ms-2">@don.CreatedAt.ToString("dd/MM/yyyy HH:mm")</span>
+            </div>
+            <div class="d-flex gap-1">
+                @if (don.PaymentMethod == PaymentMethod.ChuyenKhoan && don.Status != OrderStatus.DaHuy)
+                {
+                    <span class="badge @(don.IsPaid ? "bg-success" : "bg-warning text-dark")">
+                        @(don.IsPaid ? "Đã thanh toán" : "Chờ thanh toán")
+                    </span>
+                }
+                <span class="badge @TrangThaiDon.LopKhach(don.Status)">@don.Status.Nhan()</span>
+            </div>
+        </div>
+        <div class="card-body">
+            @if (dauTien != null)
+            {
+                <div class="d-flex align-items-center gap-3">
+                    <img src="@PhanLoai.Anh(dauTien.ProductVariant?.ImageUrl, dauTien.Product?.ImageUrl)" alt=""
+                         class="rounded border" style="width:56px;height:56px;object-fit:contain;background:#fff" />
+                    <div class="flex-grow-1">
+                        <div class="fw-semibold">@(dauTien.ProductName ?? dauTien.Product?.Name)</div>
+                        <div class="small text-muted">
+                            @if (!string.IsNullOrEmpty(dauTien.VariantName))
+                            {
+                                <text>@dauTien.VariantName · </text>
+                            }
+                            <text>Số lượng: @dauTien.Quantity</text>
+                            @if (soDongKhac > 0)
+                            {
+                                <text> · và @soDongKhac sản phẩm khác</text>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+        <div class="card-footer bg-white d-flex justify-content-between align-items-center">
+            <span>Tổng: <b class="text-danger">@TienViet.Dinh(don.Total)</b></span>
+            <a asp-action="Detail" asp-route-code="@don.OrderCode" class="btn btn-sm btn-outline-secondary">
+                Xem chi tiết
+            </a>
+        </div>
+    </div>
+}
+
+@if (Model.KetQua.TotalPages > 1)
+{
+    <nav>
+        <ul class="pagination justify-content-center">
+            @for (int i = 1; i <= Model.KetQua.TotalPages; i++)
+            {
+                <li class="page-item @(i == Model.KetQua.Page ? "active" : "")">
+                    <a class="page-link" asp-action="Index" asp-route-page="@i"
+                       asp-route-trangThai="@((int?)Model.TrangThai)">@i</a>
+                </li>
+            }
+        </ul>
+    </nav>
+}

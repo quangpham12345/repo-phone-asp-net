@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using ShopBanHang.Helpers;
 using ShopBanHang.Models.Entities;
 using ShopBanHang.Models.ViewModels;
 using ShopBanHang.Services.Interfaces;
@@ -19,16 +20,19 @@ namespace ShopBanHang.Controllers
     {
         private readonly IUserService _userService;
         private readonly IAddressService _addressService;
+        private readonly ICartService _cartService;
         private readonly UserManager<User> _userManager;
         private readonly SignInManager<User> _signInManager;
 
         public AccountController(IUserService userService,
                                  IAddressService addressService,
+                                 ICartService cartService,
                                  UserManager<User> userManager,
                                  SignInManager<User> signInManager)
         {
             _userService = userService;
             _addressService = addressService;
+            _cartService = cartService;
             _userManager = userManager;
             _signInManager = signInManager;
         }
@@ -354,11 +358,17 @@ namespace ShopBanHang.Controllers
         /// Giỏ hàng nằm trong Session, đoạn chat neo bằng cookie - ASP.NET Core
         /// không xoay session id khi đăng nhập nên cả hai đều còn nguyên ở đây.
         /// </summary>
-        private Task GopDuLieuKhachLe(User user)
+        private async Task GopDuLieuKhachLe(User user)
         {
-            // GIAI ĐOẠN SAU: gộp giỏ hàng trong Session vào giỏ của tài khoản
+            // Gộp giỏ hàng trong Session vào giỏ của tài khoản, rồi xoá giỏ Session
+            var gio = GioKhachLe.Lay(HttpContext.Session);
+            if (gio.Count > 0)
+            {
+                await _cartService.GopGioKhachAsync(user.Id, gio);
+                GioKhachLe.Xoa(HttpContext.Session);
+            }
+
             // GIAI ĐOẠN SAU: gán UserId cho ChatConversation đang neo bằng cookie
-            return Task.CompletedTask;
         }
 
         /// <summary>Rẽ nhánh sau đăng nhập: Admin vào khu quản trị, khách về trang bán hàng.</summary>
