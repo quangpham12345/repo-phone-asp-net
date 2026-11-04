@@ -1,0 +1,66 @@
+@model Order
+@using ShopBanHang.Helpers
+@* Bảng dòng hàng + tổng tiền của một đơn, phía khách. *@
+<div class="table-responsive">
+    <table class="table align-middle mb-0">
+        <thead class="table-light">
+            <tr>
+                <th>Sản phẩm</th>
+                <th class="text-end" style="width:130px">Đơn giá</th>
+                <th class="text-center" style="width:80px">SL</th>
+                <th class="text-end" style="width:140px">Thành tiền</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var d in Model.OrderDetails)
+            {
+                string anh = PhanLoai.Anh(d.ProductVariant?.ImageUrl, d.Product?.ImageUrl);
+                <tr>
+                    <td>
+                        <div class="d-flex align-items-center gap-2">
+                            <img src="@anh" alt="" class="rounded border"
+                                 style="width:48px;height:48px;object-fit:contain;background:#fff" />
+                            <div>
+                                @if (d.Product != null)
+                                {
+                                    <a asp-controller="Product" asp-action="Detail" asp-route-slug="@d.Product.Slug"
+                                       class="fw-semibold text-decoration-none">@(d.ProductName ?? d.Product.Name)</a>
+                                }
+                                else
+                                {
+                                    <span class="fw-semibold">@d.ProductName</span>
+                                }
+                                @if (!string.IsNullOrEmpty(d.VariantName))
+                                {
+                                    <div class="small text-muted">@d.VariantName</div>
+                                }
+                            </div>
+                        </div>
+                    </td>
+                    <td class="text-end">@TienViet.Dinh(d.UnitPrice)</td>
+                    <td class="text-center">@d.Quantity</td>
+                    <td class="text-end fw-semibold">@TienViet.Dinh(d.LineTotal)</td>
+                </tr>
+            }
+        </tbody>
+        <tfoot>
+            <tr>
+                <td colspan="3" class="text-end">Tạm tính</td>
+                <td class="text-end">@TienViet.Dinh(Model.Subtotal)</td>
+            </tr>
+            @if (Model.DiscountAmount > 0)
+            {
+                <tr class="text-success">
+                    <td colspan="3" class="text-end">
+                        Giảm giá @if (!string.IsNullOrEmpty(Model.CouponCode)) { <code>@Model.CouponCode</code> }
+                    </td>
+                    <td class="text-end">-@TienViet.Dinh(Model.DiscountAmount)</td>
+                </tr>
+            }
+            <tr>
+                <td colspan="3" class="text-end fw-semibold">Tổng thanh toán</td>
+                <td class="text-end h6 text-danger fw-bold mb-0">@TienViet.Dinh(Model.Total)</td>
+            </tr>
+        </tfoot>
+    </table>
+</div>

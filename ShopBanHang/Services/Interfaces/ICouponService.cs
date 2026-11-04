@@ -35,5 +35,8 @@ namespace ShopBanHang.Services.Interfaces
         /// Gọi trong lúc tạo đơn, sau khi KiemTraAsync đã ok.
         /// </summary>
         Task<bool> TangLuotDungAsync(int id);
+
+        /// <summary>Trả lại 1 lượt dùng khi đơn có dùng mã bị huỷ.</summary>
+        Task GiamLuotDungAsync(int id);
     }
 }

@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using ShopBanHang.Models.Entities;
 
@@ -27,6 +27,7 @@ namespace ShopBanHang.Data
         public DbSet<Review> Reviews => Set<Review>();
         public DbSet<Coupon> Coupons => Set<Coupon>();
         public DbSet<ProductVariant> ProductVariants => Set<ProductVariant>();
+        public DbSet<CartItem> CartItems => Set<CartItem>();
 
         protected override void OnModelCreating(ModelBuilder b)
         {
@@ -47,6 +48,7 @@ namespace ShopBanHang.Data
             b.Entity<Review>().ToTable("Reviews");
             b.Entity<Coupon>().ToTable("Coupons");
             b.Entity<ProductVariant>().ToTable("ProductVariants");
+            b.Entity<CartItem>().ToTable("CartItems");
 
             // Không cho trùng đường dẫn. Email đã được Identity lo bằng
             // chỉ mục trên NormalizedEmail nên không khai lại ở đây.
@@ -78,6 +80,36 @@ namespace ShopBanHang.Data
                 .WithMany(p => p.OrderDetails)
                 .HasForeignKey(d => d.ProductId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            // Biến thể đã nằm trong đơn thì không cho xoá (chỉ tắt), để còn hoàn tồn kho khi huỷ đơn
+            b.Entity<OrderDetail>()
+                .HasOne(d => d.ProductVariant)
+                .WithMany()
+                .HasForeignKey(d => d.ProductVariantId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Mã giảm giá đã dùng thì CouponService không cho xoá; SetNull là để phòng hờ
+            b.Entity<Order>()
+                .HasOne(o => o.Coupon)
+                .WithMany()
+                .HasForeignKey(o => o.CouponId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            // Giỏ hàng: xoá tài khoản hoặc xoá biến thể thì dòng giỏ đi theo
+            b.Entity<CartItem>()
+                .HasOne(c => c.User)
+                .WithMany()
+                .HasForeignKey(c => c.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            b.Entity<CartItem>()
+                .HasOne(c => c.ProductVariant)
+                .WithMany()
+                .HasForeignKey(c => c.ProductVariantId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Mỗi biến thể chỉ có một dòng trong giỏ của một người; thêm nữa thì cộng số lượng
+            b.Entity<CartItem>().HasIndex(c => new { c.UserId, c.ProductVariantId }).IsUnique();
 
             b.Entity<Product>()
                 .HasOne(p => p.Category)
