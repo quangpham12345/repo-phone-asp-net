@@ -104,8 +104,10 @@ namespace ShopBanHang.Services
             var v = await _db.ProductVariants.FindAsync(id);
             if (v == null) return (false, "Không tìm thấy biến thể.");
 
-            // Khi OrderDetails có VariantId (phần của đơn hàng), chặn xoá biến thể đã nằm trong đơn
-            // và báo "hãy tắt biến thể thay vì xoá", giống cách sản phẩm và tài khoản đang làm.
+            // Biến thể đã nằm trong đơn thì không xoá được (khoá ngoại Restrict), vì còn phải
+            // hoàn tồn kho khi đơn bị huỷ. Báo "hãy tắt thay vì xoá", giống sản phẩm và tài khoản.
+            if (await _db.OrderDetails.AnyAsync(d => d.ProductVariantId == id))
+                return (false, "Biến thể này đã có trong đơn hàng nên không xoá được. Hãy tắt biến thể thay vì xoá.");
 
             _db.ProductVariants.Remove(v);
             await _db.SaveChangesAsync();

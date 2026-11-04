@@ -45,13 +45,14 @@ Areas/Admin/            khu quản trị, tách riêng Controllers + Views + Lay
 Controllers/            phía khách
 Controllers/Api/        API theo RESTful, trả JSON
 ViewComponents/         khối tự lấy dữ liệu riêng (thanh danh mục trên header)
-Models/Entities/        11 entity, mang Annotation để validate
+Models/Entities/        các entity, mang Annotation để validate
 Models/ViewModels/      dữ liệu cho form và danh sách, không bind trực tiếp entity
 Models/Dtos/            hình dạng dữ liệu trả ra API
 Models/Enums/           OrderStatus (kèm luật chuyển trạng thái), PaymentMethod
 Data/                   ShopContext, DbInitializer, Scripts/ShopBanHang.sql
 Services/               nghiệp vụ; cả MVC và API cùng gọi vào đây
-Helpers/                PasswordHelper (PBKDF2), SlugHelper, TienViet, EnumHelper, ImageStorage
+Repositories/           truy cập dữ liệu cho luồng giỏ hàng, đơn hàng, tồn kho (+ UnitOfWork)
+Helpers/                SlugHelper, TienViet, EnumHelper, ImageStorage, GioKhachLe, ThanhToanOptions...
 wwwroot/css/            admin.css cho khu quản trị, style.css cho phía khách
 wwwroot/images/         ảnh mẫu sản phẩm và banner (SVG, không phụ thuộc mạng)
 wwwroot/uploads/        nơi lưu ảnh admin tải lên
@@ -62,8 +63,9 @@ trả về — `View()` cho MVC hoặc `Ok()` cho API. Nhờ vậy luật chỉ 
 
 ## Cơ sở dữ liệu
 
-11 bảng: `Roles`, `Users`, `Categories`, `Brands`, `Products`, `Orders`,
-`OrderDetails`, `News`, `Banners`, `ChatConversations`, `ChatMessages`.
+Bảng nghiệp vụ: `Categories`, `Brands`, `Products`, `ProductVariants`, `Orders`, `OrderDetails`,
+`CartItems`, `Coupons`, `Addresses`, `Reviews`, `News`, `Banners`, `ChatConversations`, `ChatMessages`.
+Tài khoản dùng ASP.NET Core Identity (`AspNetUsers`, `AspNetRoles`, `AspNetUserRoles`...).
 
 Script để tạo CSDL bằng tay: `ShopBanHang/Data/Scripts/ShopBanHang.sql`
 (sinh ở chế độ idempotent nên chạy nhiều lần không lỗi).
@@ -78,7 +80,11 @@ Vài quyết định thiết kế cần biết khi đọc code:
   lấy giá hiện tại, để shop đổi giá thì hoá đơn cũ vẫn đúng
 - Tài khoản chỉ **bật/tắt**, không xoá cứng, vì `Orders` đang trỏ tới `Users`
 - Giá tiền là `decimal(18,0)` vì VNĐ không có phần xu
-- Mật khẩu băm PBKDF2 (SHA-256, 100.000 vòng), mỗi mật khẩu một salt riêng
+- Mật khẩu do ASP.NET Core Identity băm và quản lý
+- `OrderDetails` chép lại `ProductName`, `VariantName`, `UnitPrice` lúc mua; `ProductVariantId` trỏ tới biến thể
+  đã trừ kho để huỷ đơn thì hoàn đúng chỗ. Biến thể đã nằm trong đơn không xoá được, chỉ tắt
+- Trừ tồn kho bằng một câu `UPDATE ... WHERE Stock >= @n` trong transaction, hai người mua chiếc cuối
+  cùng lúc thì chỉ một người được
 
 ## Thêm bảng mới
 
@@ -100,24 +106,31 @@ dotnet ef migrations script -o Data/Scripts/ShopBanHang.sql --idempotent
 
 Đã xong:
 
-- Cơ sở dữ liệu 11 bảng, migration, script SQL, dữ liệu mẫu
-- Đăng nhập rẽ nhánh theo vai trò, đăng ký, đổi mật khẩu, trang tài khoản
-- Quản lý tài khoản: danh sách có phân trang và lọc, thêm, sửa, bật tắt, đặt lại mật khẩu
-- Trang chủ: slideshow banner, sản phẩm nổi bật, sản phẩm mới nhất
-- Danh sách sản phẩm: lọc theo danh mục, thương hiệu, khoảng giá, 4 kiểu sắp xếp, phân trang
-- Chi tiết sản phẩm kèm sản phẩm cùng danh mục
-- **Toàn bộ khu quản trị (back-office)**:
-  - Tổng quan kèm thống kê: doanh thu tháng này, doanh thu 12 tháng, đơn theo
-    trạng thái, top 5 sản phẩm bán chạy, top 5 khách mua nhiều
-  - Đơn hàng: danh sách có lọc theo trạng thái và tra theo mã/tên/điện thoại,
-    chi tiết đơn, **chuyển trạng thái theo luồng một chiều**
-  - Sản phẩm: thêm, sửa, ẩn hiện, bật tắt nổi bật, tải ảnh lên
-  - Danh mục, thương hiệu, tin tức, banner: thêm, sửa, xoá, bật tắt
-  - Tài khoản: thêm, sửa, bật tắt, đặt lại mật khẩu
+- Cơ sở dữ liệu, migration, script SQL, dữ liệu mẫu
+- Đăng nhập (Identity) rẽ nhánh theo vai trò, đăng ký, quên/đặt lại mật khẩu, đổi mật khẩu, sổ địa chỉ
+- Trang chủ, danh sách sản phẩm có lọc, chi tiết sản phẩm theo biến thể, so sánh, gợi ý tìm kiếm, đánh giá
+- **Giỏ hàng theo biến thể** (`/Cart`): thêm (AJAX), sửa số lượng, xoá, tính tổng, kiểm tra tồn kho.
+  Chưa đăng nhập thì giỏ nằm trong Session, đăng nhập thì gộp vào bảng `CartItems`
+- **Đặt hàng** (`/Checkout`), **không bắt đăng nhập**: khách vãng lai tự nhập họ tên, số điện thoại,
+  địa chỉ, email (đều bắt buộc), đơn lưu với `UserId = null`; khách đã đăng nhập chọn được từ sổ địa chỉ.
+  Áp mã giảm giá (AJAX), COD hoặc chuyển khoản QR (VietQR), tạo đơn + trừ tồn kho + cộng lượt mã trong một transaction
+- **Đơn hàng của tôi** (`/Order`, cần đăng nhập): danh sách theo trạng thái, chi tiết + tiến trình, huỷ khi còn chờ xác nhận
+- **Tra cứu đơn** (`/Order/Lookup`, cho khách vãng lai): nhập mã đơn + số điện thoại để xem đơn, mã QR,
+  và huỷ khi còn chờ xác nhận. Trang đơn chỉ mở được trong phiên đã tra cứu đúng (hoặc vừa đặt xong),
+  nên biết mã đơn thôi chưa đủ để xem
+- **Khu quản trị**: tổng quan thống kê; đơn hàng (lọc theo trạng thái, hình thức, đã/chưa thanh toán,
+  khoảng ngày; xác nhận đơn; xác nhận đã thanh toán; chuyển trạng thái; huỷ có lý do và hoàn tồn kho);
+  sản phẩm, biến thể, danh mục, thương hiệu, tin tức, banner, mã giảm giá, tài khoản
 - `GET /api/users`, `GET /api/users/{id}`
 
-Chưa làm: giỏ hàng, đặt hàng, tra cứu đơn phía khách, trang tin tức phía khách,
-chat hỗ trợ, quốc tế hóa, AJAX.
+Chưa làm: trang tin tức phía khách, chat hỗ trợ, gửi email thật (email chỉ mới được lưu vào đơn), quốc tế hóa.
+
+## Thanh toán chuyển khoản
+
+Sửa tài khoản nhận tiền trong `appsettings.json`, mục `ThanhToan` (`BankId` theo mã VietQR: MB, VCB, TCB, ACB...).
+Sau khi đặt, khách thấy mã QR đã điền sẵn số tiền và nội dung là mã đơn bỏ dấu gạch (`DH202611040001`).
+Admin đối soát sao kê rồi bấm **Xác nhận đã thanh toán**; đơn chuyển khoản chưa thanh toán thì chưa giao được.
+Đơn COD tự được đánh dấu đã thanh toán khi chuyển sang Hoàn thành.
 
 ## Luồng trạng thái đơn hàng
 
@@ -133,3 +146,6 @@ cho phép, và service kiểm lại lần nữa trước khi lưu — không tin
 
 Khi đơn chuyển sang **Hoàn thành**, hệ thống cộng `SoldCount` cho từng sản phẩm
 trong đơn. Cộng sớm từ lúc xác nhận thì đơn bị huỷ giữa đường sẽ làm sai thống kê.
+
+Khi đơn bị **huỷ** (khách tự huỷ lúc Chờ xác nhận, hoặc admin huỷ ở ba bước đầu), tồn kho của
+từng biến thể được cộng trả lại và mã giảm giá được trả một lượt.

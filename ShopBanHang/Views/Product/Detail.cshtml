@@ -345,6 +345,9 @@
             var elGiam = document.getElementById('phanTramGiam');
             var elTon = document.getElementById('tonKho');
             var btnGio = document.getElementById('btnThemGio');
+            var btnMua = document.getElementById('btnMuaNgay');
+            var inputVariant = document.getElementById('variantIdInput');
+            var inputSoLuong = document.getElementById('soLuongInput');
             var anhChinh = document.getElementById('anhChinh');
 
             var dinhDang = function (n) { return Number(n).toLocaleString('de-DE') + ' đ'; };
@@ -431,6 +434,50 @@
             }
 
             capNhat();
+        })();
+
+        // ===== Số lượng và thêm vào giỏ bằng AJAX =====
+        (function () {
+            var form = document.getElementById('formGioHang');
+            if (!form) return;
+
+            var input = document.getElementById('soLuongInput');
+            var doiSoLuong = function (buoc) {
+                var max = Number(input.max) || 99;
+                var n = (Number(input.value) || 1) + buoc;
+                input.value = Math.min(max, Math.max(1, n));
+            };
+            document.getElementById('btnGiam').addEventListener('click', function () { doiSoLuong(-1); });
+            document.getElementById('btnTang').addEventListener('click', function () { doiSoLuong(1); });
+
+            form.addEventListener('submit', function (e) {
+                // "Mua ngay" để form submit thường, đi thẳng sang trang đặt hàng
+                if (e.submitter && e.submitter.id === 'btnMuaNgay') return;
+
+                e.preventDefault();
+                var btn = document.getElementById('btnThemGio');
+                btn.disabled = true;
+
+                var duLieu = new FormData(form);      // đã có sẵn __RequestVerificationToken
+                duLieu.set('muaNgay', 'false');
+
+                fetch(form.action, {
+                    method: 'POST',
+                    body: duLieu,
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                })
+                    .then(function (r) { return r.json(); })
+                    .then(function (kq) {
+                        if (kq.ok) {
+                            mcToast(kq.message, 'success');
+                            mcCapNhatGio(kq.soLuongGio);
+                        } else {
+                            mcToast(kq.message, 'warning');
+                        }
+                    })
+                    .catch(function () { mcToast('Không thêm được vào giỏ, vui lòng thử lại.', 'danger'); })
+                    .finally(function () { btn.disabled = false; });
+            });
         })();
     </script>
 }

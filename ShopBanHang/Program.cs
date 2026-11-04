@@ -1,7 +1,10 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using ShopBanHang.Data;
+using ShopBanHang.Helpers;
 using ShopBanHang.Models.Entities;
+using ShopBanHang.Repositories;
+using ShopBanHang.Repositories.Interfaces;
 using ShopBanHang.Services;
 using ShopBanHang.Services.Interfaces;
 
@@ -34,7 +37,21 @@ namespace ShopBanHang
             builder.Services.AddScoped<ICouponService, CouponService>();
             builder.Services.AddScoped<IProductVariantService, ProductVariantService>();
 
-            // Giỏ hàng sẽ dùng Session ở giai đoạn sau, đăng ký sẵn từ bây giờ
+            // Luồng giỏ hàng - đặt hàng - thanh toán đi theo Controller -> Service -> Repository.
+            // Repository và UnitOfWork cùng dùng chung một ShopContext trong mỗi request (Scoped).
+            builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+            builder.Services.AddScoped<ICartRepository, CartRepository>();
+            builder.Services.AddScoped<IOrderRepository, OrderRepository>();
+            builder.Services.AddScoped<IProductVariantRepository, ProductVariantRepository>();
+
+            builder.Services.AddScoped<ICartService, CartService>();
+            builder.Services.AddScoped<ICheckoutService, CheckoutService>();
+            builder.Services.AddScoped<IPaymentService, PaymentService>();
+
+            // Tài khoản nhận chuyển khoản để tạo mã VietQR, sửa trong appsettings.json
+            builder.Services.Configure<ThanhToanOptions>(builder.Configuration.GetSection(ThanhToanOptions.Section));
+
+            // Session giữ giỏ hàng của khách chưa đăng nhập
             builder.Services.AddDistributedMemoryCache();
             builder.Services.AddSession(o =>
             {

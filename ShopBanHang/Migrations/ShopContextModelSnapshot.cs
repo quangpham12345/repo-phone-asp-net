@@ -233,6 +233,39 @@ namespace ShopBanHang.Migrations
                     b.ToTable("Brands", (string)null);
                 });
 
+            modelBuilder.Entity("ShopBanHang.Models.Entities.CartItem", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("ProductVariantId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Quantity")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProductVariantId");
+
+                    b.HasIndex("UserId", "ProductVariantId")
+                        .IsUnique();
+
+                    b.ToTable("CartItems", (string)null);
+                });
+
             modelBuilder.Entity("ShopBanHang.Models.Entities.Category", b =>
                 {
                     b.Property<int>("Id")
@@ -447,6 +480,20 @@ namespace ShopBanHang.Migrations
                         .HasMaxLength(250)
                         .HasColumnType("nvarchar(250)");
 
+                    b.Property<string>("CancelReason")
+                        .HasMaxLength(250)
+                        .HasColumnType("nvarchar(250)");
+
+                    b.Property<DateTime?>("CancelledAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CouponCode")
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<int?>("CouponId")
+                        .HasColumnType("int");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
@@ -455,9 +502,15 @@ namespace ShopBanHang.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
+                    b.Property<decimal>("DiscountAmount")
+                        .HasColumnType("decimal(18,0)");
+
                     b.Property<string>("Email")
                         .HasMaxLength(150)
                         .HasColumnType("nvarchar(150)");
+
+                    b.Property<bool>("IsPaid")
+                        .HasColumnType("bit");
 
                     b.Property<string>("Note")
                         .HasMaxLength(500)
@@ -467,6 +520,9 @@ namespace ShopBanHang.Migrations
                         .IsRequired()
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
+
+                    b.Property<DateTime?>("PaidAt")
+                        .HasColumnType("datetime2");
 
                     b.Property<int>("PaymentMethod")
                         .HasColumnType("int");
@@ -479,6 +535,9 @@ namespace ShopBanHang.Migrations
                     b.Property<int>("Status")
                         .HasColumnType("int");
 
+                    b.Property<decimal>("Subtotal")
+                        .HasColumnType("decimal(18,0)");
+
                     b.Property<decimal>("Total")
                         .HasColumnType("decimal(18,0)");
 
@@ -486,6 +545,8 @@ namespace ShopBanHang.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("CouponId");
 
                     b.HasIndex("OrderCode")
                         .IsUnique();
@@ -509,17 +570,30 @@ namespace ShopBanHang.Migrations
                     b.Property<int>("ProductId")
                         .HasColumnType("int");
 
+                    b.Property<string>("ProductName")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<int?>("ProductVariantId")
+                        .HasColumnType("int");
+
                     b.Property<int>("Quantity")
                         .HasColumnType("int");
 
                     b.Property<decimal>("UnitPrice")
                         .HasColumnType("decimal(18,0)");
 
+                    b.Property<string>("VariantName")
+                        .HasMaxLength(80)
+                        .HasColumnType("nvarchar(80)");
+
                     b.HasKey("Id");
 
                     b.HasIndex("OrderId");
 
                     b.HasIndex("ProductId");
+
+                    b.HasIndex("ProductVariantId");
 
                     b.ToTable("OrderDetails", (string)null);
                 });
@@ -865,6 +939,25 @@ namespace ShopBanHang.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("ShopBanHang.Models.Entities.CartItem", b =>
+                {
+                    b.HasOne("ShopBanHang.Models.Entities.ProductVariant", "ProductVariant")
+                        .WithMany()
+                        .HasForeignKey("ProductVariantId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("ShopBanHang.Models.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("ProductVariant");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("ShopBanHang.Models.Entities.ChatConversation", b =>
                 {
                     b.HasOne("ShopBanHang.Models.Entities.User", "User")
@@ -888,10 +981,17 @@ namespace ShopBanHang.Migrations
 
             modelBuilder.Entity("ShopBanHang.Models.Entities.Order", b =>
                 {
+                    b.HasOne("ShopBanHang.Models.Entities.Coupon", "Coupon")
+                        .WithMany()
+                        .HasForeignKey("CouponId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.HasOne("ShopBanHang.Models.Entities.User", "User")
                         .WithMany("Orders")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Coupon");
 
                     b.Navigation("User");
                 });
@@ -910,9 +1010,16 @@ namespace ShopBanHang.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("ShopBanHang.Models.Entities.ProductVariant", "ProductVariant")
+                        .WithMany()
+                        .HasForeignKey("ProductVariantId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.Navigation("Order");
 
                     b.Navigation("Product");
+
+                    b.Navigation("ProductVariant");
                 });
 
             modelBuilder.Entity("ShopBanHang.Models.Entities.Product", b =>

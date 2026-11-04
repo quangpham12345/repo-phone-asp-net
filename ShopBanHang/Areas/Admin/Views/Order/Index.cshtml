@@ -1,5 +1,17 @@
 @model PagedResult<Order>
 @using ShopBanHang.Helpers
+@{
+    var loc = ViewBag.Loc as OrderFilter ?? new OrderFilter();
+    int soChoXacNhan = ViewBag.SoChoXacNhan ?? 0;
+}
+
+@if (soChoXacNhan > 0 && loc.TrangThai != OrderStatus.ChoXacNhan)
+{
+    <div class="alert alert-warning d-flex justify-content-between align-items-center py-2">
+        <span><i class="bi bi-bell"></i> Có <b>@soChoXacNhan</b> đơn đang chờ xác nhận.</span>
+        <a asp-action="Index" asp-route-trangThai="@((int)OrderStatus.ChoXacNhan)" class="btn btn-sm btn-warning">Xem ngay</a>
+    </div>
+}
 
 <div class="adm-panel">
     <div class="adm-panel-head">
@@ -7,22 +19,60 @@
         <span class="adm-badge">@Model.TotalItems đơn</span>
     </div>
 
-    <form asp-action="Index" method="get" class="d-flex flex-wrap gap-2 p-3 border-bottom">
-        <input type="text" name="tuKhoa" value="@ViewBag.TuKhoa" class="form-control"
-               style="max-width:280px" placeholder="Mã đơn, tên người nhận hoặc số điện thoại" />
+    <form asp-action="Index" method="get" class="d-flex flex-wrap gap-2 p-3 border-bottom align-items-end">
+        <div>
+            <label class="form-label small mb-1">Tìm</label>
+            <input type="text" name="tuKhoa" value="@loc.TuKhoa" class="form-control form-control-sm"
+                   style="width:240px" placeholder="Mã đơn, tên hoặc số điện thoại" />
+        </div>
 
-        <select name="trangThai" class="form-select" style="max-width:180px">
-            <option value="">— Mọi trạng thái —</option>
-            @foreach (OrderStatus tt in Enum.GetValues<OrderStatus>())
+        <div>
+            <label class="form-label small mb-1">Trạng thái</label>
+            <select name="trangThai" class="form-select form-select-sm" style="width:160px">
+                <option value="">— Tất cả —</option>
+                @foreach (OrderStatus tt in Enum.GetValues<OrderStatus>())
+                {
+                    <option value="@((int)tt)" selected="@(loc.TrangThai == tt)">@tt.Nhan()</option>
+                }
+            </select>
+        </div>
+
+        <div>
+            <label class="form-label small mb-1">Hình thức</label>
+            <select name="phuongThuc" class="form-select form-select-sm" style="width:190px">
+                <option value="">— Tất cả —</option>
+                @foreach (PaymentMethod pt in Enum.GetValues<PaymentMethod>())
+                {
+                    <option value="@((int)pt)" selected="@(loc.PhuongThuc == pt)">@pt.Nhan()</option>
+                }
+            </select>
+        </div>
+
+        <div>
+            <label class="form-label small mb-1">Thanh toán</label>
+            <select name="daThanhToan" class="form-select form-select-sm" style="width:150px">
+                <option value="">— Tất cả —</option>
+                <option value="true" selected="@(loc.DaThanhToan == true)">Đã thanh toán</option>
+                <option value="false" selected="@(loc.DaThanhToan == false)">Chưa thanh toán</option>
+            </select>
+        </div>
+
+        <div>
+            <label class="form-label small mb-1">Từ ngày</label>
+            <input type="date" name="tuNgay" value="@loc.TuNgay?.ToString("yyyy-MM-dd")" class="form-control form-control-sm" />
+        </div>
+        <div>
+            <label class="form-label small mb-1">Đến ngày</label>
+            <input type="date" name="denNgay" value="@loc.DenNgay?.ToString("yyyy-MM-dd")" class="form-control form-control-sm" />
+        </div>
+
+        <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-sm btn-primary"><i class="bi bi-funnel"></i> Lọc</button>
+            @if (loc.DangLoc)
             {
-                <option value="@((int)tt)" selected="@(ViewBag.TrangThai as OrderStatus? == tt)">
-                    @tt.Nhan()
-                </option>
+                <a asp-action="Index" class="btn btn-sm btn-light">Bỏ lọc</a>
             }
-        </select>
-
-        <button type="submit" class="btn btn-primary"><i class="bi bi-search"></i> Tìm</button>
-        <a asp-action="Index" class="btn btn-light">Bỏ lọc</a>
+        </div>
     </form>
 
     <div class="table-responsive">
@@ -34,10 +84,10 @@
                     <th>Người nhận</th>
                     <th style="width:120px">Điện thoại</th>
                     <th style="width:140px" class="text-end">Tổng tiền</th>
-                    <th style="width:130px">Thanh toán</th>
-                    <th style="width:140px">Trạng thái</th>
+                    <th style="width:150px">Thanh toán</th>
+                    <th style="width:130px">Trạng thái</th>
                     <th style="width:130px">Ngày đặt</th>
-                    <th style="width:80px" class="text-end"></th>
+                    <th style="width:60px" class="text-end"></th>
                 </tr>
             </thead>
             <tbody>
@@ -61,19 +111,29 @@
                             }
                         </td>
                         <td>@don.Phone</td>
-                        <td class="text-end adm-tien">@TienViet.Dinh(don.Total)</td>
-                        <td class="small">@don.PaymentMethod.Nhan()</td>
-                        <td>
-                            @{
-                                string lopTrangThai = don.Status switch
-                                {
-                                    OrderStatus.HoanThanh => "st-done",
-                                    OrderStatus.DaHuy => "st-todo",
-                                    _ => "st-wait"
-                                };
+                        <td class="text-end adm-tien">
+                            @TienViet.Dinh(don.Total)
+                            @if (don.DiscountAmount > 0)
+                            {
+                                <div class="small text-muted" title="Đã giảm bằng mã @don.CouponCode">
+                                    <i class="bi bi-ticket-perforated"></i> -@TienViet.Dinh(don.DiscountAmount)
+                                </div>
                             }
-                            <span class="st @lopTrangThai">@don.Status.Nhan()</span>
                         </td>
+                        <td class="small">
+                            @(don.PaymentMethod == PaymentMethod.COD ? "COD" : "Chuyển khoản")
+                            <div>
+                                @if (don.IsPaid)
+                                {
+                                    <span class="st st-done">Đã thu</span>
+                                }
+                                else if (don.Status != OrderStatus.DaHuy)
+                                {
+                                    <span class="st st-wait">Chưa thu</span>
+                                }
+                            </div>
+                        </td>
+                        <td><span class="st @TrangThaiDon.LopAdmin(don.Status)">@don.Status.Nhan()</span></td>
                         <td class="small">@don.CreatedAt.ToString("dd/MM/yyyy HH:mm")</td>
                         <td class="text-end">
                             <a asp-action="Detail" asp-route-id="@don.Id"
@@ -90,13 +150,17 @@
     @if (Model.TotalPages > 1)
     {
         <nav class="p-3 border-top">
-            <ul class="pagination mb-0">
+            <ul class="pagination mb-0 flex-wrap">
                 @for (int i = 1; i <= Model.TotalPages; i++)
                 {
                     <li class="page-item @(i == Model.Page ? "active" : "")">
                         <a class="page-link" asp-action="Index" asp-route-page="@i"
-                           asp-route-tuKhoa="@ViewBag.TuKhoa"
-                           asp-route-trangThai="@((int?)(ViewBag.TrangThai as OrderStatus?))">@i</a>
+                           asp-route-tuKhoa="@loc.TuKhoa"
+                           asp-route-trangThai="@((int?)loc.TrangThai)"
+                           asp-route-phuongThuc="@((int?)loc.PhuongThuc)"
+                           asp-route-daThanhToan="@loc.DaThanhToan"
+                           asp-route-tuNgay="@loc.TuNgay?.ToString("yyyy-MM-dd")"
+                           asp-route-denNgay="@loc.DenNgay?.ToString("yyyy-MM-dd")">@i</a>
                     </li>
                 }
             </ul>
@@ -105,6 +169,6 @@
 </div>
 
 <p class="text-muted small mt-3 mb-0">
-    Đơn hàng <b>không xoá được</b>, chỉ chuyển trạng thái — đó là lịch sử bán hàng.
-    Bấm vào biểu tượng con mắt để xem chi tiết và đổi trạng thái.
+    Đơn hàng <b>không xoá được</b>, chỉ chuyển trạng thái hoặc huỷ — đó là lịch sử bán hàng.
+    Bấm biểu tượng con mắt để xem chi tiết, xác nhận đơn và xác nhận thanh toán.
 </p>
