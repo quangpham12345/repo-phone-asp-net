@@ -14,7 +14,11 @@ namespace ShopBanHang.Services.Interfaces
         /// <summary>Sản phẩm mới nhất cho trang chủ.</summary>
         Task<List<Product>> LayMoiNhatAsync(int soLuong);
 
-        /// <summary>Danh sách có lọc và phân trang cho trang danh mục.</summary>
+        /// <summary>
+        /// Danh sách có lọc và phân trang cho trang danh mục. Các Product trả về đã Include Variants,
+        /// nên DisplayPrice, TotalStock... dùng được ngay. Lọc giá và sắp xếp giá tính theo giá thấp nhất
+        /// trong các biến thể đang bán; lọc dung lượng khớp khi có biến thể đang bán đúng dung lượng đó.
+        /// </summary>
         Task<PagedResult<Product>> LayDanhSachAsync(ProductFilter loc, int page, int pageSize);
 
         Task<Product?> LayTheoSlugAsync(string slug);
@@ -30,7 +34,6 @@ namespace ShopBanHang.Services.Interfaces
         Task<int> DemAsync();
         Task<List<ProductSuggestItem>> GoiYAsync(string tuKhoa, int soLuong);
         Task<(List<string> ram, List<string> storage, List<string> os)> LayGiaTriLocAsync();
-        Task<List<Product>> LayPhienBanKhacAsync(Product sp, int soLuong);
         Task<List<Product>> LayTheoIdsAsync(IEnumerable<int> ids);
         // ===== Phần quản trị =====
 
@@ -43,7 +46,7 @@ namespace ShopBanHang.Services.Interfaces
         /// <summary>Bật tắt cờ nổi bật trên trang chủ.</summary>
         Task<(bool ok, string? loi)> DoiNoiBatAsync(int id);
 
-        /// <summary>Biến thể (hoặc sản phẩm không biến thể) đang bán mà tồn kho từ ngưỡng trở xuống, ít nhất lên trước.</summary>
+        /// <summary>Biến thể đang bán (của sản phẩm đang bán) mà tồn kho từ ngưỡng trở xuống, ít nhất lên trước.</summary>
         Task<List<CanhBaoTonKhoItem>> LayCanhBaoTonKhoAsync();
 
         /// <summary>Chỉ đếm, dùng cho số trên menu bên trái.</summary>

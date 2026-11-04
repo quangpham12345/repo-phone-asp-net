@@ -71,16 +71,11 @@ namespace ShopBanHang.Areas.Admin.Controllers
             {
                 Id = p.Id,
                 Name = p.Name,
-                Price = p.Price,
-                OldPrice = p.OldPrice,
-                Stock = p.Stock,
                 ImageUrl = p.ImageUrl,
                 GalleryUrls = p.GalleryUrls,
                 Description = p.Description,
                 Ram = p.Ram,
-                Storage = p.Storage,
                 Os = p.Os,
-                Color = p.Color,
                 Screen = p.Screen,
                 Chip = p.Chip,
                 Battery = p.Battery,
@@ -109,6 +104,9 @@ namespace ShopBanHang.Areas.Admin.Controllers
             }
             vm.AnhTaiLenMoi = cacAnhMoi;
 
+            // Phải nhớ trước khi lưu: lưu thêm mới xong thì service gán vm.Id nên LaThemMoi sẽ thành false
+            bool laThemMoi = vm.LaThemMoi;
+
             var (ok, loi) = await _service.LuuAsync(vm);
             if (!ok)
             {
@@ -127,17 +125,20 @@ namespace ShopBanHang.Areas.Admin.Controllers
                 .ToList();
             foreach (var u in anhBiGo) ImageStorage.Xoa(u, _env);
 
-            // Biến thể: gỡ ảnh riêng đang trỏ tới ảnh vừa xoá, rồi tính lại giá/tồn kho từ biến thể
-            // (form chỉ gửi lại số cũ; không làm bước này thì số cũ có thể đè lên số mới)
-            if (!vm.LaThemMoi)
-            {
+            // Biến thể: gỡ ảnh riêng đang trỏ tới ảnh vừa xoá để biến thể quay về dùng ảnh chính
+            if (!laThemMoi)
                 await _variants.GoAnhAsync(vm.Id, anhBiGo);
-                await _variants.DongBoSanPhamAsync(vm.Id);
+
+            if (laThemMoi)
+            {
+                // Giá và tồn kho nằm ở biến thể, nên sản phẩm mới chưa có giá cho đến khi có biến thể đầu tiên
+                TempData["ThanhCong"] = "Đã thêm sản phẩm. Hãy thêm biến thể đầu tiên (dung lượng, màu, giá, tồn kho) để sản phẩm bán được.";
+                return RedirectToAction("Create", "ProductVariant", new { productId = vm.Id });
             }
 
-            TempData["ThanhCong"] = vm.LaThemMoi ? "Đã thêm sản phẩm." : "Đã cập nhật sản phẩm.";
+            TempData["ThanhCong"] = "Đã cập nhật sản phẩm.";
             return RedirectToAction(nameof(Index));
-        }    
+        }
 
         [HttpPost]
         [ValidateAntiForgeryToken]

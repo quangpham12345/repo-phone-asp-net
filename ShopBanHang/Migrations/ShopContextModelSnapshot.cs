@@ -550,10 +550,6 @@ namespace ShopBanHang.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
-                    b.Property<string>("Color")
-                        .HasMaxLength(40)
-                        .HasColumnType("nvarchar(40)");
-
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
@@ -579,15 +575,9 @@ namespace ShopBanHang.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("nvarchar(200)");
 
-                    b.Property<decimal?>("OldPrice")
-                        .HasColumnType("decimal(18,0)");
-
                     b.Property<string>("Os")
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
-
-                    b.Property<decimal>("Price")
-                        .HasColumnType("decimal(18,0)");
 
                     b.Property<string>("Ram")
                         .HasMaxLength(30)
@@ -604,13 +594,6 @@ namespace ShopBanHang.Migrations
 
                     b.Property<int>("SoldCount")
                         .HasColumnType("int");
-
-                    b.Property<int>("Stock")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Storage")
-                        .HasMaxLength(30)
-                        .HasColumnType("nvarchar(30)");
 
                     b.HasKey("Id");
 

@@ -69,7 +69,7 @@ namespace ShopBanHang.Models.ViewModels
         public List<string> CacOs { get; set; } = new();
         /// <summary>Tiêu đề trang, đổi theo danh mục đang xem.</summary>
         public string TieuDe { get; set; } = "Tất cả sản phẩm";
-        /// <summary>Id sản phẩm đang có biến thể (hoặc chính nó) sắp hết hàng, để đánh dấu trong danh sách admin.</summary>
+        /// <summary>Id sản phẩm có biến thể sắp hết hàng, để đánh dấu trong danh sách admin.</summary>
         public HashSet<int> SanPhamCanhBao { get; set; } = new();
     }
 
@@ -90,7 +90,6 @@ namespace ShopBanHang.Models.ViewModels
 
         /// <summary>Đánh giá cũ của chính khách đang xem, có thì form sẽ điền sẵn.</summary>
         public Review? DanhGiaCuaToi { get; set; }
-        public List<Product> PhienBanKhac { get; set; } = new();
     }
 
     public class ProductSuggestItem
@@ -106,14 +105,14 @@ namespace ShopBanHang.Models.ViewModels
         public List<Product> SanPham { get; set; } = new();
     }
 
-    /// <summary>Một dòng cảnh báo tồn kho: một biến thể, hoặc một sản phẩm không có biến thể.</summary>
+    /// <summary>Một dòng cảnh báo tồn kho: một biến thể sắp hết hoặc đã hết hàng.</summary>
     public class CanhBaoTonKhoItem
     {
         public int SanPhamId { get; set; }
         public string TenSanPham { get; set; } = string.Empty;
         public string? Anh { get; set; }
 
-        /// <summary>Ví dụ "512GB · Titan Đen". Null nếu sản phẩm không có biến thể.</summary>
+        /// <summary>Ví dụ "512GB · Titan Đen".</summary>
         public string? BienThe { get; set; }
 
         public int Ton { get; set; }

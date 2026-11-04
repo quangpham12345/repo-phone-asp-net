@@ -1,8 +1,10 @@
 @model Product
 @using ShopBanHang.Helpers
 @{
-    int phanTramGiam = TienViet.PhanTramGiam(Model.Price, Model.OldPrice);
-    bool hetHang = Model.Stock <= 0;
+    // Giá và tồn kho tính từ biến thể (query phải Include Variants)
+    bool coGia = Model.HasVariants;
+    int phanTramGiam = TienViet.PhanTramGiam(Model.DisplayPrice, Model.DisplayOldPrice);
+    bool hetHang = Model.TotalStock <= 0;
 }
 
 <div class="card h-100 shadow-sm product-card position-relative">
@@ -39,10 +41,17 @@
         </h3>
 
         <div class="mb-2">
-            <span class="fw-bold text-danger">@TienViet.Dinh(Model.Price)</span>
-            @if (phanTramGiam > 0)
+            @if (!coGia)
             {
-                <del class="text-muted small ms-1">@TienViet.Dinh(Model.OldPrice)</del>
+                <span class="text-muted small">Đang cập nhật giá</span>
+            }
+            else
+            {
+                <span class="fw-bold text-danger">@(Model.HasPriceRange ? "Từ " : "")@TienViet.Dinh(Model.DisplayPrice)</span>
+                @if (phanTramGiam > 0)
+                {
+                    <del class="text-muted small ms-1">@TienViet.Dinh(Model.DisplayOldPrice)</del>
+                }
             }
         </div>
 

@@ -72,6 +72,9 @@ Vài quyết định thiết kế cần biết khi đọc code:
 
 - `Orders.UserId` cho phép null — khách không đăng nhập vẫn đặt được hàng
 - `OrderDetails.UnitPrice` lưu giá tại thời điểm mua, không join sang `Products`
+- `Products` không có cột giá, tồn kho, dung lượng, màu: các thứ này chỉ nằm ở `ProductVariants`.
+  Giá hiển thị của sản phẩm là giá thấp nhất trong các biến thể đang bán, tồn kho là tổng các biến thể
+  đang bán (`Product.DisplayPrice`, `Product.TotalStock`). Sản phẩm chưa có biến thể thì chưa có giá.
   lấy giá hiện tại, để shop đổi giá thì hoá đơn cũ vẫn đúng
 - Tài khoản chỉ **bật/tắt**, không xoá cứng, vì `Orders` đang trỏ tới `Users`
 - Giá tiền là `decimal(18,0)` vì VNĐ không có phần xu

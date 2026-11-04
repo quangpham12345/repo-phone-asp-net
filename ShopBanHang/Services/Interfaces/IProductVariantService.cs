@@ -3,8 +3,8 @@
 namespace ShopBanHang.Services.Interfaces
 {
     /// <summary>
-    /// Nghiệp vụ biến thể sản phẩm (dung lượng × màu). Mỗi lần thêm, sửa, tắt, xoá biến thể,
-    /// service tự đồng bộ Product.Price, OldPrice và Stock từ các biến thể.
+    /// Nghiệp vụ biến thể sản phẩm (dung lượng × màu). Giá và tồn kho chỉ nằm ở biến thể;
+    /// giá và tồn kho hiển thị của cả sản phẩm do Product.DisplayPrice, TotalStock tính ra khi đọc.
     /// </summary>
     public interface IProductVariantService
     {
@@ -17,12 +17,6 @@ namespace ShopBanHang.Services.Interfaces
         Task<(bool ok, string? loi)> LuuAsync(ProductVariant bienThe);
         Task<(bool ok, string? loi)> DoiTrangThaiAsync(int id);
         Task<(bool ok, string? loi)> XoaAsync(int id);
-
-        /// <summary>
-        /// Tính lại giá và tồn kho của sản phẩm từ các biến thể. Sản phẩm chưa có biến thể
-        /// thì không làm gì, giá và tồn kho nhập tay được giữ nguyên.
-        /// </summary>
-        Task DongBoSanPhamAsync(int productId);
 
         /// <summary>
         /// Gỡ ảnh riêng của các biến thể đang trỏ tới những ảnh vừa bị xoá khỏi sản phẩm,

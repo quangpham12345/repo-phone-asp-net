@@ -186,51 +186,79 @@ a {
 }
 
 /* ===== Product card ===== */
+
 .product-card {
     transition: transform 0.15s ease, box-shadow 0.15s ease;
     border-radius: 10px;
     overflow: hidden;
     position: relative;
-}
-
-.product-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12) !important;
-}
-
-.product-card .mc-badges {
-    position: absolute;
-    top: 8px;
-    left: 8px;
-    z-index: 2;
+    height: 100%;
     display: flex;
     flex-direction: column;
-    gap: 4px;
 }
 
-.product-card .mc-badge {
-    font-size: 0.7rem;
-    font-weight: 700;
-    padding: 2px 8px;
-    border-radius: 4px;
-    color: #fff;
-}
+    .product-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12) !important;
+    }
 
-.product-card .mc-badge-new {
-    background-color: var(--mc-gold);
-}
+    /* Cố định kích thước vùng ảnh */
+    .product-card .card-img-top {
+        width: 100%;
+        height: 260px;
+        object-fit: contain;
+        object-position: center;
+        background-color: #fff;
+        flex-shrink: 0;
+        padding: 12px;
+    }
 
-.product-card .mc-badge-hot {
-    background-color: var(--mc-red);
-}
+    /* Nội dung card đồng đều */
+    .product-card .card-body {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+    }
 
-.product-card .card-title a {
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-    min-height: 44px;
-}
+    /* Tiêu đề sản phẩm tối đa 2 dòng */
+    .product-card .card-title a {
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        min-height: 44px;
+    }
+
+    /* Giá và thông tin sản phẩm */
+    .product-card .card-body .btn-mc-buy {
+        margin-top: auto;
+    }
+
+    .product-card .mc-badges {
+        position: absolute;
+        top: 8px;
+        left: 8px;
+        z-index: 2;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .product-card .mc-badge {
+        font-size: 0.7rem;
+        font-weight: 700;
+        padding: 2px 8px;
+        border-radius: 4px;
+        color: #fff;
+    }
+
+    .product-card .mc-badge-new {
+        background-color: var(--mc-gold);
+    }
+
+    .product-card .mc-badge-hot {
+        background-color: var(--mc-red);
+    }
 
 .btn-mc-buy {
     background-color: var(--mc-orange);
@@ -239,10 +267,10 @@ a {
     font-weight: 700;
 }
 
-.btn-mc-buy:hover {
-    background-color: var(--mc-orange-dark);
-    color: #fff;
-}
+    .btn-mc-buy:hover {
+        background-color: var(--mc-orange-dark);
+        color: #fff;
+    }
 
 footer a:hover {
     text-decoration: underline !important;
@@ -253,9 +281,6 @@ footer a:hover {
     padding-left: 0;
 }
 
-.card-img-top {
-    background-color: #fff;
-}
 
 /* ===== Tien trinh don hang (trang chi tiet don cua khach) ===== */
 .order-steps {
@@ -590,3 +615,179 @@ footer a:hover {
         background-color: #0d6efd;
         border-color: #0d6efd;
     }
+
+/* Khung thông số */
+.spec-card {
+    background: #fff;
+    border: 1px solid #eee;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 4px 18px rgba(0, 0, 0, .045);
+}
+
+/* Header */
+.spec-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 20px 22px;
+    background: linear-gradient(120deg, #fff9f1, #fff);
+    border-bottom: 1px solid #f1eee9;
+}
+
+.spec-header-icon {
+    width: 46px;
+    height: 46px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #fff0df;
+    color: #e87924;
+    font-size: 23px;
+}
+
+.spec-header h5 {
+    color: #252525;
+    font-size: 17px;
+    font-weight: 750;
+}
+
+.spec-header p {
+    color: #888;
+    font-size: 13px;
+}
+
+/* Nội dung */
+.spec-body {
+    padding: 20px 22px;
+}
+
+.spec-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 28px;
+}
+
+.spec-item {
+    display: flex;
+    align-items: center;
+    gap: 13px;
+    min-height: 76px;
+    padding: 12px 4px;
+    border-bottom: 1px solid #f1f1f1;
+}
+
+.spec-item-icon {
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 11px;
+    background: #f7f7f7;
+    color: #e87924;
+    font-size: 19px;
+}
+
+.spec-item-content {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    min-width: 0;
+}
+
+.spec-label {
+    color: #929292;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.spec-value {
+    color: #292929;
+    font-size: 14px;
+    font-weight: 650;
+    overflow-wrap: anywhere;
+}
+
+/* Đường phân cách */
+.spec-divider {
+    height: 1px;
+    background: #eee;
+    margin: 20px 0;
+}
+
+/* Tồn kho và đã bán */
+.spec-summary {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+}
+
+.spec-summary-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 15px;
+    border-radius: 12px;
+    background: #fafafa;
+    border: 1px solid #f0f0f0;
+}
+
+.summary-icon {
+    width: 42px;
+    height: 42px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 11px;
+    font-size: 19px;
+}
+
+.stock-icon {
+    color: #198754;
+    background: #e8f6ee;
+}
+
+.sold-icon {
+    color: #e87924;
+    background: #fff0df;
+}
+
+.summary-label {
+    display: block;
+    color: #888;
+    font-size: 12px;
+    margin-bottom: 4px;
+}
+
+.summary-value {
+    display: block;
+    font-size: 14px;
+    font-weight: 700;
+}
+
+/* Responsive */
+@media (max-width: 576px) {
+    .spec-header {
+        padding: 16px;
+    }
+
+    .spec-body {
+        padding: 14px 16px;
+    }
+
+    .spec-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .spec-item {
+        min-height: 66px;
+    }
+
+    .spec-summary {
+        grid-template-columns: 1fr;
+    }
+}

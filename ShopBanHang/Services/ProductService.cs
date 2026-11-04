@@ -45,19 +45,35 @@ namespace ShopBanHang.Services
             if (!string.IsNullOrWhiteSpace(loc.ThuongHieu))
                 q = q.Where(p => p.Brand!.Slug == loc.ThuongHieu);
 
-            if (loc.GiaTu.HasValue) q = q.Where(p => p.Price >= loc.GiaTu.Value);
-            if (loc.GiaDen.HasValue) q = q.Where(p => p.Price <= loc.GiaDen.Value);
+            // Giá của sản phẩm là giá thấp nhất trong các biến thể đang bán (cùng luật với Product.DisplayPrice).
+            // Sản phẩm chưa có biến thể đang bán thì MIN là NULL nên tự rơi khỏi mọi khoảng giá.
+            if (loc.GiaTu.HasValue)
+            {
+                decimal tu = loc.GiaTu.Value;
+                q = q.Where(p => p.Variants.Where(v => v.IsActive).Min(v => (decimal?)v.Price) >= tu);
+            }
+            if (loc.GiaDen.HasValue)
+            {
+                decimal den = loc.GiaDen.Value;
+                q = q.Where(p => p.Variants.Where(v => v.IsActive).Min(v => (decimal?)v.Price) <= den);
+            }
 
             if (!string.IsNullOrWhiteSpace(loc.Ram))
                 q = q.Where(p => p.Ram == loc.Ram);
             if (!string.IsNullOrWhiteSpace(loc.Storage))
-                q = q.Where(p => p.Storage == loc.Storage);
+            {
+                string dungLuong = loc.Storage;
+                q = q.Where(p => p.Variants.Any(v => v.IsActive && v.Storage == dungLuong));
+            }
             if (!string.IsNullOrWhiteSpace(loc.Os))
                 q = q.Where(p => p.Os == loc.Os);
             q = loc.SapXep switch
             {
-                ProductSort.GiaTang => q.OrderBy(p => p.Price),
-                ProductSort.GiaGiam => q.OrderByDescending(p => p.Price),
+                // Sản phẩm chưa có biến thể đang bán (chưa có giá) luôn xuống cuối, dù sắp tăng hay giảm
+                ProductSort.GiaTang => q.OrderBy(p => p.Variants.Any(v => v.IsActive) ? 0 : 1)
+                                        .ThenBy(p => p.Variants.Where(v => v.IsActive).Min(v => (decimal?)v.Price)),
+                ProductSort.GiaGiam => q.OrderBy(p => p.Variants.Any(v => v.IsActive) ? 0 : 1)
+                                        .ThenByDescending(p => p.Variants.Where(v => v.IsActive).Min(v => (decimal?)v.Price)),
                 ProductSort.BanChay => q.OrderByDescending(p => p.SoldCount),
                 _ => q.OrderByDescending(p => p.CreatedAt)
             };
@@ -111,9 +127,6 @@ namespace ShopBanHang.Services
 
         public async Task<(bool ok, string? loi)> LuuAsync(ProductFormViewModel vm)
         {
-            if (vm.OldPrice.HasValue && vm.OldPrice.Value > 0 && vm.OldPrice.Value <= vm.Price)
-                return (false, "Giá gốc phải lớn hơn giá bán, hoặc để trống nếu không giảm giá.");
-
             if (!await _db.Categories.AnyAsync(c => c.Id == vm.CategoryId))
                 return (false, "Danh mục không hợp lệ.");
             if (!await _db.Brands.AnyAsync(b => b.Id == vm.BrandId))
@@ -129,22 +142,17 @@ namespace ShopBanHang.Services
 
             if (vm.Id == 0)
             {
-                _db.Products.Add(new Product
+                var moi = new Product
                 {
                     Name = vm.Name.Trim(),
                     Slug = slug,
-                    Price = vm.Price,
-                    OldPrice = vm.OldPrice,
-                    Stock = vm.Stock,
                     ImageUrl = anh.AnhChinh,
                     Description = vm.Description?.Trim(),
                     CategoryId = vm.CategoryId,
                     BrandId = vm.BrandId,
                     GalleryUrls = anh.Gallery,
                     Ram = vm.Ram?.Trim(),
-                    Storage = vm.Storage?.Trim(),
                     Os = vm.Os?.Trim(),
-                    Color = vm.Color?.Trim(),
                     Screen = vm.Screen?.Trim(),
                     Chip = vm.Chip?.Trim(),
                     Battery = vm.Battery?.Trim(),
@@ -152,7 +160,14 @@ namespace ShopBanHang.Services
                     IsFeatured = vm.IsFeatured,
                     IsActive = vm.IsActive,
                     CreatedAt = DateTime.Now
-                });
+                };
+                _db.Products.Add(moi);
+
+                await _db.SaveChangesAsync();
+
+                // Trả id mới về cho controller để chuyển thẳng sang trang thêm biến thể
+                vm.Id = moi.Id;
+                return (true, null);
             }
             else
             {
@@ -161,17 +176,12 @@ namespace ShopBanHang.Services
 
                 p.Name = vm.Name.Trim();
                 p.Slug = slug;
-                p.Price = vm.Price;
-                p.OldPrice = vm.OldPrice;
-                p.Stock = vm.Stock;
                 p.Description = vm.Description?.Trim();
                 p.CategoryId = vm.CategoryId;
                 p.BrandId = vm.BrandId;
                 p.GalleryUrls = anh.Gallery;
                 p.Ram = vm.Ram?.Trim();
-                p.Storage = vm.Storage?.Trim();
                 p.Os = vm.Os?.Trim();
-                p.Color = vm.Color?.Trim();
                 p.Screen = vm.Screen?.Trim();
                 p.Chip = vm.Chip?.Trim();
                 p.Battery = vm.Battery?.Trim();
@@ -216,20 +226,7 @@ namespace ShopBanHang.Services
                 })
                 .ToListAsync();
 
-            // Sản phẩm không có biến thể thì giá và tồn kho nhập tay trên Product
-            var khongBienThe = await _db.Products.AsNoTracking()
-                .Where(p => p.IsActive && p.Stock <= nguong && !p.Variants.Any())
-                .Select(p => new CanhBaoTonKhoItem
-                {
-                    SanPhamId = p.Id,
-                    TenSanPham = p.Name,
-                    Anh = p.ImageUrl,
-                    BienThe = null,
-                    Ton = p.Stock
-                })
-                .ToListAsync();
-
-            return bienThe.Concat(khongBienThe)
+            return bienThe
                 .OrderBy(x => x.Ton)
                 .ThenBy(x => x.TenSanPham)
                 .ToList();
@@ -238,11 +235,8 @@ namespace ShopBanHang.Services
         public async Task<int> DemCanhBaoTonKhoAsync()
         {
             int nguong = NguongTonKho.Nguong;
-            int a = await _db.ProductVariants
+            return await _db.ProductVariants
                 .CountAsync(v => v.IsActive && v.Stock <= nguong && v.Product!.IsActive);
-            int b = await _db.Products
-                .CountAsync(p => p.IsActive && p.Stock <= nguong && !p.Variants.Any());
-            return a + b;
         }
 
         public async Task<(bool ok, string? loi)> DoiNoiBatAsync(int id)
@@ -256,13 +250,14 @@ namespace ShopBanHang.Services
         }
 
         /// <summary>
-        /// Nạp kèm Category và Brand vì view nào cũng hiện tên danh mục và thương hiệu.
-        /// Không Include thì mỗi dòng lại thêm một truy vấn.
+        /// Nạp kèm Category, Brand và Variants vì view nào cũng hiện tên danh mục, thương hiệu và giá
+        /// (giá lấy từ biến thể). Không Include thì mỗi dòng lại thêm một truy vấn, và giá sẽ ra 0.
         /// </summary>
         private IQueryable<Product> KemDanhMuc()
             => _db.Products
                 .Include(p => p.Category)
                 .Include(p => p.Brand)
+                .Include(p => p.Variants)
                 .AsNoTracking();
 
         public async Task<List<ProductSuggestItem>> GoiYAsync(string tuKhoa, int soLuong)
@@ -278,7 +273,7 @@ namespace ShopBanHang.Services
                     Name = p.Name,
                     Slug = p.Slug,
                     ImageUrl = p.ImageUrl,
-                    Price = p.Price
+                    Price = p.Variants.Where(v => v.IsActive).Min(v => (decimal?)v.Price) ?? 0
                 }).ToListAsync();
         }
 
@@ -287,38 +282,14 @@ namespace ShopBanHang.Services
             var active = _db.Products.AsNoTracking().Where(p => p.IsActive);
             var ram = await active.Where(p => p.Ram != null && p.Ram != "")
                 .Select(p => p.Ram!).Distinct().OrderBy(x => x).ToListAsync();
-            var storage = await active.Where(p => p.Storage != null && p.Storage != "")
-                .Select(p => p.Storage!).Distinct().OrderBy(x => x).ToListAsync();
+            // Dung lượng lấy từ biến thể đang bán của sản phẩm đang bán, xếp 128GB, 256GB, 512GB, 1TB
+            var storage = await _db.ProductVariants.AsNoTracking()
+                .Where(v => v.IsActive && v.Product!.IsActive)
+                .Select(v => v.Storage).Distinct().ToListAsync();
+            storage = storage.OrderBy(TongHopBienThe.GiaTriGB).ThenBy(x => x).ToList();
             var os = await active.Where(p => p.Os != null && p.Os != "")
                 .Select(p => p.Os!).Distinct().OrderBy(x => x).ToListAsync();
             return (ram, storage, os);
-        }
-
-        public async Task<List<Product>> LayPhienBanKhacAsync(Product sp, int soLuong)
-        {
-            // Cùng hãng + danh mục, rồi so tên sau khi bỏ dung lượng ở cuối
-            var candidates = await KemDanhMuc()
-                .Where(p => p.IsActive
-                            && p.BrandId == sp.BrandId
-                            && p.CategoryId == sp.CategoryId
-                            && p.Id != sp.Id)
-                .ToListAsync();
-
-            static string TenDongMay(string name)
-            {
-                return System.Text.RegularExpressions.Regex
-                    .Replace(name ?? "", @"\s+\d+\s*(GB|TB)\s*$", "", System.Text.RegularExpressions.RegexOptions.IgnoreCase)
-                    .Trim();
-            }
-
-            string dong = TenDongMay(sp.Name);
-
-            return candidates
-                .Where(p => string.Equals(TenDongMay(p.Name), dong, StringComparison.OrdinalIgnoreCase))
-                .OrderBy(p => p.Storage)
-                .ThenBy(p => p.Color)
-                .Take(soLuong)
-                .ToList();
         }
 
         public async Task<List<Product>> LayTheoIdsAsync(IEnumerable<int> ids)

@@ -18,17 +18,7 @@ namespace ShopBanHang.Models.ViewModels
         [Display(Name = "Tên sản phẩm")]
         public string Name { get; set; } = string.Empty;
 
-        [Range(0, 999999999, ErrorMessage = "Giá bán phải từ 0 trở lên")]
-        [Display(Name = "Giá bán")]
-        public decimal Price { get; set; }
-
-        [Range(0, 999999999, ErrorMessage = "Giá gốc phải từ 0 trở lên")]
-        [Display(Name = "Giá gốc")]
-        public decimal? OldPrice { get; set; }
-
-        [Range(0, 99999, ErrorMessage = "Tồn kho không được âm")]
-        [Display(Name = "Tồn kho")]
-        public int Stock { get; set; }
+        // Giá bán, giá gốc, tồn kho, dung lượng, màu sắc nằm ở form biến thể, không nằm ở form này.
 
         [StringLength(250)]
         [Display(Name = "Ảnh chính")]
@@ -46,17 +36,9 @@ namespace ShopBanHang.Models.ViewModels
         [Display(Name = "RAM")]
         public string? Ram { get; set; }
 
-        [StringLength(30)]
-        [Display(Name = "Dung lượng")]
-        public string? Storage { get; set; }
-
         [StringLength(50)]
         [Display(Name = "Hệ điều hành")]
         public string? Os { get; set; }
-
-        [StringLength(40)]
-        [Display(Name = "Màu sắc")]
-        public string? Color { get; set; }
 
         [StringLength(100)]
         [Display(Name = "Màn hình")]
@@ -92,7 +74,7 @@ namespace ShopBanHang.Models.ViewModels
         [Display(Name = "Đã bán")]
         public int SoldCount { get; set; }
 
-        /// <summary>Số biến thể của sản phẩm. Có biến thể thì giá và tồn kho bị khoá trên form.</summary>
+        /// <summary>Số biến thể của sản phẩm, chỉ để hiện trên form và dẫn sang trang biến thể.</summary>
         public int SoBienThe { get; set; }
 
         // ===== Quản lý nhiều ảnh: form gửi lên, service gộp với ImageUrl/GalleryUrls =====
