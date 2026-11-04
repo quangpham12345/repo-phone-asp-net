@@ -55,6 +55,9 @@
                     <dt>Ngày tạo</dt>
                     <dd>@Model.CreatedAt.ToString("dd/MM/yyyy HH:mm")</dd>
                 </dl>
+                <a asp-controller="Order" asp-action="Index" class="btn btn-outline-secondary btn-sm w-100 mb-2">
+                    <i class="bi bi-receipt"></i> Đơn hàng của tôi
+                </a>
                 <a asp-action="Addresses" class="btn btn-outline-secondary btn-sm w-100 mb-2">
                     <i class="bi bi-geo-alt"></i> Sổ địa chỉ giao hàng
                 </a>

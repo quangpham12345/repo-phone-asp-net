@@ -1,0 +1,130 @@
+@model MyOrderDetailViewModel
+@using ShopBanHang.Helpers
+@{
+    var don = Model.Don;
+    bool daHuy = don.Status == OrderStatus.DaHuy;
+    int buocHienTai = Array.IndexOf(TrangThaiDon.CacBuoc, don.Status);
+}
+
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb small">
+        <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">Trang chủ</a></li>
+        <li class="breadcrumb-item"><a asp-action="Index">Đơn hàng của tôi</a></li>
+        <li class="breadcrumb-item active" aria-current="page">@don.OrderCode</li>
+    </ol>
+</nav>
+
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <h1 class="h4 mb-0">Đơn <code>@don.OrderCode</code></h1>
+    <span class="badge fs-6 @TrangThaiDon.LopKhach(don.Status)">@don.Status.Nhan()</span>
+</div>
+
+@* ===== Tiến trình đơn ===== *@
+<div class="card shadow-sm mb-4">
+    <div class="card-body">
+        @if (daHuy)
+        {
+            <div class="alert alert-secondary mb-0">
+                <i class="bi bi-x-circle"></i> Đơn đã huỷ
+                @if (don.CancelledAt.HasValue)
+                {
+                    <text> lúc @don.CancelledAt.Value.ToString("dd/MM/yyyy HH:mm")</text>
+                }.
+                @if (!string.IsNullOrEmpty(don.CancelReason))
+                {
+                    <br /><span class="small">Lý do: @don.CancelReason</span>
+                }
+                @if (don.IsPaid)
+                {
+                    <br /><span class="small">Đơn đã thanh toán, shop sẽ liên hệ để hoàn tiền cho bạn.</span>
+                }
+            </div>
+        }
+        else
+        {
+            <ol class="order-steps">
+                @for (int i = 0; i < TrangThaiDon.CacBuoc.Length; i++)
+                {
+                    <li class="@(i <= buocHienTai ? "done" : "")">@TrangThaiDon.CacBuoc[i].Nhan()</li>
+                }
+            </ol>
+        }
+    </div>
+</div>
+
+<partial name="_QrThanhToan" model="Model" />
+
+<div class="row g-4">
+    <div class="col-lg-8">
+        <div class="card shadow-sm">
+            <div class="card-body pb-0">
+                <h2 class="h6">Sản phẩm</h2>
+            </div>
+            <partial name="_DongHangDon" model="don" />
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card shadow-sm mb-3">
+            <div class="card-body">
+                <h2 class="h6 mb-3">Thông tin nhận hàng</h2>
+                <p class="small mb-1"><b>@don.CustomerName</b> · @don.Phone</p>
+                <p class="small mb-1">@don.Address</p>
+                @if (!string.IsNullOrEmpty(don.Email))
+                {
+                    <p class="small mb-1 text-muted">@don.Email</p>
+                }
+                @if (!string.IsNullOrEmpty(don.Note))
+                {
+                    <p class="small mb-0 text-muted">Ghi chú: @don.Note</p>
+                }
+                <hr />
+                <dl class="row small mb-0">
+                    <dt class="col-6">Ngày đặt</dt>
+                    <dd class="col-6">@don.CreatedAt.ToString("dd/MM/yyyy HH:mm")</dd>
+                    <dt class="col-6">Thanh toán</dt>
+                    <dd class="col-6">@don.PaymentMethod.Nhan()</dd>
+                    <dt class="col-6">Trạng thái tiền</dt>
+                    <dd class="col-6">
+                        @if (don.IsPaid)
+                        {
+                            <span class="text-success">Đã thanh toán</span>
+                        }
+                        else if (daHuy)
+                        {
+                            <span class="text-muted">—</span>
+                        }
+                        else
+                        {
+                            <span class="text-warning">Chưa thanh toán</span>
+                        }
+                    </dd>
+                </dl>
+            </div>
+        </div>
+
+        @if (Model.DuocHuy)
+        {
+            <div class="card shadow-sm border-danger-subtle">
+                <div class="card-body">
+                    <h2 class="h6">Huỷ đơn</h2>
+                    <p class="small text-muted">Bạn chỉ tự huỷ được khi shop chưa xác nhận đơn.</p>
+                    <form asp-action="Cancel" asp-route-code="@don.OrderCode" method="post"
+                          onsubmit="return confirm('Bạn chắc chắn muốn huỷ đơn này?');">
+                        <select name="lyDo" class="form-select form-select-sm mb-2" aria-label="Lý do huỷ">
+                            <option value="">— Chọn lý do (không bắt buộc) —</option>
+                            <option>Muốn đổi sang phân loại khác</option>
+                            <option>Muốn đổi địa chỉ nhận hàng</option>
+                            <option>Tìm được giá tốt hơn</option>
+                            <option>Không còn nhu cầu mua</option>
+                            <option>Lý do khác</option>
+                        </select>
+                        <button type="submit" class="btn btn-sm btn-outline-danger w-100">
+                            <i class="bi bi-x-circle"></i> Huỷ đơn hàng
+                        </button>
+                    </form>
+                </div>
+            </div>
+        }
+    </div>
+</div>

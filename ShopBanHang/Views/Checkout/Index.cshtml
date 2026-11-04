@@ -1,0 +1,249 @@
+@model CheckoutViewModel
+@using ShopBanHang.Helpers
+@{
+    bool diaChiMoi = Model.Form.AddressId == null;
+}
+
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb small">
+        <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">Trang chủ</a></li>
+        <li class="breadcrumb-item"><a asp-controller="Cart" asp-action="Index">Giỏ hàng</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Đặt hàng</li>
+    </ol>
+</nav>
+
+<h1 class="h4 mb-3">Đặt hàng</h1>
+
+<form asp-action="PlaceOrder" method="post" id="formDatHang">
+    <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2"></div>
+
+    <div class="row g-4">
+        <div class="col-lg-7">
+            @* ===== Địa chỉ nhận hàng ===== *@
+            <div class="card shadow-sm mb-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h2 class="h6 mb-0"><i class="bi bi-geo-alt"></i> Địa chỉ nhận hàng</h2>
+                        <a asp-controller="Account" asp-action="Addresses" class="small">Quản lý sổ địa chỉ</a>
+                    </div>
+
+                    @foreach (var dc in Model.CacDiaChi)
+                    {
+                        <label class="d-flex gap-2 border rounded p-2 mb-2" style="cursor:pointer">
+                            <input type="radio" class="form-check-input mt-1 js-chon-dc" name="Form.AddressId"
+                                   value="@dc.Id" checked="@(Model.Form.AddressId == dc.Id)" />
+                            <span>
+                                <b>@dc.ReceiverName</b> · @dc.Phone
+                                @if (dc.IsDefault)
+                                {
+                                    <span class="badge bg-light text-dark border ms-1">Mặc định</span>
+                                }
+                                <br /><span class="small text-muted">@dc.Detail</span>
+                            </span>
+                        </label>
+                    }
+
+                    <label class="d-flex gap-2 border rounded p-2 mb-2" style="cursor:pointer">
+                        <input type="radio" class="form-check-input mt-1 js-chon-dc" name="Form.AddressId"
+                               value="" checked="@diaChiMoi" id="radioDiaChiMoi" />
+                        <span><b>@(Model.CacDiaChi.Count == 0 ? "Nhập địa chỉ nhận hàng" : "Giao đến địa chỉ khác")</b></span>
+                    </label>
+
+                    <div id="khungDiaChiMoi" class="border rounded p-3 bg-light @(diaChiMoi ? "" : "d-none")">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label asp-for="Form.ReceiverName" class="form-label"></label>
+                                <input asp-for="Form.ReceiverName" class="form-control" />
+                                <span asp-validation-for="Form.ReceiverName" class="text-danger small"></span>
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="Form.Phone" class="form-label"></label>
+                                <input asp-for="Form.Phone" class="form-control" />
+                                <span asp-validation-for="Form.Phone" class="text-danger small"></span>
+                            </div>
+                            <div class="col-12">
+                                <label asp-for="Form.AddressDetail" class="form-label"></label>
+                                <input asp-for="Form.AddressDetail" class="form-control"
+                                       placeholder="Số nhà, đường, phường/xã, quận/huyện, tỉnh/thành" />
+                                <span asp-validation-for="Form.AddressDetail" class="text-danger small"></span>
+                            </div>
+                            <div class="col-12">
+                                <div class="form-check">
+                                    <input asp-for="Form.LuuDiaChi" class="form-check-input" />
+                                    <label asp-for="Form.LuuDiaChi" class="form-check-label"></label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            @* ===== Liên hệ và ghi chú ===== *@
+            <div class="card shadow-sm mb-4">
+                <div class="card-body">
+                    <h2 class="h6 mb-3"><i class="bi bi-chat-left-text"></i> Thông tin thêm</h2>
+                    <div class="mb-3">
+                        <label asp-for="Form.Email" class="form-label"></label>
+                        <input asp-for="Form.Email" class="form-control" />
+                        <span asp-validation-for="Form.Email" class="text-danger small"></span>
+                    </div>
+                    <div>
+                        <label asp-for="Form.Note" class="form-label"></label>
+                        <textarea asp-for="Form.Note" class="form-control" rows="2"
+                                  placeholder="Ví dụ: giao giờ hành chính, gọi trước khi giao"></textarea>
+                        <span asp-validation-for="Form.Note" class="text-danger small"></span>
+                    </div>
+                </div>
+            </div>
+
+            @* ===== Thanh toán ===== *@
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h2 class="h6 mb-3"><i class="bi bi-credit-card"></i> Hình thức thanh toán</h2>
+
+                    <label class="d-flex gap-2 border rounded p-2 mb-2" style="cursor:pointer">
+                        <input type="radio" class="form-check-input mt-1" name="Form.PaymentMethod"
+                               value="@((int)PaymentMethod.COD)" checked="@(Model.Form.PaymentMethod == PaymentMethod.COD)" />
+                        <span>
+                            <b><i class="bi bi-cash-coin"></i> @PaymentMethod.COD.Nhan()</b>
+                            <br /><span class="small text-muted">Trả tiền mặt cho nhân viên giao hàng.</span>
+                        </span>
+                    </label>
+
+                    <label class="d-flex gap-2 border rounded p-2" style="cursor:pointer">
+                        <input type="radio" class="form-check-input mt-1" name="Form.PaymentMethod"
+                               value="@((int)PaymentMethod.ChuyenKhoan)" checked="@(Model.Form.PaymentMethod == PaymentMethod.ChuyenKhoan)" />
+                        <span>
+                            <b><i class="bi bi-qr-code"></i> Chuyển khoản qua mã QR</b>
+                            <br /><span class="small text-muted">
+                                Sau khi đặt, bạn quét mã QR bằng app ngân hàng. Số tiền và nội dung đã điền sẵn.
+                                Đơn được giao sau khi shop xác nhận đã nhận tiền.
+                            </span>
+                        </span>
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        @* ===== Tóm tắt đơn ===== *@
+        <div class="col-lg-5">
+            <div class="card shadow-sm position-sticky" style="top:16px">
+                <div class="card-body">
+                    <h2 class="h6 mb-3">Đơn hàng (@Model.Gio.TongSoLuong sản phẩm)</h2>
+
+                    @foreach (var l in Model.Gio.Lines)
+                    {
+                        <div class="d-flex gap-2 mb-3">
+                            <div class="position-relative">
+                                <img src="@l.ImageUrl" alt="@l.ProductName" class="rounded border"
+                                     style="width:56px;height:56px;object-fit:contain;background:#fff" />
+                                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-secondary">@l.Quantity</span>
+                            </div>
+                            <div class="flex-grow-1 small">
+                                <div class="fw-semibold">@l.ProductName</div>
+                                <div class="text-muted">@l.VariantName</div>
+                            </div>
+                            <div class="small fw-semibold text-nowrap">@TienViet.Dinh(l.LineTotal)</div>
+                        </div>
+                    }
+
+                    <hr />
+
+                    <label for="couponInput" class="form-label small fw-semibold">Mã giảm giá</label>
+                    <div class="input-group mb-1">
+                        <input type="text" name="Form.CouponCode" id="couponInput" value="@Model.Form.CouponCode"
+                               class="form-control text-uppercase" placeholder="Nhập mã" maxlength="30" autocomplete="off" />
+                        <button type="button" class="btn btn-outline-secondary" id="btnApMa">Áp dụng</button>
+                    </div>
+                    <div id="thongBaoMa" class="small mb-3"></div>
+
+                    <div class="d-flex justify-content-between mb-1">
+                        <span>Tạm tính</span>
+                        <span>@TienViet.Dinh(Model.Gio.TamTinh)</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-1 text-success @(Model.TienGiam > 0 ? "" : "d-none")" id="dongGiam">
+                        <span>Giảm giá</span>
+                        <span>-<span id="tienGiam">@TienViet.Dinh(Model.TienGiam)</span></span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-1">
+                        <span>Phí vận chuyển</span>
+                        <span class="text-success">Miễn phí</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mt-2 mb-3">
+                        <span class="fw-semibold">Tổng thanh toán</span>
+                        <span class="h5 text-danger fw-bold mb-0" id="tongThanhToan">@TienViet.Dinh(Model.TongThanhToan)</span>
+                    </div>
+
+                    <button type="submit" class="btn btn-mc-cta w-100" id="btnDatHang">
+                        <i class="bi bi-bag-check"></i> Đặt hàng
+                    </button>
+                    <p class="small text-muted mt-2 mb-0">
+                        Giá và tồn kho được kiểm tra lại lúc bấm đặt hàng.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        (function () {
+            // Hiện ô nhập địa chỉ mới chỉ khi chọn "Giao đến địa chỉ khác"
+            var khung = document.getElementById('khungDiaChiMoi');
+            var radioMoi = document.getElementById('radioDiaChiMoi');
+            document.querySelectorAll('.js-chon-dc').forEach(function (r) {
+                r.addEventListener('change', function () {
+                    khung.classList.toggle('d-none', !radioMoi.checked);
+                });
+            });
+
+            // Áp mã giảm giá bằng AJAX. Lúc đặt hàng server còn kiểm lại mã lần nữa.
+            var form = document.getElementById('formDatHang');
+            var input = document.getElementById('couponInput');
+            var thongBao = document.getElementById('thongBaoMa');
+            var btn = document.getElementById('btnApMa');
+
+            btn.addEventListener('click', function () {
+                var duLieu = new FormData();
+                duLieu.append('code', input.value.trim());
+                duLieu.append('__RequestVerificationToken',
+                    form.querySelector('input[name="__RequestVerificationToken"]').value);
+
+                btn.disabled = true;
+                fetch('@Url.Action("ApplyCoupon", "Checkout")', {
+                    method: 'POST',
+                    body: duLieu,
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                })
+                    .then(function (r) { return r.json(); })
+                    .then(function (kq) {
+                        thongBao.textContent = kq.message;
+                        thongBao.className = 'small mb-3 ' + (kq.ok ? 'text-success' : 'text-danger');
+                        document.getElementById('dongGiam').classList.toggle('d-none', !kq.ok);
+                        document.getElementById('tienGiam').textContent = kq.tienGiamText;
+                        document.getElementById('tongThanhToan').textContent = kq.tongThanhToanText;
+                        // Mã sai thì xoá đi, để không gửi kèm khi đặt hàng rồi bị báo lỗi lần nữa
+                        if (!kq.ok) input.value = '';
+                    })
+                    .catch(function () {
+                        thongBao.textContent = 'Không kiểm tra được mã, vui lòng thử lại.';
+                        thongBao.className = 'small mb-3 text-danger';
+                    })
+                    .finally(function () { btn.disabled = false; });
+            });
+
+            input.addEventListener('keydown', function (e) {
+                // Enter trong ô mã thì áp mã, không submit cả form đặt hàng
+                if (e.key === 'Enter') { e.preventDefault(); btn.click(); }
+            });
+
+            // Chặn bấm đặt hàng hai lần
+            form.addEventListener('submit', function () {
+                if (window.jQuery && jQuery(form).valid && !jQuery(form).valid()) return;
+                document.getElementById('btnDatHang').disabled = true;
+            });
+        })();
+    </script>
+}

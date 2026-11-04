@@ -31,3 +31,47 @@
         if (!box.contains(e.target) && e.target !== input) box.style.display = 'none';
     });
 })();
+
+// ===== Thông báo nổi (toast) dùng chung. CSS ở style.css: .mc-toast =====
+// Gọi: mcToast('Đã thêm vào giỏ', 'success')  — loại: success | danger | warning | info
+window.mcToast = function (noiDung, loai) {
+    loai = loai || 'info';
+    var icon = {
+        success: 'bi-check-circle-fill',
+        danger: 'bi-x-circle-fill',
+        warning: 'bi-exclamation-triangle-fill',
+        info: 'bi-info-circle-fill'
+    }[loai] || 'bi-info-circle-fill';
+
+    var wrap = document.querySelector('.mc-toast-wrap');
+    if (!wrap) {
+        wrap = document.createElement('div');
+        wrap.className = 'mc-toast-wrap';
+        document.body.appendChild(wrap);
+    }
+
+    var t = document.createElement('div');
+    t.className = 'mc-toast mc-toast-' + loai;
+    t.setAttribute('role', 'status');
+    t.innerHTML = '<i class="bi ' + icon + '"></i><div class="mc-toast-text"></div>' +
+                  '<button type="button" class="mc-toast-close" aria-label="Đóng">&times;</button>';
+    t.querySelector('.mc-toast-text').textContent = noiDung;   // textContent để không chèn HTML lạ
+    wrap.appendChild(t);
+
+    var dong = function () {
+        t.classList.remove('show');
+        setTimeout(function () { t.remove(); }, 250);
+    };
+    t.querySelector('.mc-toast-close').addEventListener('click', dong);
+
+    requestAnimationFrame(function () { t.classList.add('show'); });
+    setTimeout(dong, 3500);
+};
+
+// ===== Cập nhật badge số lượng giỏ trên header =====
+window.mcCapNhatGio = function (soLuong) {
+    var el = document.getElementById('cartCount');
+    if (!el) return;
+    el.textContent = soLuong;
+    el.classList.toggle('d-none', !(soLuong > 0));
+};

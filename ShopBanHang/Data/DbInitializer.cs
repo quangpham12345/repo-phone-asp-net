@@ -94,9 +94,16 @@ namespace ShopBanHang.Data
                 foreach (var (chiSo, soLuong) in m.Dong)
                 {
                     var hang = sp[chiSo % sp.Count];
+
+                    // Phân loại rẻ nhất đang bán, chỉ để hoá đơn mẫu có chữ "256GB · Đen" mà xem.
+                    // Không gán ProductVariantId: đơn mẫu không trừ kho, nên huỷ cũng không được hoàn kho.
+                    var bt = hang.Variants.Where(v => v.IsActive).OrderBy(v => v.Price).FirstOrDefault();
+
                     don.OrderDetails.Add(new OrderDetail
                     {
                         ProductId = hang.Id,
+                        ProductName = hang.Name,
+                        VariantName = bt == null ? null : PhanLoai.Ten(bt.Storage, bt.Color),
                         Quantity = soLuong,
                         UnitPrice = hang.DisplayPrice   // chốt giá tại thời điểm mua
                     });
@@ -104,7 +111,21 @@ namespace ShopBanHang.Data
                     if (m.Tt == OrderStatus.HoanThanh) hang.SoldCount += soLuong;
                 }
 
-                don.Total = don.OrderDetails.Sum(d => d.Quantity * d.UnitPrice);
+                don.Subtotal = don.OrderDetails.Sum(d => d.Quantity * d.UnitPrice);
+                don.Total = don.Subtotal;
+
+                // Đơn đã giao xong coi như đã thu tiền
+                if (m.Tt == OrderStatus.HoanThanh)
+                {
+                    don.IsPaid = true;
+                    don.PaidAt = ngay;
+                }
+                if (m.Tt == OrderStatus.DaHuy)
+                {
+                    don.CancelledAt = ngay.AddHours(2);
+                    don.CancelReason = "Khách đổi ý (dữ liệu mẫu)";
+                }
+
                 db.Orders.Add(don);
                 stt++;
             }
