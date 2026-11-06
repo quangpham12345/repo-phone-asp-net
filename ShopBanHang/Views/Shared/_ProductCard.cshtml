@@ -1,72 +1,86 @@
 @model Product
 @using ShopBanHang.Helpers
 @{
-    // Giá và tồn kho tính từ biến thể (query phải Include Variants)
     bool coGia = Model.HasVariants;
     int phanTramGiam = TienViet.PhanTramGiam(Model.DisplayPrice, Model.DisplayOldPrice);
     bool hetHang = Model.TotalStock <= 0;
+
+    // Chỉ hiện ô tick so sánh trên trang danh sách /Product (Index)
+    var controller = ViewContext.RouteData.Values["controller"]?.ToString();
+    var action = ViewContext.RouteData.Values["action"]?.ToString();
+    bool showCompare = string.Equals(controller, "Product", StringComparison.OrdinalIgnoreCase)
+                    && string.Equals(action, "Index", StringComparison.OrdinalIgnoreCase);
 }
 
-<div class="card h-100 shadow-sm product-card position-relative">
-   <div class="compare-check-wrap">
-        <input class="form-check-input compare-check shadow-sm"
-               type="checkbox"
-               value="@Model.Id"
-               id="ss-@Model.Id"
-               title="Chọn để so sánh"
-               aria-label="Chọn để so sánh" />
-    </div>
-    <div class="mc-badges">
-        @if (phanTramGiam > 0)
+<div class="product-card">
+    <div class="card-img-wrap">
+        <div class="hh-badges">
+            @if (phanTramGiam > 0)
+            {
+                <span class="hh-badge hh-badge-sale">-@phanTramGiam%</span>
+            }
+            @if (Model.IsFeatured)
+            {
+                <span class="hh-badge hh-badge-hot">HOT</span>
+            }
+        </div>
+
+        @if (showCompare)
         {
-            <span class="mc-badge mc-badge-hot ">-@phanTramGiam%</span>
+            <div class="compare-check-wrap">
+                <input class="form-check-input compare-check"
+                       type="checkbox"
+                       value="@Model.Id"
+                       id="ss-@Model.Id"
+                       title="Chọn để so sánh"
+                       aria-label="Chọn để so sánh" />
+            </div>
         }
-        @if (Model.IsFeatured)
-        {
-            <span class="mc-badge mc-badge-new">Nổi bật</span>
-        }
+
+        <a asp-controller="Product" asp-action="Detail" asp-route-slug="@Model.Slug">
+            <img src="@(string.IsNullOrEmpty(Model.ImageUrl) ? "/images/products/no-image.svg" : Model.ImageUrl)"
+                 alt="@Model.Name" loading="lazy" />
+        </a>
     </div>
 
-    <a asp-controller="Product" asp-action="Detail" asp-route-slug="@Model.Slug">
-        <img src="@(string.IsNullOrEmpty(Model.ImageUrl) ? "/images/products/no-image.svg" : Model.ImageUrl)"
-             class="card-img-top" alt="@Model.Name" loading="lazy" />
-    </a>
-
-    <div class="card-body d-flex flex-column">
-        <h3 class="card-title h6 mb-2">
-            <a class="text-decoration-none text-dark"
-               asp-controller="Product" asp-action="Detail" asp-route-slug="@Model.Slug">
+    <div class="card-body">
+        <h3 class="card-title">
+            <a asp-controller="Product" asp-action="Detail" asp-route-slug="@Model.Slug">
                 @Model.Name
             </a>
         </h3>
 
-        <div class="mb-2">
+        <div class="price-block">
             @if (!coGia)
             {
                 <span class="text-muted small">Đang cập nhật giá</span>
             }
             else
             {
-                <span class="fw-bold text-danger">@(Model.HasPriceRange ? "Từ " : "")@TienViet.Dinh(Model.DisplayPrice)</span>
+                @if (Model.HasPriceRange)
+                {
+                    <span class="price-from">Từ </span>
+                }
+                <span class="price-current">@TienViet.Dinh(Model.DisplayPrice)</span>
                 @if (phanTramGiam > 0)
                 {
-                    <del class="text-muted small ms-1">@TienViet.Dinh(Model.DisplayOldPrice)</del>
+                    <span class="price-old">@TienViet.Dinh(Model.DisplayOldPrice)</span>
                 }
             }
         </div>
 
-        <div class="small text-muted mb-2">
+        <div class="meta-info">
             @Model.Brand?.Name · Đã bán @Model.SoldCount
         </div>
 
         <div class="mt-auto">
             @if (hetHang)
             {
-                <button class="btn btn-secondary w-100 btn-sm" disabled>Hết hàng</button>
+                <button class="btn btn-out w-100" disabled>Hết hàng</button>
             }
             else
             {
-                <a class="btn btn-mc-buy w-100 btn-sm"
+                <a class="btn btn-buy"
                    asp-controller="Product" asp-action="Detail" asp-route-slug="@Model.Slug">
                     Xem chi tiết
                 </a>

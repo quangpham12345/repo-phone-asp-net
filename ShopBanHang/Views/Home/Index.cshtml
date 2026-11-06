@@ -2,102 +2,86 @@
     var banners = ViewBag.Banners as List<Banner> ?? new List<Banner>();
     var noiBat = ViewBag.NoiBat as List<Product> ?? new List<Product>();
     var moiNhat = ViewBag.MoiNhat as List<Product> ?? new List<Product>();
-    var cacThuongHieu = ViewBag.CacThuongHieu as List<Brand>  ?? new List<Brand>();
+    var cacThuongHieu = ViewBag.CacThuongHieu as List<Brand> ?? new List<Brand>();
     var banChay = ViewBag.BanChay as List<Product> ?? new List<Product>();
+    ViewData["Title"] = "Trang chủ";
 }
 
-@* ===== Slideshow banner, dữ liệu do admin quản lý ở /Admin/Banner ===== *@
 @if (banners.Any())
 {
-    <div id="bannerSlide" class="carousel slide shadow-sm mb-5 rounded-4 overflow-hidden" data-bs-ride="carousel" data-bs-interval="4000">
-        
-        <!-- Thanh chỉ báo (Indicators) dạng chấm tròn hiện đại -->
-        <div class="carousel-indicators mb-2">
+    <div id="bannerSlide" class="carousel slide hh-banner" data-bs-ride="carousel" data-bs-interval="5000">
+        <div class="carousel-indicators">
             @for (int i = 0; i < banners.Count; i++)
             {
                 <button type="button" data-bs-target="#bannerSlide" data-bs-slide-to="@i"
-                        class="@(i == 0 ? "active" : "") rounded-circle" 
-                        style="width: 10px; height: 10px; border: none; background-color: rgba(255,255,255,0.6); transition: all 0.3s;"
-                        aria-label="Banner @(i + 1)"></button>
+                        class="@(i == 0 ? "active" : "")" aria-label="Banner @(i + 1)"></button>
             }
         </div>
-
-        <!-- Khung chứa các Slide ảnh -->
-        <div class="carousel-inner" style="max-height: 420px; background-color: #f8f9fa;">
+        <div class="carousel-inner">
             @for (int i = 0; i < banners.Count; i++)
             {
                 var bn = banners[i];
                 <div class="carousel-item @(i == 0 ? "active" : "")">
-                    @if (!string.IsNullOrEmpty(bn.LinkUrl))
-                    {
-                        <a href="@bn.LinkUrl">
-                            <img src="@bn.ImageUrl" class="d-block w-100 object-fit-cover" style="height: 420px;" alt="@bn.Title" />
-                        </a>
-                    }
-                    else
-                    {
-                        <img src="@bn.ImageUrl" class="d-block w-100 object-fit-cover" style="height: 420px;" alt="@bn.Title" />
-                    }
+                    <img src="@bn.ImageUrl" class="d-block w-100" alt="@bn.Title" />
+                    <div class="hh-banner-caption">
+                        <div class="hh-banner-caption-inner">
+                            @if (!string.IsNullOrWhiteSpace(bn.Title))
+                            {
+                                <h2 class="hh-banner-title">@bn.Title</h2>
+                            }
+                            @if (!string.IsNullOrEmpty(bn.LinkUrl))
+                            {
+                                <a href="@bn.LinkUrl" class="hh-banner-cta">
+                                    Xem ngay <i class="bi bi-arrow-right"></i>
+                                </a>
+                            }
+                        </div>
+                    </div>
                 </div>
             }
         </div>
-
-        <!-- Nút chuyển Slide Trước (Previous) -->
         <button class="carousel-control-prev" type="button" data-bs-target="#bannerSlide" data-bs-slide="prev">
-            <span class="carousel-control-prev-icon bg-dark bg-opacity-50 rounded-circle p-3 d-flex align-items-center justify-content-center" style="width: 45px; height: 45px;"></span>
+            <span class="carousel-control-prev-icon"></span>
             <span class="visually-hidden">Trước</span>
         </button>
-
-        <!-- Nút chuyển Slide Sau (Next) -->
         <button class="carousel-control-next" type="button" data-bs-target="#bannerSlide" data-bs-slide="next">
-            <span class="carousel-control-next-icon bg-dark bg-opacity-50 rounded-circle p-3 d-flex align-items-center justify-content-center" style="width: 45px; height: 45px;"></span>
+            <span class="carousel-control-next-icon"></span>
             <span class="visually-hidden">Sau</span>
         </button>
     </div>
 }
 
-@* ===== Sản phẩm theo hãng ===== *@
-<div class="brand-nav mb-4">
-    <a asp-controller="Product"
-       asp-action="Index"
-       class="brand-item">
-        Tất cả
-    </a>
-
-   
-    @foreach (var brand in cacThuongHieu)
-    {
-        <a asp-controller="Product"
-           asp-action="Index"
-           asp-route-ThuongHieu="@brand.Slug"
-           class="brand-item">
-
-            @if (!string.IsNullOrEmpty(brand.LogoUrl))
-            {
-                <img src="@brand.LogoUrl"
-                     alt="@brand.Name"
-                     class="adm-logo-thumb"
-                     style="width:60px;height:34px;object-fit:contain" />
-            }
-            else
-            {
-                <span class="text-muted small">—</span>
-            }
+@if (cacThuongHieu.Any())
+{
+    <div class="brand-nav">
+        <a asp-controller="Product" asp-action="Index" class="brand-item">
+            <strong>Tất cả</strong>
         </a>
-    }
-</div>
+        @foreach (var brand in cacThuongHieu)
+        {
+            <a asp-controller="Product" asp-action="Index" asp-route-ThuongHieu="@brand.Slug" class="brand-item">
+                @if (!string.IsNullOrEmpty(brand.LogoUrl))
+                {
+                    <img src="@brand.LogoUrl" alt="@brand.Name"
+                         onerror="this.style.display='none';this.nextElementSibling.style.display='inline';" />
+                    <span style="display:none">@brand.Name</span>
+                }
+                else
+                {
+                    @brand.Name
+                }
+            </a>
+        }
+    </div>
+}
 
-
-
-@* ===== Sản phẩm nổi bật ===== *@
 @if (noiBat.Any())
 {
-    <div class="d-flex align-items-center justify-content-between mb-3">
-        <h2 class="h5 mb-0"><i class="bi bi-star-fill mc-text-gold"></i> Sản phẩm nổi bật</h2>
-        <a asp-controller="Product" asp-action="Index" class="small text-decoration-none mc-suggest-item">Xem tất cả</a>
+    <div class="section-header">
+        <h2 class="section-title"><i class="bi bi-star-fill"></i> Sản phẩm nổi bật</h2>
+        <a asp-controller="Product" asp-action="Index" class="section-link">Xem tất cả <i class="bi bi-chevron-right"></i></a>
     </div>
-
-    <div class="row row-cols-2 row-cols-md-4 g-3 mb-5">
+    <div class="row row-cols-2 row-cols-md-3 row-cols-lg-4 row-cols-xl-5 g-3 mb-5">
         @foreach (var sp in noiBat)
         {
             <div class="col">
@@ -107,24 +91,15 @@
     </div>
 }
 
-@* ===== Sản phẩm bán chạy ===== *@
 @if (banChay.Any())
 {
-    <div class="d-flex align-items-center justify-content-between mb-3">
-        <h2 class="h5 mb-0">
-            <i class="bi bi-fire mc-text-gold"></i>
-            Điện thoại bán chạy
-        </h2>
-
-        <a asp-controller="Product"
-           asp-action="Index"
-           asp-route-SapXep="@((int)ProductSort.BanChay)"
-           class="small text-decoration-none mc-suggest-item">
-            Xem tất cả
+    <div class="section-header">
+        <h2 class="section-title"><i class="bi bi-fire"></i> Điện thoại bán chạy</h2>
+        <a asp-controller="Product" asp-action="Index" asp-route-SapXep="@((int)ProductSort.BanChay)" class="section-link">
+            Xem tất cả <i class="bi bi-chevron-right"></i>
         </a>
     </div>
-
-    <div class="row row-cols-2 row-cols-md-4 g-3 mb-5">
+    <div class="row row-cols-2 row-cols-md-3 row-cols-lg-4 row-cols-xl-5 g-3 mb-5">
         @foreach (var sp in banChay)
         {
             <div class="col">
@@ -134,15 +109,14 @@
     </div>
 }
 
-@* ===== Sản phẩm mới nhất ===== *@
-<div class="d-flex align-items-center justify-content-between mb-3">
-    <h2 class="h5 mb-0"><i class="bi bi-clock-history mc-text-gold"></i> Sản phẩm mới nhất</h2>
-    <a asp-controller="Product" asp-action="Index" class="small text-decoration-none mc-suggest-item">Xem tất cả</a>
+<div class="section-header">
+    <h2 class="section-title"><i class="bi bi-lightning-charge-fill"></i> Sản phẩm mới nhất</h2>
+    <a asp-controller="Product" asp-action="Index" class="section-link">Xem tất cả <i class="bi bi-chevron-right"></i></a>
 </div>
 
 @if (moiNhat.Any())
 {
-    <div class="row row-cols-2 row-cols-md-4 g-3">
+    <div class="row row-cols-2 row-cols-md-3 row-cols-lg-4 row-cols-xl-5 g-3">
         @foreach (var sp in moiNhat)
         {
             <div class="col">
@@ -153,5 +127,8 @@
 }
 else
 {
-    <div class="alert alert-light border">Chưa có sản phẩm nào.</div>
+    <div class="alert alert-light border text-center py-5">
+        <i class="bi bi-inbox fs-1 text-muted"></i>
+        <p class="mb-0 mt-2">Chưa có sản phẩm nào.</p>
+    </div>
 }

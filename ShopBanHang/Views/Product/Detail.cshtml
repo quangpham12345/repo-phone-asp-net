@@ -2,9 +2,8 @@
 @using ShopBanHang.Helpers
 @{
     var sp = Model.SanPham;
+    ViewData["Title"] = sp.Name;
 
-    // Giá và tồn kho lấy từ biến thể. Phần hiển thị ban đầu là giá thấp nhất; khách chọn dung lượng/màu
-    // thì script ở cuối trang đổi giá, tồn kho và ảnh theo biến thể đang chọn.
     int phanTramGiam = TienViet.PhanTramGiam(sp.DisplayPrice, sp.DisplayOldPrice);
     bool hetHang = sp.TotalStock <= 0;
 
@@ -40,8 +39,8 @@
     if (anh.Count == 0) anh.Add("/images/products/no-image.svg");
 }
 
-<nav aria-label="breadcrumb">
-    <ol class="breadcrumb small">
+<nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb small mb-0">
         <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">Trang chủ</a></li>
         <li class="breadcrumb-item">
             <a asp-controller="Product" asp-action="Index" asp-route-danhMuc="@sp.Category?.Slug">
@@ -52,27 +51,32 @@
     </ol>
 </nav>
 
-<div class="card shadow-sm mb-4">
-    <div class="row g-0">
-        <div class="col-md-5 p-3">
-            <div class="mb-2 text-center">
-                <img id="anhChinh" src="@anh[0]" class="img-fluid rounded" style="max-height:360px;object-fit:contain" alt="@sp.Name" />
+<div class="row g-4 mb-4">
+    @* ===== GALLERY ===== *@
+    <div class="col-lg-5">
+        <div class="detail-gallery">
+            <div class="text-center mb-3">
+                <img id="anhChinh" src="@anh[0]" class="detail-main-img" alt="@sp.Name" />
             </div>
             @if (anh.Count > 1)
             {
-                <div class="d-flex gap-2 flex-wrap justify-content-center">
+                <div class="detail-thumbs">
                     @for (int i = 0; i < anh.Count; i++)
                     {
-                        <img src="@anh[i]" class="rounded border thumb-gallery @(i == 0 ? "border-primary" : "")"
-                             style="width:64px;height:64px;object-fit:cover;cursor:pointer"
-                             data-src="@anh[i]" alt="Ảnh @(i + 1)" />
+                        <img src="@anh[i]"
+                             class="detail-thumb thumb-gallery @(i == 0 ? "active" : "")"
+                             data-src="@anh[i]"
+                             alt="Ảnh @(i + 1)" />
                     }
                 </div>
             }
         </div>
+    </div>
 
-        <div class="col-md-7 p-4">
-            <h1 class="h4">@sp.Name</h1>
+    @* ===== INFO ===== *@
+    <div class="col-lg-7">
+        <div class="detail-info">
+            <h1 class="detail-name">@sp.Name</h1>
 
             <div class="small text-muted mb-3">
                 Thương hiệu <b>@sp.Brand?.Name</b> ·
@@ -99,28 +103,27 @@
             }
             else
             {
-                <div class="mb-3">
-                    <span id="giaBan" class="h3 text-danger fw-bold">@TienViet.Dinh(sp.DisplayPrice)</span>
-                    <del id="giaGoc" class="text-muted ms-2 @(phanTramGiam > 0 ? "" : "d-none")">@TienViet.Dinh(sp.DisplayOldPrice)</del>
-                    <span id="phanTramGiam" class="badge bg-danger ms-2 @(phanTramGiam > 0 ? "" : "d-none")">-@phanTramGiam%</span>
+                <div class="mb-3 d-flex align-items-center flex-wrap gap-2">
+                    <span id="giaBan" class="detail-price">@TienViet.Dinh(sp.DisplayPrice)</span>
+                    <del id="giaGoc" class="detail-old-price @(phanTramGiam > 0 ? "" : "d-none")">@TienViet.Dinh(sp.DisplayOldPrice)</del>
+                    <span id="phanTramGiam" class="detail-discount @(phanTramGiam > 0 ? "" : "d-none")">-@phanTramGiam%</span>
                 </div>
             }
 
             <div class="mb-3">
-                <span id="tonKho" class="badge @(hetHang ? "bg-secondary" : "bg-success")">
+                <span id="tonKho" class="badge @(hetHang ? "bg-secondary" : "bg-success") rounded-pill px-3 py-2">
                     @(hetHang ? "Hết hàng" : "Còn " + sp.TotalStock + " sản phẩm")
                 </span>
             </div>
 
             @if (cacBienThe.Count > 0)
             {
-                @* Nút chọn dung lượng và màu do script vẽ từ dữ liệu JSON này *@
                 <div class="mb-3">
-                    <div class="small fw-semibold mb-2">Dung lượng</div>
+                    <div class="fw-semibold mb-2 small text-uppercase text-muted">Dung lượng</div>
                     <div id="dsDungLuong" class="d-flex flex-wrap gap-2"></div>
                 </div>
-                <div class="mb-3">
-                    <div class="small fw-semibold mb-2">Màu sắc</div>
+                <div class="mb-4">
+                    <div class="fw-semibold mb-2 small text-uppercase text-muted">Màu sắc</div>
                     <div id="dsMau" class="d-flex flex-wrap gap-2"></div>
                 </div>
                 <script type="application/json" id="bienTheData">@Html.Raw(System.Text.Json.JsonSerializer.Serialize(duLieuBienThe))</script>
@@ -128,235 +131,187 @@
 
             @if (!string.IsNullOrWhiteSpace(sp.Description))
             {
-                <p class="mb-4">@sp.Description</p>
+                <p class="mb-4 text-secondary">@sp.Description</p>
             }
 
-            @if (cacBienThe.Count > 0)
-            {
-                @* Form thật, chạy được cả khi tắt JavaScript. Có JS thì nút "Thêm vào giỏ" gửi bằng AJAX,
-                   còn "Mua ngay" vẫn submit bình thường để đi thẳng sang bước đặt hàng. *@
-                <form id="formGioHang" asp-controller="Cart" asp-action="Add" method="post">
-                    <input type="hidden" name="variantId" id="variantIdInput" value="@cacBienThe[0].Id" />
-                    <input type="hidden" name="returnUrl" value="@($"{Context.Request.Path}{Context.Request.QueryString}")" />
-
-                    <div class="d-flex align-items-center gap-2 mb-3">
-                        <label for="soLuongInput" class="small fw-semibold mb-0">Số lượng</label>
-                        <div class="input-group input-group-sm" style="width:130px">
-                            <button type="button" class="btn btn-outline-secondary" id="btnGiam" aria-label="Giảm">−</button>
-                            <input type="number" name="soLuong" id="soLuongInput" value="1" min="1" max="99"
-                                   class="form-control text-center" />
-                            <button type="button" class="btn btn-outline-secondary" id="btnTang" aria-label="Tăng">+</button>
-                        </div>
-                    </div>
-
-                    <div class="d-flex gap-2 flex-wrap">
-                        <button type="submit" id="btnThemGio" name="muaNgay" value="false"
-                                class="btn btn-outline-warning fw-semibold" disabled="@hetHang">
-                            <i class="bi bi-cart-plus"></i> Thêm vào giỏ
-                        </button>
-                        <button type="submit" id="btnMuaNgay" name="muaNgay" value="true"
-                                class="btn btn-mc-cta" disabled="@hetHang">
-                            <i class="bi bi-lightning-charge"></i> Mua ngay
-                        </button>
-                        <a asp-controller="Product" asp-action="Index" class="btn btn-light">
-                            Xem sản phẩm khác
-                        </a>
-                    </div>
-                </form>
-            }
-            else
-            {
-                <a asp-controller="Product" asp-action="Index" class="btn btn-light">
+            <div class="d-flex gap-3 flex-wrap">
+                <button id="btnThemGio" class="btn btn-add-cart" disabled="@hetHang">
+                    <i class="bi bi-cart-plus me-1"></i> Thêm vào giỏ
+                </button>
+                <a asp-controller="Product" asp-action="Index" class="btn btn-buy-now">
                     Xem sản phẩm khác
                 </a>
-            }
+            </div>
+            <div class="form-text mt-2 text-muted">Chức năng giỏ hàng sẽ làm ở giai đoạn sau.</div>
         </div>
     </div>
 </div>
 
-<div class="spec-card mb-4">
-    <div class="spec-header">
-        <div class="spec-header-icon">
+@* ===== SPECS ===== *@
+<div class="detail-info mb-4">
+    <div class="d-flex align-items-center gap-3 mb-4">
+        <div class="rounded-circle d-flex align-items-center justify-content-center"
+             style="width:48px;height:48px;background:#ffebee;color:var(--hh-primary);font-size:1.3rem;">
             <i class="bi bi-cpu"></i>
         </div>
         <div>
-            <h5 class="mb-1">Thông số kỹ thuật</h5>
-            <p class="mb-0">Thông tin chi tiết về sản phẩm</p>
+            <h2 class="h5 mb-0">Thông số kỹ thuật</h2>
+            <p class="mb-0 small text-muted">Thông tin chi tiết về sản phẩm</p>
         </div>
     </div>
 
-    <div class="spec-body">
-        <div class="spec-grid">
-            @foreach (var (nhan, giaTri) in thongSo)
-            {
-                var icon = nhan switch
-                {
-                    "Thương hiệu" => "bi-award",
-                    "Danh mục" => "bi-grid",
-                    "Màn hình" => "bi-display",
-                    "Chip" => "bi-cpu",
-                    "RAM" => "bi-memory",
-                    "Dung lượng" => "bi-device-ssd",
-                    "Màu sắc" => "bi-palette",
-                    "Camera" => "bi-camera",
-                    "Pin" => "bi-battery-full",
-                    "Hệ điều hành" => "bi-android2",
-                    _ => "bi-info-circle"
-                };
+    <table class="spec-table">
+        @foreach (var (nhan, giaTri) in thongSo)
+        {
+            <tr>
+                <td>@nhan</td>
+                <td class="fw-semibold">@giaTri</td>
+            </tr>
+        }
+    </table>
 
-                <div class="spec-item">
-                    <div class="spec-item-icon">
-                        <i class="bi @icon"></i>
-                    </div>
-                    <div class="spec-item-content">
-                        <span class="spec-label">@nhan</span>
-                        <span class="spec-value">@giaTri</span>
-                    </div>
-                </div>
-            }
-        </div>
-
-        <div class="spec-divider"></div>
-
-        <div class="spec-summary">
-            <div class="spec-summary-item">
-                <div class="summary-icon stock-icon">
+    <div class="row g-3 mt-3">
+        <div class="col-sm-6">
+            <div class="d-flex align-items-center gap-3 p-3 rounded-hh" style="background:#f8f9fa;">
+                <div class="rounded-circle d-flex align-items-center justify-content-center"
+                     style="width:40px;height:40px;background:#e8f5e9;color:#2e7d32;">
                     <i class="bi bi-box-seam"></i>
                 </div>
                 <div>
-                    <span class="summary-label">Tồn kho</span>
+                    <div class="small text-muted">Tồn kho</div>
                     @if (sp.TotalStock > 0)
                     {
-                        <span class="summary-value text-success">
-                            Còn @sp.TotalStock sản phẩm
-                        </span>
+                        <div class="fw-bold text-success">Còn @sp.TotalStock sản phẩm</div>
                     }
                     else
                     {
-                        <span class="summary-value text-danger">Hết hàng</span>
+                        <div class="fw-bold text-danger">Hết hàng</div>
                     }
                 </div>
             </div>
-
-            <div class="spec-summary-item">
-                <div class="summary-icon sold-icon">
+        </div>
+        <div class="col-sm-6">
+            <div class="d-flex align-items-center gap-3 p-3 rounded-hh" style="background:#f8f9fa;">
+                <div class="rounded-circle d-flex align-items-center justify-content-center"
+                     style="width:40px;height:40px;background:#fff3e0;color:#e65100;">
                     <i class="bi bi-cart-check"></i>
                 </div>
                 <div>
-                    <span class="summary-label">Đã bán</span>
-                    <span class="summary-value">@sp.SoldCount sản phẩm</span>
+                    <div class="small text-muted">Đã bán</div>
+                    <div class="fw-bold">@sp.SoldCount sản phẩm</div>
                 </div>
             </div>
         </div>
     </div>
 </div>
-@* ===== Đánh giá sản phẩm ===== *@
-<div class="card shadow-sm mb-4">
-    <div class="card-body">
-        <h2 class="h5 mb-3">
-            Đánh giá sản phẩm
-            @if (Model.SoLuotDanhGia > 0)
-            {
-                <span class="text-muted small">— @Model.DiemTrungBinh/5 từ @Model.SoLuotDanhGia lượt</span>
-            }
-        </h2>
 
-        @if (User.Identity?.IsAuthenticated != true)
+@* ===== REVIEWS ===== *@
+<div class="detail-info mb-4">
+    <h2 class="h5 mb-3">
+        Đánh giá sản phẩm
+        @if (Model.SoLuotDanhGia > 0)
         {
-            <div class="alert alert-light border py-2 small mb-3">
-                <a asp-controller="Account" asp-action="Login">Đăng nhập</a>
-                để đánh giá sản phẩm này.
-            </div>
+            <span class="text-muted small fw-normal">— @Model.DiemTrungBinh/5 từ @Model.SoLuotDanhGia lượt</span>
         }
-        else if (!Model.DuocDanhGia)
-        {
-            @* Chốt chặn thật nằm ở service, đây chỉ là lời giải thích cho khách *@
-            <div class="alert alert-light border py-2 small mb-3">
-                <i class="bi bi-info-circle"></i>
-                Chỉ khách đã mua và nhận hàng thành công sản phẩm này mới được đánh giá.
+    </h2>
+
+    @if (User.Identity?.IsAuthenticated != true)
+    {
+        <div class="alert alert-light border py-2 small mb-3">
+            <a asp-controller="Account" asp-action="Login" class="text-primary-hh fw-semibold">Đăng nhập</a>
+            để đánh giá sản phẩm này.
+        </div>
+    }
+    else if (!Model.DuocDanhGia)
+    {
+        <div class="alert alert-light border py-2 small mb-3">
+            <i class="bi bi-info-circle"></i>
+            Chỉ khách đã mua và nhận hàng thành công sản phẩm này mới được đánh giá.
+        </div>
+    }
+    else
+    {
+        <form asp-action="Review" method="post" class="border rounded-hh p-3 mb-3">
+            <input type="hidden" name="productId" value="@sp.Id" />
+            <input type="hidden" name="slug" value="@sp.Slug" />
+
+            <div class="mb-2">
+                <label class="form-label mb-1 small fw-semibold">Số sao</label>
+                <select name="soSao" class="form-select form-select-sm" style="max-width:160px">
+                    @for (int i = 5; i >= 1; i--)
+                    {
+                        <option value="@i" selected="@(Model.DanhGiaCuaToi?.Rating == i)">@i sao</option>
+                    }
+                </select>
             </div>
-        }
-        else
-        {
-            <form asp-action="Review" method="post" class="border rounded p-3 mb-3">
-                <input type="hidden" name="productId" value="@sp.Id" />
-                <input type="hidden" name="slug" value="@sp.Slug" />
 
-                <div class="mb-2">
-                    <label class="form-label mb-1">Số sao</label>
-                    <select name="soSao" class="form-select form-select-sm" style="max-width:160px">
-                        @for (int i = 5; i >= 1; i--)
-                        {
-                            <option value="@i" selected="@(Model.DanhGiaCuaToi?.Rating == i)">@i sao</option>
-                        }
-                    </select>
-                </div>
+            <div class="mb-2">
+                <label class="form-label mb-1 small fw-semibold">Nhận xét</label>
+                <textarea name="nhanXet" class="form-control" rows="3" maxlength="1000"
+                          placeholder="Máy dùng thế nào?">@Model.DanhGiaCuaToi?.Comment</textarea>
+            </div>
 
-                <div class="mb-2">
-                    <label class="form-label mb-1">Nhận xét</label>
-                    <textarea name="nhanXet" class="form-control" rows="3" maxlength="1000"
-                              placeholder="Máy dùng thế nào?">@Model.DanhGiaCuaToi?.Comment</textarea>
-                </div>
-
-                <button type="submit" class="btn btn-sm btn-mc-cta">
-                    <i class="bi bi-send"></i>
-                    @(Model.DanhGiaCuaToi == null ? "Gửi đánh giá" : "Cập nhật đánh giá")
-                </button>
-
-                @if (Model.DanhGiaCuaToi != null)
-                {
-                    <span class="small text-muted ms-2">Bạn đã đánh giá sản phẩm này.</span>
-                }
-            </form>
+            <button type="submit" class="btn btn-sm btn-buy">
+                <i class="bi bi-send"></i>
+                @(Model.DanhGiaCuaToi == null ? "Gửi đánh giá" : "Cập nhật đánh giá")
+            </button>
 
             @if (Model.DanhGiaCuaToi != null)
             {
-                <form asp-action="ReviewDelete" method="post" class="mb-3"
-                      onsubmit="return confirm('Xoa danh gia cua ban?');">
-                    <input type="hidden" name="productId" value="@sp.Id" />
-                    <input type="hidden" name="slug" value="@sp.Slug" />
-                    <button type="submit" class="btn btn-sm btn-outline-danger">
-                        <i class="bi bi-trash"></i> Xoá đánh giá của tôi
-                    </button>
-                </form>
+                <span class="small text-muted ms-2">Bạn đã đánh giá sản phẩm này.</span>
             }
-        }
+        </form>
 
-        @if (!Model.DanhGia.Any())
+        @if (Model.DanhGiaCuaToi != null)
         {
-            <p class="text-muted small mb-0">Chưa có đánh giá nào cho sản phẩm này.</p>
+            <form asp-action="ReviewDelete" method="post" class="mb-3"
+                  onsubmit="return confirm('Xóa đánh giá của bạn?');">
+                <input type="hidden" name="productId" value="@sp.Id" />
+                <input type="hidden" name="slug" value="@sp.Slug" />
+                <button type="submit" class="btn btn-sm btn-outline-danger">
+                    <i class="bi bi-trash"></i> Xoá đánh giá của tôi
+                </button>
+            </form>
         }
-        else
-        {
-            <div class="d-flex flex-column gap-3">
-                @foreach (var dg in Model.DanhGia)
-                {
-                    <div class="border-bottom pb-2">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <b>@(dg.User?.FullName ?? "Khách hàng")</b>
-                            <span class="small text-muted">@dg.CreatedAt.ToString("dd/MM/yyyy HH:mm")</span>
-                        </div>
-                        <div class="text-warning small">
-                            @for (int i = 1; i <= 5; i++)
-                            {
-                                <i class="bi @(i <= dg.Rating ? "bi-star-fill" : "bi-star")"></i>
-                            }
-                        </div>
-                        @if (!string.IsNullOrWhiteSpace(dg.Comment))
+    }
+
+    @if (!Model.DanhGia.Any())
+    {
+        <p class="text-muted small mb-0">Chưa có đánh giá nào cho sản phẩm này.</p>
+    }
+    else
+    {
+        <div class="d-flex flex-column gap-3">
+            @foreach (var dg in Model.DanhGia)
+            {
+                <div class="border-bottom pb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <b>@(dg.User?.FullName ?? "Khách hàng")</b>
+                        <span class="small text-muted">@dg.CreatedAt.ToString("dd/MM/yyyy HH:mm")</span>
+                    </div>
+                    <div class="text-warning small mb-1">
+                        @for (int i = 1; i <= 5; i++)
                         {
-                            <div class="small mt-1">@dg.Comment</div>
+                            <i class="bi @(i <= dg.Rating ? "bi-star-fill" : "bi-star")"></i>
                         }
                     </div>
-                }
-            </div>
-        }
-    </div>
+                    @if (!string.IsNullOrWhiteSpace(dg.Comment))
+                    {
+                        <div class="small">@dg.Comment</div>
+                    }
+                </div>
+            }
+        </div>
+    }
 </div>
 
+@* ===== RELATED ===== *@
 @if (Model.LienQuan.Any())
 {
-    <h2 class="h5 mb-3">Sản phẩm cùng danh mục</h2>
-    <div class="row row-cols-2 row-cols-md-4 g-3">
+    <div class="section-header">
+        <h2 class="section-title"><i class="bi bi-grid"></i> Sản phẩm cùng danh mục</h2>
+    </div>
+    <div class="row row-cols-2 row-cols-md-3 row-cols-lg-4 row-cols-xl-5 g-3">
         @foreach (var lq in Model.LienQuan)
         {
             <div class="col">
@@ -366,18 +321,16 @@
     </div>
 }
 
-
 @section Scripts {
     <script>
         document.querySelectorAll('.thumb-gallery').forEach(function (el) {
             el.addEventListener('click', function () {
                 document.getElementById('anhChinh').src = this.dataset.src;
-                document.querySelectorAll('.thumb-gallery').forEach(t => t.classList.remove('border-primary'));
-                this.classList.add('border-primary');
+                document.querySelectorAll('.thumb-gallery').forEach(t => t.classList.remove('active'));
+                this.classList.add('active');
             });
         });
 
-        // ===== Chọn biến thể (dung lượng x màu): đổi giá, tồn kho, ảnh theo biến thể đang chọn =====
         (function () {
             var nguon = document.getElementById('bienTheData');
             if (!nguon) return;
@@ -399,7 +352,6 @@
 
             var dinhDang = function (n) { return Number(n).toLocaleString('de-DE') + ' đ'; };
 
-            // Thứ tự dung lượng giữ đúng như server đã xếp (nhỏ đến lớn)
             var cacDungLuong = [];
             ds.forEach(function (v) {
                 if (cacDungLuong.indexOf(v.storage) === -1) cacDungLuong.push(v.storage);
@@ -409,7 +361,6 @@
                 return ds.filter(function (v) { return v.storage === dl; });
             }
 
-            // Mặc định chọn biến thể rẻ nhất còn hàng; hết sạch hàng thì chọn biến thể rẻ nhất
             var conHang = ds.filter(function (v) { return v.stock > 0; });
             var chon = (conHang.length > 0 ? conHang : ds).reduce(function (a, b) {
                 return a.price > b.price ? b : a;
@@ -418,8 +369,7 @@
             function taoNut(nhan, dangChon, hetHang, onClick) {
                 var b = document.createElement('button');
                 b.type = 'button';
-                b.className = 'btn btn-sm ' + (dangChon ? 'btn-outline-primary active' : 'btn-outline-secondary')
-                            + (hetHang ? ' opacity-50' : '');
+                b.className = 'variant-option' + (dangChon ? ' active' : '') + (hetHang ? ' opacity-50' : '');
                 b.textContent = nhan;
                 if (hetHang) b.title = 'Hết hàng';
                 b.addEventListener('click', onClick);
@@ -433,7 +383,6 @@
                     boxDungLuong.appendChild(taoNut(dl, dl === chon.storage, het, function () {
                         if (dl === chon.storage) return;
                         var cungDl = theoDungLuong(dl);
-                        // Giữ màu đang chọn nếu dung lượng mới có màu đó, không thì lấy biến thể còn hàng đầu tiên
                         var cungMau = cungDl.filter(function (v) { return v.color === chon.color; })[0];
                         var conHangDl = cungDl.filter(function (v) { return v.stock > 0; })[0];
                         chon = cungMau || conHangDl || cungDl[0];
@@ -464,27 +413,22 @@
                 }
 
                 if (chon.stock > 0) {
-                    elTon.className = 'badge bg-success';
+                    elTon.className = 'badge bg-success rounded-pill px-3 py-2';
                     elTon.textContent = 'Còn ' + chon.stock + ' sản phẩm';
                 } else {
-                    elTon.className = 'badge bg-secondary';
+                    elTon.className = 'badge bg-secondary rounded-pill px-3 py-2';
                     elTon.textContent = 'Hết hàng';
                 }
 
-                // Form giỏ hàng gửi đúng biến thể đang chọn; hết hàng thì khoá hai nút
-                if (inputVariant) inputVariant.value = chon.id;
-                if (btnGio) btnGio.disabled = chon.stock <= 0;
-                if (btnMua) btnMua.disabled = chon.stock <= 0;
-                if (inputSoLuong) {
-                    inputSoLuong.max = Math.max(1, Math.min(99, chon.stock));
-                    if (Number(inputSoLuong.value) > Number(inputSoLuong.max)) inputSoLuong.value = inputSoLuong.max;
+                if (btnGio) {
+                    btnGio.disabled = chon.stock <= 0;
+                    btnGio.dataset.variantId = chon.id;
                 }
 
-                // Biến thể có ảnh riêng thì đổi ảnh chính theo
                 if (chon.image && anhChinh) {
                     anhChinh.src = chon.image;
                     document.querySelectorAll('.thumb-gallery').forEach(function (t) {
-                        t.classList.toggle('border-primary', t.dataset.src === chon.image);
+                        t.classList.toggle('active', t.dataset.src === chon.image);
                     });
                 }
             }

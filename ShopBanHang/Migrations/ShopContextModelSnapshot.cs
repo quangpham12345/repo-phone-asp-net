@@ -212,8 +212,7 @@ namespace ShopBanHang.Migrations
                         .HasColumnType("bit");
 
                     b.Property<string>("LogoUrl")
-                        .HasMaxLength(250)
-                        .HasColumnType("nvarchar(250)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Name")
                         .IsRequired()
