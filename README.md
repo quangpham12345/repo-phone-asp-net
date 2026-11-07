@@ -40,8 +40,10 @@ Chuỗi kết nối riêng của máy mình thì lưu bằng `dotnet user-secret
 | Khách hàng | khach1@shop.com | Khach@123 |
 | Khách hàng (đã bị tắt) | khach2@shop.com | Khach@123 |
 
-Dữ liệu mẫu kèm theo: 4 danh mục, 4 thương hiệu, **90 sản phẩm** (20 sản phẩm chính + 70 sản phẩm để thử phân trang),
-**4 banner**, 6 đơn hàng, 4 mã giảm giá. Ảnh mẫu lấy từ Unsplash nên cần Internet để hiện ảnh.
+Dữ liệu mẫu kèm theo: 4 danh mục, 10 thương hiệu, **56 sản phẩm theo mẫu máy thật** (iPhone 17, Galaxy S26,
+Xiaomi 15T, MacBook, ASUS, Lenovo, AirPods, Sony...) có biến thể dung lượng/màu, **4 banner**, 6 đơn hàng, 6 mã giảm giá.
+Ảnh minh hoạ lấy từ Unsplash (cần Internet); ảnh thật của từng máy chép vào `wwwroot/images/sanpham/{slug}/`
+(xem README trong thư mục đó). Nạp lại dữ liệu mẫu từ đầu: `dotnet run -- --NapLaiDuLieu=true`.
 
 Đăng nhập bằng Admin sẽ vào thẳng khu quản trị `/Admin`, bằng khách hàng thì về trang bán hàng.
 

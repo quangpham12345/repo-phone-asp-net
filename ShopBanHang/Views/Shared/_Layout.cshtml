@@ -20,6 +20,17 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
     <link rel="stylesheet" href="~/css/style.css" asp-append-version="true" />
+    <script>
+        // Ảnh nào tải lỗi (link hỏng, mất mạng) thì thay bằng ảnh "chưa có ảnh", không để ô trống.
+        // Đặt trong <head> và bắt ở pha capture để không lỡ lỗi của ảnh tải sớm.
+        document.addEventListener('error', function (e) {
+            var img = e.target;
+            if (img && img.tagName === 'IMG' && !img.dataset.loiAnh) {
+                img.dataset.loiAnh = '1';
+                img.src = '/images/products/no-image.svg';
+            }
+        }, true);
+    </script>
 </head>
 <body>
     <!-- Top promo bar -->

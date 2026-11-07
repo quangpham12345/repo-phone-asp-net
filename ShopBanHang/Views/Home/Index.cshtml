@@ -4,7 +4,7 @@
     var moiNhat = ViewBag.MoiNhat as List<Product> ?? new List<Product>();
     var cacThuongHieu = ViewBag.CacThuongHieu as List<Brand> ?? new List<Brand>();
     var banChay = ViewBag.BanChay as List<Product> ?? new List<Product>();
-    ViewData["Title"] = "Trang chủ";
+    ViewData["Title"] = L["Trang chủ"].Value;
 }
 
 @if (banners.Any())
@@ -22,7 +22,7 @@
             {
                 var bn = banners[i];
                 <div class="carousel-item @(i == 0 ? "active" : "")">
-                    <img src="@bn.ImageUrl" class="d-block w-100" alt="@bn.Title" />
+                    <img src="@bn.ImageUrl" class="d-block w-100" alt="@bn.Title" loading="@(i == 0 ? "eager" : "lazy")" />
                     <div class="hh-banner-caption">
                         <div class="hh-banner-caption-inner">
                             @if (!string.IsNullOrWhiteSpace(bn.Title))
@@ -32,7 +32,7 @@
                             @if (!string.IsNullOrEmpty(bn.LinkUrl))
                             {
                                 <a href="@bn.LinkUrl" class="hh-banner-cta">
-                                    Xem ngay <i class="bi bi-arrow-right"></i>
+                                    @L["Xem ngay"] <i class="bi bi-arrow-right"></i>
                                 </a>
                             }
                         </div>
@@ -81,7 +81,7 @@
         <h2 class="section-title"><i class="bi bi-star-fill"></i> @L["Sản phẩm nổi bật"]</h2>
         <a asp-controller="Product" asp-action="Index" class="section-link">@L["Xem tất cả"] <i class="bi bi-chevron-right"></i></a>
     </div>
-    <div class="row row-cols-2 row-cols-md-3 row-cols-lg-5 g-3 g-3 mb-5">
+    <div class="row row-cols-2 row-cols-md-3 row-cols-lg-5 g-3 mb-5">
         @foreach (var sp in noiBat)
         {
             <div class="col">
@@ -99,7 +99,7 @@
             Xem tất cả <i class="bi bi-chevron-right"></i>
         </a>
     </div>
-    <div class="row row-cols-2 row-cols-md-3 row-cols-lg-5 g-3 g-3 mb-5">
+    <div class="row row-cols-2 row-cols-md-3 row-cols-lg-5 g-3 mb-5">
         @foreach (var sp in banChay)
         {
             <div class="col">
@@ -116,7 +116,7 @@
 
 @if (moiNhat.Any())
 {
-    <div class="row row-cols-2 row-cols-md-3 row-cols-lg-5 g-3 g-3">
+    <div class="row row-cols-2 row-cols-md-3 row-cols-lg-5 g-3">
         @foreach (var sp in moiNhat)
         {
             <div class="col">

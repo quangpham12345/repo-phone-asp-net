@@ -20,7 +20,6 @@ namespace ShopBanHang.Controllers
         {
             ViewData["Title"] = "Trang chủ";
 
-
             ViewBag.Banners = await _bannerService.LayDangHienAsync();
             ViewBag.NoiBat = await _productService.LayNoiBatAsync(5);
             ViewBag.MoiNhat = await _productService.LayMoiNhatAsync(5);
