@@ -1,10 +1,11 @@
 @model int
-@* id="cartCount" để script trên trang chi tiết cập nhật badge sau khi thêm vào giỏ bằng AJAX *@
-<a asp-area="" asp-controller="Cart" asp-action="Index" class="btn mc-btn-outline btn-sm position-relative"
-   title="Giỏ hàng">
-    <i class="bi bi-cart3"></i> <span class="d-none d-md-inline">Giỏ hàng</span>
+@* id="cartCount" để mcCapNhatGio() trong site.js cập nhật badge sau khi thêm vào giỏ bằng AJAX.
+   Ẩn/hiện badge bằng class d-none, không dùng style="display:none". *@
+<a asp-area="" asp-controller="Cart" asp-action="Index" class="hh-action-btn position-relative" title="Giỏ hàng">
+    <i class="bi bi-cart3"></i>
+    <span>Giỏ hàng</span>
     <span id="cartCount"
-          class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger @(Model > 0 ? "" : "d-none")">
+          class="hh-cart-badge badge rounded-pill bg-danger @(Model > 0 ? "" : "d-none")">
         @Model
     </span>
 </a>

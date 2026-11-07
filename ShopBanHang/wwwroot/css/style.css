@@ -903,3 +903,16 @@ img {
         width: 40px;
     }
 }
+
+/* ===== Badge số lượng trên nút giỏ hàng (header) =====
+   Đặt :not(.d-none) để class d-none vẫn ẩn được badge khi giỏ trống,
+   và để thắng luật ".hh-action-btn span { display:none }" trên màn hình nhỏ. */
+   .hh-action-btn .hh-cart-badge:not(.d-none) {
+    display: inline-block;
+    position: absolute;
+    top: 2px;
+    right: 6px;
+    font-size: 10px;
+    min-width: 18px;
+    padding: 3px 5px;
+}
