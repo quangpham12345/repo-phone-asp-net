@@ -223,7 +223,7 @@ kể cả ảnh theo từng màu. Quy ước tên file và danh sách slug: `www
 
 ---
 
-## 8. Đối chiếu yêu cầu đề bài
+## 8. Các chức năng và các công nghệ sử dụng trong hệ thống
 
 | Yêu cầu | Thực hiện | Xem ở đâu |
 |---|---|---|
