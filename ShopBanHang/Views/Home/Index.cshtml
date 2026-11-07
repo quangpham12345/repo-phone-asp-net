@@ -55,7 +55,7 @@
 {
     <div class="brand-nav">
         <a asp-controller="Product" asp-action="Index" class="brand-item">
-            <strong>Tất cả</strong>
+            <strong>@L["Tất cả"]</strong>
         </a>
         @foreach (var brand in cacThuongHieu)
         {
@@ -78,8 +78,8 @@
 @if (noiBat.Any())
 {
     <div class="section-header">
-        <h2 class="section-title"><i class="bi bi-star-fill"></i> Sản phẩm nổi bật</h2>
-        <a asp-controller="Product" asp-action="Index" class="section-link">Xem tất cả <i class="bi bi-chevron-right"></i></a>
+        <h2 class="section-title"><i class="bi bi-star-fill"></i> @L["Sản phẩm nổi bật"]</h2>
+        <a asp-controller="Product" asp-action="Index" class="section-link">@L["Xem tất cả"] <i class="bi bi-chevron-right"></i></a>
     </div>
     <div class="row row-cols-2 row-cols-md-3 row-cols-lg-4 row-cols-xl-5 g-3 mb-5">
         @foreach (var sp in noiBat)
@@ -94,7 +94,7 @@
 @if (banChay.Any())
 {
     <div class="section-header">
-        <h2 class="section-title"><i class="bi bi-fire"></i> Điện thoại bán chạy</h2>
+        <h2 class="section-title"><i class="bi bi-fire"></i> @L["Điện thoại bán chạy"]</h2>
         <a asp-controller="Product" asp-action="Index" asp-route-SapXep="@((int)ProductSort.BanChay)" class="section-link">
             Xem tất cả <i class="bi bi-chevron-right"></i>
         </a>
@@ -110,8 +110,8 @@
 }
 
 <div class="section-header">
-    <h2 class="section-title"><i class="bi bi-lightning-charge-fill"></i> Sản phẩm mới nhất</h2>
-    <a asp-controller="Product" asp-action="Index" class="section-link">Xem tất cả <i class="bi bi-chevron-right"></i></a>
+    <h2 class="section-title"><i class="bi bi-lightning-charge-fill"></i> @L["Sản phẩm mới nhất"]</h2>
+    <a asp-controller="Product" asp-action="Index" class="section-link">@L["Xem tất cả"] <i class="bi bi-chevron-right"></i></a>
 </div>
 
 @if (moiNhat.Any())
@@ -129,6 +129,9 @@ else
 {
     <div class="alert alert-light border text-center py-5">
         <i class="bi bi-inbox fs-1 text-muted"></i>
-        <p class="mb-0 mt-2">Chưa có sản phẩm nào.</p>
+        <p class="mb-0 mt-2">@L["Chưa có sản phẩm nào."]</p>
     </div>
 }
+
+@* COOKIE: sản phẩm khách đã xem ở những lần ghé trước (ViewComponents/DaXemGanDayViewComponent.cs) *@
+@await Component.InvokeAsync("DaXemGanDay")

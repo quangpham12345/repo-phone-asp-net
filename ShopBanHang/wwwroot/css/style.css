@@ -907,7 +907,7 @@ img {
 /* ===== Badge số lượng trên nút giỏ hàng (header) =====
    Đặt :not(.d-none) để class d-none vẫn ẩn được badge khi giỏ trống,
    và để thắng luật ".hh-action-btn span { display:none }" trên màn hình nhỏ. */
-   .hh-action-btn .hh-cart-badge:not(.d-none) {
+.hh-action-btn .hh-cart-badge:not(.d-none) {
     display: inline-block;
     position: absolute;
     top: 2px;
@@ -915,4 +915,14 @@ img {
     font-size: 10px;
     min-width: 18px;
     padding: 3px 5px;
+}
+
+/* ===== Chọn ngôn ngữ trên thanh topbar (i18n) ===== */
+.hh-lang {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding-left: 12px;
+    border-left: 1px solid rgba(255,255,255,0.35);
+    white-space: nowrap;
 }

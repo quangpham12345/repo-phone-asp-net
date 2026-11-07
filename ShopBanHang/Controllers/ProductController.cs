@@ -1,7 +1,8 @@
 ﻿using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Identity.Client.Extensions.Msal;
+using Microsoft.Extensions.Localization;
+using ShopBanHang.Helpers;
 using ShopBanHang.Models.ViewModels;
 using ShopBanHang.Services.Interfaces;
 
@@ -16,11 +17,14 @@ namespace ShopBanHang.Controllers
 
         private readonly IProductService _productService;
         private readonly IReviewService _reviewService;
+        private readonly IStringLocalizer<SharedResource> _l;
 
-        public ProductController(IProductService productService, IReviewService reviewService)
+        public ProductController(IProductService productService, IReviewService reviewService,
+                                 IStringLocalizer<SharedResource> l)
         {
             _productService = productService;
             _reviewService = reviewService;
+            _l = l;
         }
 
         [HttpGet]
@@ -30,6 +34,10 @@ namespace ShopBanHang.Controllers
             loc.ChiHangDangBan = true;
             var (rams, storages, oss) = await _productService.LayGiaTriLocAsync();
 
+            // SESSION: ghi nhớ từ khoá vừa tìm trong phiên này
+            if (!string.IsNullOrWhiteSpace(loc.TuKhoa))
+                LichSuTimKiem.Them(HttpContext.Session, loc.TuKhoa);
+
             var vm = new ProductListViewModel
             {
                 Loc = loc,
@@ -38,7 +46,9 @@ namespace ShopBanHang.Controllers
                 CacThuongHieu = await _productService.LayThuongHieuAsync(),
                 CacRam = rams,
                 CacStorage = storages,
-                CacOs = oss
+                CacOs = oss,
+                TuKhoaGanDay = LichSuTimKiem.Lay(HttpContext.Session),
+                TieuDe = _l["Tất cả sản phẩm"]
             };
 
             // Tiêu đề đổi theo danh mục hoặc từ khoá đang xem
@@ -49,7 +59,7 @@ namespace ShopBanHang.Controllers
             }
             else if (!string.IsNullOrWhiteSpace(loc.TuKhoa))
             {
-                vm.TieuDe = $"Kết quả cho \"{loc.TuKhoa}\"";
+                vm.TieuDe = _l["Kết quả cho \"{0}\"", loc.TuKhoa];
             }
 
             ViewData["Title"] = vm.TieuDe;
@@ -67,6 +77,10 @@ namespace ShopBanHang.Controllers
             var sp = await _productService.LayTheoSlugAsync(slug);
             if (sp == null) return NotFound();
             ViewData["Title"] = sp.Name;
+
+            // COOKIE: ghi id sản phẩm vào danh sách "đã xem gần đây" (Helpers/CookieDaXem.cs)
+            CookieDaXem.Them(HttpContext, sp.Id);
+
             var (trungBinh, soLuot) = await _reviewService.ThongKeAsync(sp.Id);
 
             var vm = new ProductDetailViewModel
@@ -94,6 +108,24 @@ namespace ShopBanHang.Controllers
         {
             var list = await _productService.GoiYAsync(q ?? "", 8);
             return Json(list);
+        }
+
+        /// <summary>Xoá cookie "đã xem gần đây".</summary>
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult XoaDaXem(string? returnUrl = null)
+        {
+            CookieDaXem.Xoa(HttpContext);
+            return Url.IsLocalUrl(returnUrl) ? LocalRedirect(returnUrl!) : RedirectToAction(nameof(Index));
+        }
+
+        /// <summary>Xoá lịch sử tìm kiếm lưu trong Session.</summary>
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult XoaLichSuTim()
+        {
+            LichSuTimKiem.Xoa(HttpContext.Session);
+            return RedirectToAction(nameof(Index));
         }
 
         [HttpGet]

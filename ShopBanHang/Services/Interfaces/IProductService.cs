@@ -35,6 +35,12 @@ namespace ShopBanHang.Services.Interfaces
         Task<List<ProductSuggestItem>> GoiYAsync(string tuKhoa, int soLuong);
         Task<(List<string> ram, List<string> storage, List<string> os)> LayGiaTriLocAsync();
         Task<List<Product>> LayTheoIdsAsync(IEnumerable<int> ids);
+
+        /// <summary>
+        /// Sản phẩm đang bán theo danh sách id, GIỮ ĐÚNG THỨ TỰ của danh sách
+        /// (dùng cho "Sản phẩm bạn đã xem" đọc từ cookie). Id không tồn tại hoặc đã ẩn thì bỏ qua.
+        /// </summary>
+        Task<List<Product>> LayTheoThuTuIdAsync(IList<int> ids);
         // ===== Phần quản trị =====
 
         /// <summary>Lưu thêm mới hoặc cập nhật. Slug sinh tự động từ tên.</summary>

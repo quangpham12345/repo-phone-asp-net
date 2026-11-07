@@ -71,6 +71,9 @@ namespace ShopBanHang.Models.ViewModels
         public string TieuDe { get; set; } = "Tất cả sản phẩm";
         /// <summary>Id sản phẩm có biến thể sắp hết hàng, để đánh dấu trong danh sách admin.</summary>
         public HashSet<int> SanPhamCanhBao { get; set; } = new();
+
+        /// <summary>Từ khoá đã tìm trong phiên này, đọc từ Session (Helpers/LichSuTimKiem.cs).</summary>
+        public List<string> TuKhoaGanDay { get; set; } = new();
     }
 
     /// <summary>Dữ liệu trang chi tiết sản phẩm.</summary>

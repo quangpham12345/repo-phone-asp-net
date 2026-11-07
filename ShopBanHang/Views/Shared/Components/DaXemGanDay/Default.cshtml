@@ -1,0 +1,22 @@
+@model List<Product>
+@* Danh sách id lấy từ cookie "ShopBanHang.DaXem" (Helpers/CookieDaXem.cs) *@
+@if (Model.Any())
+{
+    <div class="section-header mt-4">
+        <h2 class="section-title"><i class="bi bi-clock-history"></i> @L["Sản phẩm bạn đã xem"]</h2>
+        <form asp-area="" asp-controller="Product" asp-action="XoaDaXem" method="post" class="d-inline">
+            <input type="hidden" name="returnUrl" value="@($"{Context.Request.Path}{Context.Request.QueryString}")" />
+            <button type="submit" class="btn btn-link section-link p-0">
+                <i class="bi bi-x-circle"></i> @L["Xoá lịch sử"]
+            </button>
+        </form>
+    </div>
+    <div class="row row-cols-2 row-cols-md-3 row-cols-lg-4 row-cols-xl-5 g-3 mb-4">
+        @foreach (var sp in Model)
+        {
+            <div class="col">
+                <partial name="_ProductCard" model="sp" />
+            </div>
+        }
+    </div>
+}

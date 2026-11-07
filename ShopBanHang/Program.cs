@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using System.Globalization;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Localization;
 using Microsoft.EntityFrameworkCore;
 using ShopBanHang.Data;
 using ShopBanHang.Helpers;
@@ -18,7 +20,32 @@ namespace ShopBanHang
 
             // ===== Dịch vụ =====
 
-            builder.Services.AddControllersWithViews();
+            // ===== Quốc tế hoá (i18n) =====
+            // Chuỗi dịch nằm ở Resources/SharedResource.{vi|en}.resx, khoá là câu tiếng Việt gốc.
+            builder.Services.AddLocalization(o => o.ResourcesPath = "Resources");
+
+            builder.Services.AddControllersWithViews()
+                // ErrorMessage và Display(Name) trong các annotation cũng được dịch,
+                // tra trong cùng file SharedResource
+                .AddDataAnnotationsLocalization(o =>
+                    o.DataAnnotationLocalizerProvider = (_, factory) => factory.Create(typeof(SharedResource)));
+
+            var cacNgonNgu = new[] { new CultureInfo("vi-VN"), new CultureInfo("en-US") };
+            builder.Services.Configure<RequestLocalizationOptions>(o =>
+            {
+                o.DefaultRequestCulture = new RequestCulture("vi-VN");
+                o.SupportedCultures = cacNgonNgu;      // định dạng ngày, số
+                o.SupportedUICultures = cacNgonNgu;    // chọn file .resx
+
+                // Thứ tự xác định ngôn ngữ: ?culture=en-US trên URL, rồi tới cookie
+                // ".AspNetCore.Culture" do NgonNguController ghi. Bỏ Accept-Language của
+                // trình duyệt để trang luôn mặc định tiếng Việt, chỉ đổi khi người dùng bấm chọn.
+                o.RequestCultureProviders = new List<IRequestCultureProvider>
+                {
+                    new QueryStringRequestCultureProvider(),
+                    new CookieRequestCultureProvider()
+                };
+            });
 
             builder.Services.AddDbContext<ShopContext>(options =>
                 options.UseSqlServer(builder.Configuration.GetConnectionString("ShopContext")));
@@ -51,10 +78,14 @@ namespace ShopBanHang
             // Tài khoản nhận chuyển khoản để tạo mã VietQR, sửa trong appsettings.json
             builder.Services.Configure<ThanhToanOptions>(builder.Configuration.GetSection(ThanhToanOptions.Section));
 
-            // Session giữ giỏ hàng của khách chưa đăng nhập
+            // Session (lưu phía server, trình duyệt chỉ giữ cookie mã phiên):
+            //   - giỏ hàng của khách chưa đăng nhập      Helpers/GioKhachLe.cs
+            //   - các đơn khách vãng lai được phép xem   Helpers/DonKhachLe.cs
+            //   - lịch sử từ khoá tìm kiếm trong phiên   Helpers/LichSuTimKiem.cs
             builder.Services.AddDistributedMemoryCache();
             builder.Services.AddSession(o =>
             {
+                o.Cookie.Name = "ShopBanHang.Session";
                 o.IdleTimeout = TimeSpan.FromMinutes(60);
                 o.Cookie.HttpOnly = true;
                 o.Cookie.IsEssential = true;
@@ -92,6 +123,30 @@ namespace ShopBanHang
                 o.SlidingExpiration = true;
                 o.Cookie.Name = "ShopBanHang.Auth";
                 o.Cookie.HttpOnly = true;
+                o.Cookie.SameSite = SameSiteMode.Lax;
+
+                // Gọi /api/... (hoặc AJAX) mà chưa đăng nhập / không đủ quyền thì trả 401/403 đúng kiểu REST,
+                // không chuyển hướng (302) sang trang đăng nhập HTML như với trang thường.
+                static bool KhongChuyenHuong(HttpRequest r)
+                    => r.Path.StartsWithSegments("/api")
+                       || string.Equals(r.Headers.XRequestedWith, "XMLHttpRequest", StringComparison.Ordinal);
+
+                o.Events.OnRedirectToLogin = ctx =>
+                {
+                    if (KhongChuyenHuong(ctx.Request))
+                        ctx.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                    else
+                        ctx.Response.Redirect(ctx.RedirectUri);
+                    return Task.CompletedTask;
+                };
+                o.Events.OnRedirectToAccessDenied = ctx =>
+                {
+                    if (KhongChuyenHuong(ctx.Request))
+                        ctx.Response.StatusCode = StatusCodes.Status403Forbidden;
+                    else
+                        ctx.Response.Redirect(ctx.RedirectUri);
+                    return Task.CompletedTask;
+                };
             });
 
             var app = builder.Build();
@@ -106,6 +161,9 @@ namespace ShopBanHang
 
             app.UseHttpsRedirection();
             app.UseStaticFiles();
+
+            // Đặt CultureInfo cho từng request theo URL/cookie, trước routing và MVC
+            app.UseRequestLocalization();
 
             app.UseRouting();
 

@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <!-- Bản dịch tiếng Anh. Khoá (name) là câu tiếng Việt gốc dùng trong code. -->
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="Miễn phí giao hàng toàn quốc" xml:space="preserve"><value>Free nationwide shipping</value></data>
+  <data name="Bảo hành chính hãng" xml:space="preserve"><value>Official warranty</value></data>
+  <data name="Hệ thống cửa hàng" xml:space="preserve"><value>Our stores</value></data>
+  <data name="Tìm điện thoại, laptop, phụ kiện..." xml:space="preserve"><value>Search phones, laptops, accessories...</value></data>
+  <data name="Quản trị" xml:space="preserve"><value>Admin</value></data>
+  <data name="Đơn hàng" xml:space="preserve"><value>Orders</value></data>
+  <data name="Thoát" xml:space="preserve"><value>Log out</value></data>
+  <data name="Tra cứu đơn" xml:space="preserve"><value>Track order</value></data>
+  <data name="Tài khoản" xml:space="preserve"><value>Account</value></data>
+  <data name="Giỏ hàng" xml:space="preserve"><value>Cart</value></data>
+  <data name="Ngôn ngữ" xml:space="preserve"><value>Language</value></data>
+  <data name="Danh mục" xml:space="preserve"><value>Categories</value></data>
+  <data name="Điện thoại" xml:space="preserve"><value>Phones</value></data>
+  <data name="Tablet" xml:space="preserve"><value>Tablets</value></data>
+  <data name="Laptop" xml:space="preserve"><value>Laptops</value></data>
+  <data name="Phụ kiện" xml:space="preserve"><value>Accessories</value></data>
+  <data name="Hệ thống bán lẻ điện thoại, laptop &amp; phụ kiện chính hãng. Cam kết giá tốt – bảo hành uy tín." xml:space="preserve"><value>Retailer of genuine phones, laptops &amp; accessories. Great prices, trusted warranty.</value></data>
+  <data name="Hỗ trợ khách hàng" xml:space="preserve"><value>Customer support</value></data>
+  <data name="Chính sách bảo hành" xml:space="preserve"><value>Warranty policy</value></data>
+  <data name="Chính sách đổi trả" xml:space="preserve"><value>Return policy</value></data>
+  <data name="Hướng dẫn mua hàng" xml:space="preserve"><value>How to buy</value></data>
+  <data name="Thanh toán &amp; vận chuyển" xml:space="preserve"><value>Payment &amp; shipping</value></data>
+  <data name="Liên hệ" xml:space="preserve"><value>Contact</value></data>
+  <data name="Hà Nội, Việt Nam" xml:space="preserve"><value>Hanoi, Vietnam</value></data>
+  <data name="Bảo lưu mọi quyền." xml:space="preserve"><value>All rights reserved.</value></data>
+  <data name="Tất cả" xml:space="preserve"><value>All</value></data>
+  <data name="Sản phẩm nổi bật" xml:space="preserve"><value>Featured products</value></data>
+  <data name="Điện thoại bán chạy" xml:space="preserve"><value>Best-selling phones</value></data>
+  <data name="Sản phẩm mới nhất" xml:space="preserve"><value>New arrivals</value></data>
+  <data name="Xem tất cả" xml:space="preserve"><value>View all</value></data>
+  <data name="Chưa có sản phẩm nào." xml:space="preserve"><value>No products yet.</value></data>
+  <data name="Đang cập nhật giá" xml:space="preserve"><value>Price coming soon</value></data>
+  <data name="Từ" xml:space="preserve"><value>From</value></data>
+  <data name="Đã bán" xml:space="preserve"><value>Sold</value></data>
+  <data name="Hết hàng" xml:space="preserve"><value>Out of stock</value></data>
+  <data name="Xem chi tiết" xml:space="preserve"><value>View details</value></data>
+  <data name="Chọn để so sánh" xml:space="preserve"><value>Select to compare</value></data>
+  <data name="Trang chủ" xml:space="preserve"><value>Home</value></data>
+  <data name="Tất cả sản phẩm" xml:space="preserve"><value>All products</value></data>
+  <data name='Kết quả cho "{0}"' xml:space="preserve"><value>Results for "{0}"</value></data>
+  <data name="Tất cả danh mục" xml:space="preserve"><value>All categories</value></data>
+  <data name="Thương hiệu" xml:space="preserve"><value>Brand</value></data>
+  <data name="Tất cả thương hiệu" xml:space="preserve"><value>All brands</value></data>
+  <data name="Khoảng giá" xml:space="preserve"><value>Price range</value></data>
+  <data name="Đến" xml:space="preserve"><value>To</value></data>
+  <data name="Dung lượng" xml:space="preserve"><value>Storage</value></data>
+  <data name="Hệ điều hành" xml:space="preserve"><value>Operating system</value></data>
+  <data name="Sắp xếp" xml:space="preserve"><value>Sort by</value></data>
+  <data name="Mới nhất" xml:space="preserve"><value>Newest</value></data>
+  <data name="Giá thấp đến cao" xml:space="preserve"><value>Price: low to high</value></data>
+  <data name="Giá cao đến thấp" xml:space="preserve"><value>Price: high to low</value></data>
+  <data name="Bán chạy" xml:space="preserve"><value>Best selling</value></data>
+  <data name="Áp dụng bộ lọc" xml:space="preserve"><value>Apply filters</value></data>
+  <data name="Bỏ lọc" xml:space="preserve"><value>Clear filters</value></data>
+  <data name="{0} sản phẩm" xml:space="preserve"><value>{0} products</value></data>
+  <data name="Tick tối đa 3 sản phẩm rồi bấm So sánh" xml:space="preserve"><value>Tick up to 3 products, then press Compare</value></data>
+  <data name="So sánh" xml:space="preserve"><value>Compare</value></data>
+  <data name="Không có sản phẩm nào khớp bộ lọc." xml:space="preserve"><value>No products match your filters.</value></data>
+  <data name="Bạn vừa tìm" xml:space="preserve"><value>Recent searches</value></data>
+  <data name="Sản phẩm bạn đã xem" xml:space="preserve"><value>Recently viewed</value></data>
+  <data name="Xoá lịch sử" xml:space="preserve"><value>Clear history</value></data>
+  <data name="Đăng nhập" xml:space="preserve"><value>Log in</value></data>
+  <data name="Chưa có tài khoản?" xml:space="preserve"><value>Don't have an account?</value></data>
+  <data name="Đăng ký ngay" xml:space="preserve"><value>Sign up now</value></data>
+  <data name="Quên mật khẩu?" xml:space="preserve"><value>Forgot password?</value></data>
+  <data name="Email" xml:space="preserve"><value>Email</value></data>
+  <data name="Email bắt buộc nhập" xml:space="preserve"><value>Email is required</value></data>
+  <data name="Email không đúng định dạng" xml:space="preserve"><value>Email is not valid</value></data>
+  <data name="Mật khẩu" xml:space="preserve"><value>Password</value></data>
+  <data name="Mật khẩu bắt buộc nhập" xml:space="preserve"><value>Password is required</value></data>
+  <data name="Ghi nhớ đăng nhập" xml:space="preserve"><value>Remember me</value></data>
+  <data name="Email hoặc mật khẩu không đúng, hoặc tài khoản đã bị tắt." xml:space="preserve"><value>Incorrect email or password, or the account has been disabled.</value></data>
+  <data name="Tài khoản tạm bị khoá do nhập sai mật khẩu nhiều lần. Thử lại sau ít phút." xml:space="preserve"><value>Account temporarily locked after too many failed attempts. Please try again in a few minutes.</value></data>
+</root>

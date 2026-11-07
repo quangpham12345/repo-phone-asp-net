@@ -298,5 +298,16 @@ namespace ShopBanHang.Services
             if (idList.Count == 0) return new List<Product>();
             return await KemDanhMuc().Where(p => p.IsActive && idList.Contains(p.Id)).ToListAsync();
         }
+
+        public async Task<List<Product>> LayTheoThuTuIdAsync(IList<int> ids)
+        {
+            if (ids.Count == 0) return new List<Product>();
+
+            var idList = ids.ToList();   // List<int>.Contains dịch được sang SQL IN (...)
+            var tim = await KemDanhMuc().Where(p => p.IsActive && idList.Contains(p.Id)).ToListAsync();
+
+            // SQL IN (...) không giữ thứ tự, sắp lại theo vị trí trong danh sách gốc
+            return tim.OrderBy(p => ids.IndexOf(p.Id)).ToList();
+        }
     }
 }

@@ -134,7 +134,7 @@
                 <p class="mb-4 text-secondary">@sp.Description</p>
             }
 
-                        @if (cacBienThe.Count > 0)
+            @if (cacBienThe.Count > 0)
             {
                 @* Form thật, chạy được cả khi tắt JavaScript. Có JS thì "Thêm vào giỏ" gửi bằng AJAX,
                    còn "Mua ngay" submit bình thường để đi thẳng sang trang giỏ / đặt hàng. *@
@@ -350,6 +350,9 @@
         }
     </div>
 }
+
+@* COOKIE: sản phẩm đã xem gần đây, bỏ qua chính sản phẩm đang mở *@
+@await Component.InvokeAsync("DaXemGanDay", new { boQuaId = sp.Id })
 
 @section Scripts {
     <script>
