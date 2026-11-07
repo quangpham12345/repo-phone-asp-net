@@ -134,15 +134,45 @@
                 <p class="mb-4 text-secondary">@sp.Description</p>
             }
 
-            <div class="d-flex gap-3 flex-wrap">
-                <button id="btnThemGio" class="btn btn-add-cart" disabled="@hetHang">
-                    <i class="bi bi-cart-plus me-1"></i> Thêm vào giỏ
-                </button>
+                        @if (cacBienThe.Count > 0)
+            {
+                @* Form thật, chạy được cả khi tắt JavaScript. Có JS thì "Thêm vào giỏ" gửi bằng AJAX,
+                   còn "Mua ngay" submit bình thường để đi thẳng sang trang giỏ / đặt hàng. *@
+                <form id="formGioHang" asp-controller="Cart" asp-action="Add" method="post">
+                    <input type="hidden" name="variantId" id="variantIdInput" value="@cacBienThe[0].Id" />
+                    <input type="hidden" name="returnUrl" value="@($"{Context.Request.Path}{Context.Request.QueryString}")" />
+
+                    <div class="d-flex align-items-center gap-2 mb-3">
+                        <label for="soLuongInput" class="small fw-semibold text-uppercase text-muted mb-0">Số lượng</label>
+                        <div class="input-group input-group-sm" style="width:130px">
+                            <button type="button" class="btn btn-outline-secondary" id="btnGiam" aria-label="Giảm">−</button>
+                            <input type="number" name="soLuong" id="soLuongInput" value="1" min="1" max="99"
+                                   class="form-control text-center" />
+                            <button type="button" class="btn btn-outline-secondary" id="btnTang" aria-label="Tăng">+</button>
+                        </div>
+                    </div>
+
+                    <div class="d-flex gap-3 flex-wrap">
+                        <button type="submit" id="btnThemGio" name="muaNgay" value="false"
+                                class="btn btn-add-cart" disabled="@hetHang">
+                            <i class="bi bi-cart-plus me-1"></i> Thêm vào giỏ
+                        </button>
+                        <button type="submit" id="btnMuaNgay" name="muaNgay" value="true"
+                                class="btn btn-buy-now" disabled="@hetHang">
+                            <i class="bi bi-lightning-charge me-1"></i> Mua ngay
+                        </button>
+                    </div>
+                </form>
+                <a asp-controller="Product" asp-action="Index" class="d-inline-block mt-3 small text-decoration-none">
+                    <i class="bi bi-arrow-left"></i> Xem sản phẩm khác
+                </a>
+            }
+            else
+            {
                 <a asp-controller="Product" asp-action="Index" class="btn btn-buy-now">
                     Xem sản phẩm khác
                 </a>
-            </div>
-            <div class="form-text mt-2 text-muted">Chức năng giỏ hàng sẽ làm ở giai đoạn sau.</div>
+            }
         </div>
     </div>
 </div>
@@ -420,9 +450,13 @@
                     elTon.textContent = 'Hết hàng';
                 }
 
-                if (btnGio) {
-                    btnGio.disabled = chon.stock <= 0;
-                    btnGio.dataset.variantId = chon.id;
+                // Form giỏ hàng gửi đúng biến thể đang chọn; hết hàng thì khoá hai nút
+                if (inputVariant) inputVariant.value = chon.id;
+                if (btnGio) btnGio.disabled = chon.stock <= 0;
+                if (btnMua) btnMua.disabled = chon.stock <= 0;
+                if (inputSoLuong) {
+                    inputSoLuong.max = Math.max(1, Math.min(99, chon.stock));
+                    if (Number(inputSoLuong.value) > Number(inputSoLuong.max)) inputSoLuong.value = inputSoLuong.max;
                 }
 
                 if (chon.image && anhChinh) {
