@@ -1,13 +1,13 @@
 ﻿@model LoginViewModel
 @{
-    ViewData["Title"] = "Đăng nhập";
+    ViewData["Title"] = L["Đăng nhập"].Value;
 }
 
 <div class="row justify-content-center">
     <div class="col-md-5">
         <div class="card shadow-sm">
             <div class="card-body p-4">
-                <h1 class="h4 mb-3">Đăng nhập</h1>
+                <h1 class="h4 mb-3">@L["Đăng nhập"]</h1>
 
                 <form asp-action="Login" method="post">
                     <input type="hidden" asp-for="ReturnUrl" />
@@ -33,17 +33,17 @@
                     </div>
 
                     <button type="submit" class="btn btn-mc-cta w-100">
-                        <i class="bi bi-box-arrow-in-right"></i> Đăng nhập
+                        <i class="bi bi-box-arrow-in-right"></i> @L["Đăng nhập"]
                     </button>
                 </form>
 
                 <hr class="my-4" />
                 <p class="mb-1 small">
-                    Chưa có tài khoản?
-                    <a asp-action="Register">Đăng ký ngay</a>
+                    @L["Chưa có tài khoản?"]
+                    <a asp-action="Register">@L["Đăng ký ngay"]</a>
                 </p>
                 <p class="mb-0 small">
-                    <a asp-action="ForgotPassword">Quên mật khẩu?</a>
+                    <a asp-action="ForgotPassword">@L["Quên mật khẩu?"]</a>
                 </p>
             </div>
         </div>

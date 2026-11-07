@@ -32,8 +32,8 @@
                        type="checkbox"
                        value="@Model.Id"
                        id="ss-@Model.Id"
-                       title="Chọn để so sánh"
-                       aria-label="Chọn để so sánh" />
+                       title="@L["Chọn để so sánh"]"
+                       aria-label="@L["Chọn để so sánh"]" />
             </div>
         }
 
@@ -53,13 +53,13 @@
         <div class="price-block">
             @if (!coGia)
             {
-                <span class="text-muted small">Đang cập nhật giá</span>
+                <span class="text-muted small">@L["Đang cập nhật giá"]</span>
             }
             else
             {
                 @if (Model.HasPriceRange)
                 {
-                    <span class="price-from">Từ </span>
+                    <span class="price-from">@L["Từ"] </span>
                 }
                 <span class="price-current">@TienViet.Dinh(Model.DisplayPrice)</span>
                 @if (phanTramGiam > 0)
@@ -70,19 +70,19 @@
         </div>
 
         <div class="meta-info">
-            @Model.Brand?.Name · Đã bán @Model.SoldCount
+            @Model.Brand?.Name · @L["Đã bán"] @Model.SoldCount
         </div>
 
         <div class="mt-auto">
             @if (hetHang)
             {
-                <button class="btn btn-out w-100" disabled>Hết hàng</button>
+                <button class="btn btn-out w-100" disabled>@L["Hết hàng"]</button>
             }
             else
             {
                 <a class="btn btn-buy"
                    asp-controller="Product" asp-action="Detail" asp-route-slug="@Model.Slug">
-                    Xem chi tiết
+                    @L["Xem chi tiết"]
                 </a>
             }
         </div>

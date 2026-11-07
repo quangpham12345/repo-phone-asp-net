@@ -1,12 +1,12 @@
 @model ProductListViewModel
 @using ShopBanHang.Helpers
 @{
-    ViewData["Title"] = Model.TieuDe ?? "Sản phẩm";
+    ViewData["Title"] = Model.TieuDe;
 }
 
 <nav aria-label="breadcrumb" class="mb-3">
     <ol class="breadcrumb small mb-0">
-        <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">Trang chủ</a></li>
+        <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">@L["Trang chủ"]</a></li>
         <li class="breadcrumb-item active" aria-current="page">@Model.TieuDe</li>
     </ol>
 </nav>
@@ -25,9 +25,9 @@
             <input type="hidden" name="tuKhoa" value="@Model.Loc.TuKhoa" />
 
             <div class="filter-group">
-                <div class="filter-title"><i class="bi bi-grid me-1"></i> Danh mục</div>
+                <div class="filter-title"><i class="bi bi-grid me-1"></i> @L["Danh mục"]</div>
                 <select name="danhMuc" class="form-select form-select-sm">
-                    <option value="">Tất cả danh mục</option>
+                    <option value="">@L["Tất cả danh mục"]</option>
                     @foreach (var dm in Model.CacDanhMuc)
                     {
                         <option value="@dm.Slug" selected="@(Model.Loc.DanhMuc == dm.Slug)">@dm.Name</option>
@@ -36,9 +36,9 @@
             </div>
 
             <div class="filter-group">
-                <div class="filter-title"><i class="bi bi-award me-1"></i> Thương hiệu</div>
+                <div class="filter-title"><i class="bi bi-award me-1"></i> @L["Thương hiệu"]</div>
                 <select name="thuongHieu" class="form-select form-select-sm">
-                    <option value="">Tất cả thương hiệu</option>
+                    <option value="">@L["Tất cả thương hiệu"]</option>
                     @foreach (var th in Model.CacThuongHieu)
                     {
                         <option value="@th.Slug" selected="@(Model.Loc.ThuongHieu == th.Slug)">@th.Name</option>
@@ -47,12 +47,12 @@
             </div>
 
             <div class="filter-group">
-                <div class="filter-title"><i class="bi bi-cash-stack me-1"></i> Khoảng giá</div>
+                <div class="filter-title"><i class="bi bi-cash-stack me-1"></i> @L["Khoảng giá"]</div>
                 <div class="d-flex gap-2">
                     <input type="number" name="giaTu" value="@Model.Loc.GiaTu" min="0" step="100000"
-                           class="form-control form-control-sm" placeholder="Từ" />
+                           class="form-control form-control-sm" placeholder="@L["Từ"]" />
                     <input type="number" name="giaDen" value="@Model.Loc.GiaDen" min="0" step="100000"
-                           class="form-control form-control-sm" placeholder="Đến" />
+                           class="form-control form-control-sm" placeholder="@L["Đến"]" />
                 </div>
             </div>
 
@@ -61,7 +61,7 @@
                 <div class="filter-group">
                     <div class="filter-title"><i class="bi bi-memory me-1"></i> RAM</div>
                     <select name="ram" class="form-select form-select-sm">
-                        <option value="">Tất cả</option>
+                        <option value="">@L["Tất cả"]</option>
                         @foreach (var r in Model.CacRam)
                         {
                             <option value="@r" selected="@(Model.Loc.Ram == r)">@r</option>
@@ -73,9 +73,9 @@
             @if (Model.CacStorage.Any())
             {
                 <div class="filter-group">
-                    <div class="filter-title"><i class="bi bi-device-ssd me-1"></i> Dung lượng</div>
+                    <div class="filter-title"><i class="bi bi-device-ssd me-1"></i> @L["Dung lượng"]</div>
                     <select name="storage" class="form-select form-select-sm">
-                        <option value="">Tất cả</option>
+                        <option value="">@L["Tất cả"]</option>
                         @foreach (var s in Model.CacStorage)
                         {
                             <option value="@s" selected="@(Model.Loc.Storage == s)">@s</option>
@@ -87,9 +87,9 @@
             @if (Model.CacOs.Any())
             {
                 <div class="filter-group">
-                    <div class="filter-title"><i class="bi bi-phone me-1"></i> Hệ điều hành</div>
+                    <div class="filter-title"><i class="bi bi-phone me-1"></i> @L["Hệ điều hành"]</div>
                     <select name="os" class="form-select form-select-sm">
-                        <option value="">Tất cả</option>
+                        <option value="">@L["Tất cả"]</option>
                         @foreach (var o in Model.CacOs)
                         {
                             <option value="@o" selected="@(Model.Loc.Os == o)">@o</option>
@@ -99,30 +99,47 @@
             }
 
             <div class="filter-group">
-                <div class="filter-title"><i class="bi bi-sort-down me-1"></i> Sắp xếp</div>
+                <div class="filter-title"><i class="bi bi-sort-down me-1"></i> @L["Sắp xếp"]</div>
                 <select name="sapXep" class="form-select form-select-sm">
                     @foreach (ProductSort sx in Enum.GetValues<ProductSort>())
                     {
-                        <option value="@((int)sx)" selected="@(Model.Loc.SapXep == sx)">@sx.Nhan()</option>
+                        <option value="@((int)sx)" selected="@(Model.Loc.SapXep == sx)">@L[sx.Nhan()]</option>
                     }
                 </select>
             </div>
 
             <button type="submit" class="btn btn-buy w-100 mb-2">
-                <i class="bi bi-funnel me-1"></i> Áp dụng bộ lọc
+                <i class="bi bi-funnel me-1"></i> @L["Áp dụng bộ lọc"]
             </button>
-            <a asp-action="Index" class="btn btn-outline-secondary btn-sm w-100">Bỏ lọc</a>
+            <a asp-action="Index" class="btn btn-outline-secondary btn-sm w-100">@L["Bỏ lọc"]</a>
         </form>
     </div>
 
     @* ===== PRODUCT GRID ===== *@
     <div class="col-lg-9">
+        @* SESSION: từ khoá đã tìm trong phiên này (Helpers/LichSuTimKiem.cs) *@
+        @if (Model.TuKhoaGanDay.Any())
+        {
+            <div class="d-flex flex-wrap align-items-center gap-2 mb-3 small">
+                <span class="text-muted"><i class="bi bi-clock-history"></i> @L["Bạn vừa tìm"]:</span>
+                @foreach (var tk in Model.TuKhoaGanDay)
+                {
+                    <a asp-action="Index" asp-route-tuKhoa="@tk" class="badge rounded-pill text-bg-light border text-decoration-none">@tk</a>
+                }
+                <form asp-action="XoaLichSuTim" method="post" class="d-inline">
+                    <button type="submit" class="btn btn-link btn-sm p-0 text-muted" title="@L["Xoá lịch sử"]">
+                        <i class="bi bi-x-circle"></i>
+                    </button>
+                </form>
+            </div>
+        }
+
         <div class="product-toolbar">
             <div>
-                <div class="fw-semibold">@Model.KetQua.TotalItems sản phẩm</div>
+                <div class="fw-semibold">@(L["{0} sản phẩm", Model.KetQua.TotalItems])</div>
                 <div class="small text-muted">
                     <i class="bi bi-info-circle"></i>
-                    Tick tối đa 3 sản phẩm rồi bấm <b>So sánh</b>
+                    @L["Tick tối đa 3 sản phẩm rồi bấm So sánh"]
                 </div>
             </div>
 
@@ -130,7 +147,7 @@
                 <div id="compareIds"></div>
                 <button type="submit" class="btn btn-outline-danger btn-sm">
                     <i class="bi bi-arrow-left-right"></i>
-                    So sánh <span id="soLuongChon">0</span> sản phẩm
+                    @L["So sánh"] (<span id="soLuongChon">0</span>)
                 </button>
             </form>
         </div>
@@ -139,7 +156,7 @@
         {
             <div class="alert alert-light border text-center py-5">
                 <i class="bi bi-inbox fs-1 text-muted"></i>
-                <p class="mb-0 mt-2">Không có sản phẩm nào khớp bộ lọc.</p>
+                <p class="mb-0 mt-2">@L["Không có sản phẩm nào khớp bộ lọc."]</p>
             </div>
         }
         else

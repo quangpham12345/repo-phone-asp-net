@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Localization;
 using ShopBanHang.Helpers;
 using ShopBanHang.Models.Entities;
 using ShopBanHang.Models.ViewModels;
@@ -23,13 +24,16 @@ namespace ShopBanHang.Controllers
         private readonly ICartService _cartService;
         private readonly UserManager<User> _userManager;
         private readonly SignInManager<User> _signInManager;
+        private readonly IStringLocalizer<SharedResource> _l;
 
         public AccountController(IUserService userService,
                                  IAddressService addressService,
                                  ICartService cartService,
                                  UserManager<User> userManager,
-                                 SignInManager<User> signInManager)
+                                 SignInManager<User> signInManager,
+                                 IStringLocalizer<SharedResource> l)
         {
+            _l = l;
             _userService = userService;
             _addressService = addressService;
             _cartService = cartService;
@@ -59,7 +63,7 @@ namespace ShopBanHang.Controllers
             if (user == null || !user.IsActive)
             {
                 ModelState.AddModelError(string.Empty,
-                    "Email hoặc mật khẩu không đúng, hoặc tài khoản đã bị tắt.");
+                    _l["Email hoặc mật khẩu không đúng, hoặc tài khoản đã bị tắt."]);
                 return View(vm);
             }
 
@@ -69,13 +73,13 @@ namespace ShopBanHang.Controllers
             if (kq.IsLockedOut)
             {
                 ModelState.AddModelError(string.Empty,
-                    "Tài khoản tạm bị khoá do nhập sai mật khẩu nhiều lần. Thử lại sau ít phút.");
+                    _l["Tài khoản tạm bị khoá do nhập sai mật khẩu nhiều lần. Thử lại sau ít phút."]);
                 return View(vm);
             }
             if (!kq.Succeeded)
             {
                 ModelState.AddModelError(string.Empty,
-                    "Email hoặc mật khẩu không đúng, hoặc tài khoản đã bị tắt.");
+                    _l["Email hoặc mật khẩu không đúng, hoặc tài khoản đã bị tắt."]);
                 return View(vm);
             }
 

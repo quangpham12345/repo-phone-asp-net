@@ -1,0 +1,100 @@
+### =====================================================================
+### Gọi thử Web API RESTful của ShopBanHang
+###
+### Visual Studio 2022 (17.8+) / VS Code (extension REST Client):
+### mở file này, bấm "Send request" phía trên từng yêu cầu.
+###
+### Các lệnh GET gọi được ngay. POST/PUT/DELETE và /api/users cần đăng nhập Admin:
+###   1. Chạy web, đăng nhập admin@shop.com / Admin@123 trên trình duyệt
+###   2. F12 > Application > Cookies > copy giá trị cookie "ShopBanHang.Auth"
+###   3. Dán vào biến @authCookie bên dưới
+### Không có cookie: ghi trả 401. Đăng nhập tài khoản khách: ghi trả 403.
+### =====================================================================
+
+@host = https://localhost:7127
+@authCookie = DAN_GIA_TRI_COOKIE_VAO_DAY
+
+### Danh mục và thương hiệu (lấy categoryId, brandId để tạo sản phẩm)
+GET {{host}}/api/categories
+
+###
+GET {{host}}/api/brands
+
+### Danh sách sản phẩm: lọc + phân trang. sapXep: 0 mới nhất, 1 giá tăng, 2 giá giảm, 3 bán chạy
+GET {{host}}/api/products?tuKhoa=iphone&sapXep=1&page=1&pageSize=5
+
+###
+GET {{host}}/api/products?danhMuc=dien-thoai&thuongHieu=samsung&giaTu=5000000&giaDen=30000000
+
+### Chi tiết một sản phẩm (có biến thể). Id không tồn tại -> 404
+GET {{host}}/api/products/1
+
+###
+GET {{host}}/api/products/999999
+
+### Tạo sản phẩm -> 201 Created, header Location trỏ tới /api/products/{id mới}
+POST {{host}}/api/products
+Content-Type: application/json
+Cookie: ShopBanHang.Auth={{authCookie}}
+
+{
+  "name": "Sản phẩm tạo bằng API",
+  "categoryId": 1,
+  "brandId": 1,
+  "imageUrl": "/images/products/no-image.svg",
+  "description": "Tạo thử qua POST /api/products",
+  "ram": "8GB",
+  "os": "Android 15",
+  "isFeatured": false,
+  "isActive": true
+}
+
+### Dữ liệu sai -> 400 kèm danh sách lỗi validate (từ annotation của ProductWriteDto)
+POST {{host}}/api/products
+Content-Type: application/json
+Cookie: ShopBanHang.Auth={{authCookie}}
+
+{
+  "name": "",
+  "categoryId": 0,
+  "brandId": 0
+}
+
+### Không gửi cookie -> 401 Unauthorized
+POST {{host}}/api/products
+Content-Type: application/json
+
+{ "name": "Không có quyền", "categoryId": 1, "brandId": 1 }
+
+### Cập nhật -> 204 No Content (đổi id cho đúng sản phẩm vừa tạo)
+PUT {{host}}/api/products/91
+Content-Type: application/json
+Cookie: ShopBanHang.Auth={{authCookie}}
+
+{
+  "name": "Sản phẩm tạo bằng API (đã sửa)",
+  "categoryId": 1,
+  "brandId": 1,
+  "description": "Sửa qua PUT",
+  "isFeatured": true,
+  "isActive": true
+}
+
+### Xoá mềm (ẩn) -> 204 No Content
+DELETE {{host}}/api/products/91
+Cookie: ShopBanHang.Auth={{authCookie}}
+
+### Admin xem cả sản phẩm đã ẩn
+GET {{host}}/api/products?includeHidden=true&pageSize=100
+Cookie: ShopBanHang.Auth={{authCookie}}
+
+### API tài khoản (chỉ Admin)
+GET {{host}}/api/users?page=1&pageSize=5
+Cookie: ShopBanHang.Auth={{authCookie}}
+
+###
+GET {{host}}/api/users/1
+Cookie: ShopBanHang.Auth={{authCookie}}
+
+### Đổi ngôn ngữ (ghi cookie .AspNetCore.Culture) rồi quay về trang chủ
+GET {{host}}/NgonNgu/Doi?culture=en-US&returnUrl=/

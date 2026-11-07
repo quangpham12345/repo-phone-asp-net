@@ -13,6 +13,9 @@ Cần có: .NET SDK 8 trở lên, SQL Server (bản Express cũng được), Vis
 Không phải chạy lệnh nào khác. Lúc khởi động, `DbInitializer` tự áp migration để
 tạo database `ShopBanHang` rồi nạp dữ liệu mẫu.
 
+Hướng dẫn cài đặt, cấu hình, tạo CSDL bằng script SQL, Session/Cookie, Web API, quốc tế hoá
+và bảo mật viết đầy đủ trong **[HUONG-DAN.md](HUONG-DAN.md)**.
+
 Nếu SQL Server của bạn không nằm ở `localhost`, sửa `ConnectionStrings:ShopContext`
 trong `appsettings.json`:
 
@@ -26,6 +29,9 @@ Dùng tài khoản SQL thay cho Windows auth thì đổi thành:
 "Server=localhost;Database=ShopBanHang;User Id=sa;Password=matkhau;TrustServerCertificate=True"
 ```
 
+Chuỗi kết nối riêng của máy mình thì lưu bằng `dotnet user-secrets` thay vì sửa và commit
+`appsettings.json` (xem HUONG-DAN.md mục 4.1).
+
 ## Tài khoản mẫu
 
 | Vai trò | Email | Mật khẩu |
@@ -34,7 +40,8 @@ Dùng tài khoản SQL thay cho Windows auth thì đổi thành:
 | Khách hàng | khach1@shop.com | Khach@123 |
 | Khách hàng (đã bị tắt) | khach2@shop.com | Khach@123 |
 
-Dữ liệu mẫu kèm theo: 4 danh mục, 4 thương hiệu, **8 sản phẩm**, **3 banner** trang chủ.
+Dữ liệu mẫu kèm theo: 4 danh mục, 4 thương hiệu, **90 sản phẩm** (20 sản phẩm chính + 70 sản phẩm để thử phân trang),
+**4 banner**, 6 đơn hàng, 4 mã giảm giá. Ảnh mẫu lấy từ Unsplash nên cần Internet để hiện ảnh.
 
 Đăng nhập bằng Admin sẽ vào thẳng khu quản trị `/Admin`, bằng khách hàng thì về trang bán hàng.
 
@@ -43,18 +50,21 @@ Dữ liệu mẫu kèm theo: 4 danh mục, 4 thương hiệu, **8 sản phẩm**
 ```
 Areas/Admin/            khu quản trị, tách riêng Controllers + Views + Layout
 Controllers/            phía khách
-Controllers/Api/        API theo RESTful, trả JSON
-ViewComponents/         khối tự lấy dữ liệu riêng (thanh danh mục trên header)
+Controllers/Api/        Web API RESTful trả JSON (products, categories, brands, users)
+ViewComponents/         khối tự lấy dữ liệu riêng (thanh danh mục, nút giỏ hàng, sản phẩm đã xem)
+Resources/              SharedResource.vi.resx / .en.resx cho quốc tế hoá
 Models/Entities/        các entity, mang Annotation để validate
 Models/ViewModels/      dữ liệu cho form và danh sách, không bind trực tiếp entity
 Models/Dtos/            hình dạng dữ liệu trả ra API
 Models/Enums/           OrderStatus (kèm luật chuyển trạng thái), PaymentMethod
 Data/                   ShopContext, DbInitializer, Scripts/ShopBanHang.sql
+../scripts/             xuat-script-sql.ps1 / .sh: sinh lại file SQL từ migration
 Services/               nghiệp vụ; cả MVC và API cùng gọi vào đây
 Repositories/           truy cập dữ liệu cho luồng giỏ hàng, đơn hàng, tồn kho (+ UnitOfWork)
-Helpers/                SlugHelper, TienViet, EnumHelper, ImageStorage, GioKhachLe, ThanhToanOptions...
+Helpers/                SlugHelper, TienViet, ImageStorage, GioKhachLe/DonKhachLe/LichSuTimKiem (Session),
+                        CookieDaXem (Cookie), ThanhToanOptions...
 wwwroot/css/            admin.css cho khu quản trị, style.css cho phía khách
-wwwroot/images/         ảnh mẫu sản phẩm và banner (SVG, không phụ thuộc mạng)
+wwwroot/images/         ảnh SVG dự phòng (no-image, logo)
 wwwroot/uploads/        nơi lưu ảnh admin tải lên
 ```
 
@@ -68,7 +78,8 @@ Bảng nghiệp vụ: `Categories`, `Brands`, `Products`, `ProductVariants`, `Or
 Tài khoản dùng ASP.NET Core Identity (`AspNetUsers`, `AspNetRoles`, `AspNetUserRoles`...).
 
 Script để tạo CSDL bằng tay: `ShopBanHang/Data/Scripts/ShopBanHang.sql`
-(sinh ở chế độ idempotent nên chạy nhiều lần không lỗi).
+(sinh ở chế độ idempotent nên chạy nhiều lần không lỗi). Sinh lại sau mỗi migration mới bằng
+`scripts/xuat-script-sql.ps1` (Windows) hoặc `scripts/xuat-script-sql.sh`.
 
 Vài quyết định thiết kế cần biết khi đọc code:
 
@@ -96,10 +107,10 @@ Add-Migration TenViecVuaLam
 Rồi F5 — `DbInitializer` tự áp migration, không cần `Update-Database`.
 Phải dừng ứng dụng (Shift+F5) trước khi `Add-Migration`, vì lệnh này build project.
 
-Sau khi thêm migration, xuất lại script để nộp:
+Sau khi thêm migration, xuất lại script để nộp (tại thư mục gốc repo):
 
-```bash
-dotnet ef migrations script -o Data/Scripts/ShopBanHang.sql --idempotent
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\xuat-script-sql.ps1
 ```
 
 ## Tiến độ
@@ -121,9 +132,16 @@ dotnet ef migrations script -o Data/Scripts/ShopBanHang.sql --idempotent
 - **Khu quản trị**: tổng quan thống kê; đơn hàng (lọc theo trạng thái, hình thức, đã/chưa thanh toán,
   khoảng ngày; xác nhận đơn; xác nhận đã thanh toán; chuyển trạng thái; huỷ có lý do và hoàn tồn kho);
   sản phẩm, biến thể, danh mục, thương hiệu, tin tức, banner, mã giảm giá, tài khoản
-- `GET /api/users`, `GET /api/users/{id}`
+- **Web API RESTful**: `/api/products` đủ `GET` (lọc, phân trang), `GET {id}`, `POST`, `PUT`, `DELETE` (xoá mềm);
+  `GET /api/categories`, `GET /api/brands`, `GET /api/users`, `GET /api/users/{id}`.
+  Ghi cần quyền Admin, trả 401/403 đúng chuẩn. Gọi thử bằng `ShopBanHang/ShopBanHang.http`
+- **Session**: giỏ hàng khách vãng lai, đơn được phép xem, lịch sử từ khoá tìm kiếm ("Bạn vừa tìm")
+- **Cookie**: ngôn ngữ đã chọn (`.AspNetCore.Culture`), sản phẩm đã xem gần đây (`ShopBanHang.DaXem`), đăng nhập
+- **Quốc tế hoá**: Tiếng Việt / English, chọn ở thanh trên cùng; dịch layout, trang chủ, danh sách sản phẩm,
+  thẻ sản phẩm, đăng nhập và cả thông báo lỗi của annotation
 
-Chưa làm: trang tin tức phía khách, chat hỗ trợ, gửi email thật (email chỉ mới được lưu vào đơn), quốc tế hóa.
+Chưa làm: trang tin tức phía khách, chat hỗ trợ, gửi email thật (email chỉ mới được lưu vào đơn),
+dịch khu quản trị và các trang giỏ hàng/đặt hàng sang tiếng Anh.
 
 ## Thanh toán chuyển khoản
 

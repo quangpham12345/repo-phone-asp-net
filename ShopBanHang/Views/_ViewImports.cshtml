@@ -3,4 +3,7 @@
 @using ShopBanHang.Models.Entities
 @using ShopBanHang.Models.Enums
 @using ShopBanHang.Models.ViewModels
+@using Microsoft.Extensions.Localization
+@* L["Câu tiếng Việt"] trả về bản dịch theo ngôn ngữ đang chọn (xem Resources/SharedResource.*.resx) *@
+@inject IStringLocalizer<SharedResource> L
 @addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers

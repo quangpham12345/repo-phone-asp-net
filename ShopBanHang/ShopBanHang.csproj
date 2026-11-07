@@ -4,6 +4,9 @@
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <!-- Cho phép mỗi thành viên lưu chuỗi kết nối riêng bằng "dotnet user-secrets",
+         không phải sửa appsettings.json (xem HUONG-DAN.md, mục Cấu hình) -->
+    <UserSecretsId>shopbanhang-7d1c2a4e-bt-lap-trinh-web</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>
