@@ -24,3 +24,6 @@ wwwroot/uploads/*
 ## File tam
 *.log
 *.tmp
+
+## macOS
+.DS_Store

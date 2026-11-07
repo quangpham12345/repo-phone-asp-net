@@ -86,7 +86,7 @@ namespace ShopBanHang.Controllers
             var vm = new ProductDetailViewModel
             {
                 SanPham = sp,
-                LienQuan = await _productService.LayLienQuanAsync(sp, 4),
+                LienQuan = await _productService.LayLienQuanAsync(sp, 5),
                 DanhGia = await _reviewService.LayCuaSanPhamAsync(sp.Id),
                 DiemTrungBinh = trungBinh,
                 SoLuotDanhGia = soLuot

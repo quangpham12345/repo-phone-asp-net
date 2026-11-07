@@ -926,3 +926,23 @@ img {
     border-left: 1px solid rgba(255,255,255,0.35);
     white-space: nowrap;
 }
+
+/* ===== Ảnh sản phẩm =====
+   Ảnh thật của hãng thường là ảnh tách nền trắng: giữ "contain" để thấy trọn máy.
+   Nền trắng cho khớp với ảnh tách nền. */
+.product-card .card-img-wrap {
+    background: #fff;
+}
+
+/* Banner là ảnh chụp: phủ kín khung, lớp tối phía trái để chữ dễ đọc */
+.hh-banner .carousel-item img {
+    height: 400px;
+    object-fit: cover;
+    object-position: center;
+}
+
+@media (max-width: 991.98px) {
+    .hh-banner .carousel-item img {
+        height: 260px;
+    }
+}

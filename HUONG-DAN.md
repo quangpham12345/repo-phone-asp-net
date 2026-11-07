@@ -176,14 +176,20 @@ Nhấn F5 là migration được áp. Sau đó chạy lại mục 5.3.
 
 Ràng buộc quan trọng: xem mục "Cơ sở dữ liệu" trong `README.md`.
 
-### 5.6. Xoá CSDL làm lại từ đầu
+### 5.6. Xoá CSDL, nạp lại dữ liệu mẫu từ đầu
 
-```powershell
-# Package Manager Console
-Drop-Database
+`DbInitializer` chỉ nạp dữ liệu mẫu khi bảng còn trống, nên CSDL tạo từ trước vẫn giữ dữ liệu cũ.
+Muốn xoá sạch và nạp lại (mọi đơn hàng, tài khoản, sản phẩm thêm tay đều mất):
+
+```bash
+cd ShopBanHang
+dotnet run -- --NapLaiDuLieu=true
 ```
 
-Rồi F5, CSDL và dữ liệu mẫu được tạo lại.
+Chỉ có tác dụng ở môi trường Development (chạy bằng `dotnet run` / F5), không bao giờ xoá CSDL ở Production.
+Lần sau chạy `dotnet run` bình thường. Cookie đăng nhập cũ không còn hợp lệ, đăng nhập lại là được.
+
+Trong Visual Studio cũng có thể dùng Package Manager Console: `Drop-Database`, rồi F5.
 
 ---
 
@@ -201,11 +207,19 @@ Rồi F5, CSDL và dữ liệu mẫu được tạo lại.
 
 ## 7. Dữ liệu mẫu
 
-4 danh mục · 4 thương hiệu · **90 sản phẩm** (20 sản phẩm chính có biến thể chi tiết + 70 sản phẩm bổ sung để thử phân trang)
-· biến thể giá/màu/dung lượng · 4 banner · 6 đơn hàng đủ 5 trạng thái · 4 mã giảm giá (`GIAM10`, `GIAM200K`, `SALE11`, `TETCU`).
+4 danh mục · 10 thương hiệu (Apple, Samsung, Xiaomi, OPPO, vivo, ASUS, Lenovo, Dell, Sony, Anker)
+· **56 sản phẩm theo mẫu máy có bán ngoài thị trường** (25 điện thoại, 8 tablet, 11 laptop, 12 phụ kiện)
+· biến thể dung lượng x màu với giá riêng · 4 banner · 6 đơn hàng đủ 5 trạng thái · 6 mã giảm giá.
+Danh sách nằm trong `ShopBanHang/Data/DuLieuMau.cs`. Giá và cấu hình là số liệu minh hoạ cho bài tập.
 
-Có hàng giảm giá, hàng hết kho, một sản phẩm đã ẩn (MacBook Pro 14 — khách không thấy, admin thấy),
-biến thể đã tắt, đơn của khách đăng nhập và đơn của khách vãng lai.
+Các tình huống để thử: hàng giảm giá, sản phẩm hết hàng (Xiaomi 15T), sản phẩm đã ẩn
+(MacBook Pro 14 M4 Pro — khách không thấy, admin thấy), biến thể đã tắt (iPhone 16 màu Hồng),
+đơn của khách đăng nhập và đơn của khách vãng lai.
+
+**Ảnh sản phẩm.** Mặc định dùng ảnh minh hoạ từ Unsplash (cần Internet). Muốn ảnh đúng từng mẫu máy,
+chép ảnh vào `ShopBanHang/wwwroot/images/sanpham/{slug}/` rồi chạy lại web; ảnh được gắn tự động,
+kể cả ảnh theo từng màu. Quy ước tên file và danh sách slug: `wwwroot/images/sanpham/README.md`.
+Ảnh banner: `wwwroot/images/banners/1.jpg` … `4.jpg`. Ảnh tải lỗi tự thay bằng ảnh "chưa có ảnh".
 
 ---
 
